@@ -11,7 +11,7 @@ SRC_URI="http://sysoev.ru/nginx/${P}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~ppc ~x86 ~x86-fbsd"
-IUSE="addition debug fastcgi flv imap ipv6 pcre perl random-index securelink ssl status sub webdav zlib"
+IUSE="addition aio debug fastcgi flv imap ipv6 pcre perl realip random-index securelink ssl status sub webdav zlib"
 
 DEPEND="dev-lang/perl
 	pcre? ( >=dev-libs/libpcre-4.2 )
@@ -50,6 +50,7 @@ src_compile() {
 	# fi
 
 	use addition && myconf="${myconf} --with-http_addition_module"
+	use aio      && myconf="${myconf} --with-file-aio"
 	use ipv6	&& myconf="${myconf} --with-ipv6"
 	use fastcgi	|| myconf="${myconf} --without-http_fastcgi_module"
 	use fastcgi	&& myconf="${myconf} --with-http_realip_module"
@@ -66,6 +67,7 @@ src_compile() {
 	use webdav	&& myconf="${myconf} --with-http_dav_module"
 	use sub		&& myconf="${myconf} --with-http_sub_module"
 	use random-index	&& myconf="${myconf} --with-http_random_index_module"
+	use realip      && myconf="${myconf} --with-http_realip_module"
 	use securelink && myconf="${myconf} --with-http_secure_link_module"
 
 	tc-export CC
