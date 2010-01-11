@@ -1,5 +1,6 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
+# $Header: $
 
 EAPI="0"
 inherit perl-module
@@ -29,9 +30,10 @@ src_unpack() {
 #	sed -i "s:/etc/raddb:${D}/etc/raddb:" "${S}/install-radius-db.PL"
 #	set -i "s:'/var/tmp/portage/dev-perl/RadiusPerl-0.15-r2/image//etc/raddb:/var/tmp/portage/dev-perl/RadiusPerl-0.15-r2/work/Authen-Radius-0.15/raddb" "${S}/install-radius-db.PL"
         cd "${S}"
-	mkdir /etc/raddb
+	dodir /etc/raddb
         epatch "${FILESDIR}"/Radius.pm.COA.patch
 }
+
 src_install() {
         keepdir /etc/raddb/
 }
