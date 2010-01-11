@@ -37,7 +37,7 @@ src_unpack() {
 
 src_compile() {
         keepdir /etc/raddb/
-	emake || die "emake failed"
+	perl-module_src_compile || die "perl-module_src_compile failed"
 }
 
 #src_install()
