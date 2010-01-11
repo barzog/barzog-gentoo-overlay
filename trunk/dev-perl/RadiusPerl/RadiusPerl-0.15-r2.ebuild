@@ -36,7 +36,5 @@ src_unpack() {
 src_install()
 {
 	perl-module_src_install || die "perl-module_src_install failed"
-        cd "${S}"
 	dodir /etc/raddb
-	insinto /etc/raddb
 }
