@@ -1,23 +1,27 @@
 --- Radius.pm	2009-09-02 14:27:29.000000000 +0300
-+++ Radius.pm.patched	2010-01-11 11:08:54.000000000 +0200
++++ Radius.pm.patched	2010-01-11 13:46:25.000000000 +0200
 @@ -31,7 +31,7 @@
  @ISA = qw(Exporter);
  @EXPORT = qw(ACCESS_REQUEST ACCESS_ACCEPT ACCESS_REJECT
  			 ACCOUNTING_REQUEST ACCOUNTING_RESPONSE ACCOUNTING_STATUS
 -			DISCONNECT_REQUEST);
-+			DISCONNECT_REQUEST COA_REQUEST);
++			DISCONNECT_REQUEST DISCONNECT_ACCEPT DISCONNECT_REJECT COA_REQUEST COA_ACCEPT COA_REJECT);
  $VERSION = '0.15';
  
  my (%dict_id, %dict_name, %dict_val, %dict_vendor_id, %dict_vendor_name );
-@@ -55,6 +55,7 @@
+@@ -55,6 +55,11 @@
  use constant ACCOUNTING_RESPONSE          => 5;
  use constant ACCOUNTING_STATUS            => 6;
  use constant DISCONNECT_REQUEST           => 40;
++use constant DISCONNECT_ACCEPT		  => 41;
++use constant DISCONNECT_REJECT		  => 42;
 +use constant COA_REQUEST		  => 43;
++use constant COA_ACCEPT			  => 44;
++use constant COA_REJECT			  => 45;
  
  sub new {
  	my $class = shift;
-@@ -107,7 +108,7 @@
+@@ -107,7 +112,7 @@
  		$request_id = ($request_id + 1) & 0xff;
  	}
  	$self->set_error;    
