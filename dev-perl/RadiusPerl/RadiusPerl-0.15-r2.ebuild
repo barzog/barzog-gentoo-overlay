@@ -35,6 +35,7 @@ src_unpack() {
 
 src_install()
 {
+#Must be fixed, because /etc/raddb is NOT installed
 	perl-module_src_install || die "perl-module_src_install failed"
 	dodir /etc/raddb
 }
