@@ -35,6 +35,13 @@ src_unpack() {
         epatch "${FILESDIR}"/Radius.pm.COA.patch
 }
 
-src_compile() {
-        keepdir /etc/raddb/
+#src_compile() {
+#        keepdir /etc/raddb/
+#	emake || die "emake failed"
+#}
+
+src_install()
+{
+	keepdir /etc/raddb
+	emake DESTDIR="${D}" install || die "install failed"
 }
