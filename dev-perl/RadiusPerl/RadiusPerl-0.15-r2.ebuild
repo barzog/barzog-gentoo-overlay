@@ -28,5 +28,6 @@ src_unpack() {
 	perl-module_src_unpack
 	sed -i "s:/etc/raddb:${D}/etc/raddb:" "${S}/install-radius-db.PL"
         cd "${S}"
+	echo "Patching at ${S} by ${FILESDIR}"
         epatch "${FILESDIR}"/Radius.pm.COA.patch
 }
