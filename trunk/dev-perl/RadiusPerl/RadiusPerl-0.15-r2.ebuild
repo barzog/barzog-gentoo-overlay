@@ -26,8 +26,9 @@ S=${WORKDIR}/Authen-Radius-${PV}
 
 src_unpack() {
 	perl-module_src_unpack
-	sed -i "s:/etc/raddb:${D}/etc/raddb:" "${S}/install-radius-db.PL"
+#	sed -i "s:/etc/raddb:${D}/etc/raddb:" "${S}/install-radius-db.PL"
+#	set -i "s:'/var/tmp/portage/dev-perl/RadiusPerl-0.15-r2/image//etc/raddb:/var/tmp/portage/dev-perl/RadiusPerl-0.15-r2/work/Authen-Radius-0.15/raddb" "${S}/install-radius-db.PL"
         cd "${S}"
-	mkdir -p image/raddb
+#	mkdir -p image/raddb
         epatch "${FILESDIR}"/Radius.pm.COA.patch
 }
