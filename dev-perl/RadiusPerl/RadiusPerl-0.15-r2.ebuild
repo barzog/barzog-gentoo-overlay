@@ -31,10 +31,10 @@ src_unpack() {
 #	echo "Patching to ${D}"
         cd "${S}"
 #	dodir /etc/raddb
-	keepdir /etc/raddb
+#	keepdir /etc/raddb
         epatch "${FILESDIR}"/Radius.pm.COA.patch
 }
 
-#src_install() {
-#        keepdir /etc/raddb/
-#}
+src_compile() {
+        keepdir /etc/raddb/
+}
