@@ -1,5 +1,5 @@
---- /usr/local/lib/perl5/site_perl/5.8.9/Authen/Radius.pm 2009-11-09 16:01:50.000000000 +0200
-+++ /home/barzog/Radius.pm      2009-12-11 16:56:44.000000000 +0200
+--- Radius.pm 2009-11-09 16:01:50.000000000 +0200
++++ Radius.pm      2009-12-11 16:56:44.000000000 +0200
 @@ -31,7 +31,7 @@
  @ISA = qw(Exporter);
  @EXPORT = qw(ACCESS_REQUEST ACCESS_ACCEPT ACCESS_REJECT
