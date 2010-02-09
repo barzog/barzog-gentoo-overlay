@@ -31,6 +31,7 @@ src_unpack() {
 	mkdir -p ${D}/etc/raddb
         cd "${S}"
         epatch "${FILESDIR}"/Radius-0.17.pm.COA.patch
+	epatch "${FILESDIR}"/dictionary.cisco.ssg.patch
 }
 
 src_install()
