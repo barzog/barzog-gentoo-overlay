@@ -8,7 +8,7 @@ LICENSE="GPL-2"
 
 SRC_URI="mirror://sourceforge/fprobe/${P}.tar.bz2"
 SLOT="0"
-KEYWORDS="~x86"
+KEYWORDS="~x86 ~amd64 ~ppc ~ia64"
 
 IUSE="debug messages"
 
@@ -27,4 +27,7 @@ src_install() {
 
 	dodoc AUTHORS NEWS README TODO
 	docinto contrib ; dodoc contrib/tg.sh
+	
+	newinitd "${FILESDIR}/fprobe-ulog.initd" fprobe-ulog
+	newconfd "${FILESDIR}/fprobe-ulog.confd" fprobe-ulog
 }
