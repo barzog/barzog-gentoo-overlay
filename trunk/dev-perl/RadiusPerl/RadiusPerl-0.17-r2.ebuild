@@ -35,7 +35,17 @@ src_unpack() {
 
 src_install()
 {
-#Must be fixed, because /etc/raddb is NOT installed
 	perl-module_src_install || die "perl-module_src_install failed"
-	dodir /etc/raddb
+	insinto /etc/raddb
+	newins raddb/dictionary dictionary 
+	newins raddb/dictionary.xtradius dictionary.xtradius
+	newins raddb/dictionary.shiva dictionary.shiva 
+	newins raddb/dictionary.tunnel dictionary.tunnel
+	newins raddb/dictionary.versanet dictionary.versanet
+	newins raddb/dictionary.cisco dictionary.cisco
+	newins raddb/dictionary.livingston dictionary.livingston
+	newins raddb/dictionary.ascend dictionary.ascend
+	newins raddb/dictionary.usr dictionary.usr
+	newins raddb/dictionary.quintum dictionary.quintum
+	newins raddb/dictionary.compat dictionary.compat
 }
