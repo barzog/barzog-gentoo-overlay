@@ -4,5 +4,5 @@
 FPROBEULOG_OPTS="127.0.0.1:2055"
 
 # pid file location
-PIDFILE=/var/run/flows/flowcap.pid
+PIDFILE=/var/run/flows/fprobe-ulog.pid
 
