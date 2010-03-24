@@ -24,6 +24,7 @@ src_unpack() {
 	unpack ${A}
 	cd "${S}"
 	epatch "${FILESDIR}/${PV}-nostrip.patch"
+	epatch "${FILESDIR}/bird-${PV}-llscompat.patch"
 }
 
 src_compile() {
