@@ -137,9 +137,10 @@ src_prepare() {
 	# sick bacula autoconf/autotools file location
 	# in ./autoconf/ instead of ./
 #	epatch "${FILESDIR}"/${PV}/${P}-ncurses.patch \
-#		&& econf --enable-client-only \
-#		&& make configure \
-#		|| die "making configure failed"
+#		&& 
+		econf --enable-client-only \
+		&& make configure \
+		|| die "making configure failed"
 }
 
 src_configure() {
