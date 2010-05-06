@@ -2,8 +2,9 @@ EAPI=2
 
 inherit eutils 
 
-DEPEND="mail-filter/libmilter 
-	>=mail-mta/sendmail-8.12"
+DEPEND="net-mail/mailbase
+	!!mail-filter/libmilter
+	mail-mta/sendmail"
 RDEPEND="${DEPEND}"
 
 DESCRIPTION="amavisd-milter is a sendmail milter for amavisd-new version 2.2.0 and above which use the new AM.PDP protocol."
