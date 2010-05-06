@@ -5,11 +5,11 @@
 # daemon name
 NAME="amavisd-milter"
 #daemon locations
-DAEMON=/usr/bin/$NAME
+DAEMON=/usr/sbin/$NAME
 # Unix domain socket locations
 SOCKET="/var/amavis/amavisd-milter.sock"
 # Pid file locations
 PIDFILE="/var/run/$NAME.pid"
 # this setting owerwrite config file !
-$USER=amavis
-DOPTIONS="-s $SOCKET -u $USER -p $PIDFILE"
+USER=amavis
+DOPTIONS="-s $SOCKET -p $PIDFILE"
