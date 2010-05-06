@@ -17,3 +17,8 @@ IUSE=""
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
+src_install() {
+	newinitd "${FILESDIR}"/amavisd-milter.initd amavisd-milter
+	newconfd "${FILESDIR}"/amavisd-milter.confd amavisd-milter
+	local user="smmsp"
+}
