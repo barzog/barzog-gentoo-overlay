@@ -4,8 +4,8 @@
 # $Header: Exp $
 
 depend() {
-        use logger dns dovecot openldap dkim-filter dns p0f dracd sendmail
-        provide postfix_greylist
+        use logger dns amavis sendmail
+        provide amavisd_milter
 }
 
 start() {

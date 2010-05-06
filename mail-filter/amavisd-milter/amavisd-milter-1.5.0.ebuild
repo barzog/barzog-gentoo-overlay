@@ -23,3 +23,7 @@ src_install() {
 	newconfd "${FILESDIR}"/amavisd-milter.confd amavisd-milter
 	local user="smmsp"
 }
+
+pkg_postinst() {
+	chown g-rx /var/amavis
+}
