@@ -3,13 +3,15 @@
 # Header: slepnoga rion-overlay 19/01/2010 $
 
 # daemon name
-NAME="amavisd-milter"
+NAME="amavis-milter"
 #daemon locations
 DAEMON=/usr/sbin/$NAME
 # Unix domain socket locations
 SOCKET="/var/amavis/amavisd-milter.sock"
+AM_SOCKET="/var/amavis/amavisd.sock"
+AM_TMP="/var/amavis/tmp"
 # Pid file locations
 PIDFILE="/var/run/$NAME.pid"
 # this setting owerwrite config file !
-USER=amavis
-DOPTIONS="-s $SOCKET -p $PIDFILE"
+DOPTIONS="-s $SOCKET -p $PIDFILE -S $AM_SOCKET -w $AM_TMP"
+

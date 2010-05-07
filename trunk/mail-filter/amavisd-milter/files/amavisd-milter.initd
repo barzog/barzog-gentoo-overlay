@@ -5,12 +5,12 @@
 
 depend() {
         use logger dns amavis sendmail
-        provide amavisd_milter
+        provide amavis_milter
 }
 
 start() {
         ebegin "Starting $DESC"
-        start-stop-daemon --quiet --start --startas $DAEMON --pidfile $PIDFILE  -- $DOPTIONS
+        start-stop-daemon --quiet --start --startas $DAEMON --pidfile $PIDFILE  --user amavis -c amavis -- $DOPTIONS
         eend $? "Failed to start ${DAEMON}"
 }
 
