@@ -4,7 +4,8 @@ inherit eutils
 
 DEPEND="net-mail/mailbase
 	!!mail-filter/libmilter
-	mail-mta/sendmail"
+	mail-mta/sendmail
+	mail-filter/amavisd-new"
 RDEPEND="${DEPEND}"
 
 DESCRIPTION="amavisd-milter is a sendmail milter for amavisd-new version 2.2.0 and above which use the new AM.PDP protocol."
@@ -25,5 +26,5 @@ src_install() {
 }
 
 pkg_postinst() {
-	chown g-rx /var/amavis
+	chown g-rx /var/amavis/tmp
 }
