@@ -99,6 +99,7 @@ src_install() {
 	newinitd "${FILESDIR}/amavisd.rc6" amavisd
 	newinitd "${FILESDIR}"/amavis-milter.initd amavis-milter
 	newconfd "${FILESDIR}"/amavis-milter.confd amavis-milter
+	newconfd "${FILESDIR}/amavisd.conf" amavisd
 	dosed "s:/var/run/amavis/:$AMAVIS_ROOT/:g" /etc/init.d/amavisd
 
 	keepdir ${AMAVIS_ROOT}
