@@ -1,21 +1,45 @@
 #!/sbin/runscript
 
+opts="${opts} reload"
+
+# If you plan to simultaneously use several Amavisd-new instances, don't forget
+# to specify alternate home directories, pid and socket files, etc. You can 
+# create separate configuration files, or add instance-specific directives
+# to the main configuration file in an "if ($instance_name eq 'alt')" block.
+# See amavisd-new release notes (2.5.0 release section) for details & examples.
+# Make a symlink from /etc/init.d/amavisd to /etc/init.d/amavisd.alt,
+# copy /etc/conf.d/amavisd to /etc/conf.d/amavisd.alt, and optionally specify
+# a new configuration file using '-c' in AMAVISD_OPTS.
+
+if [ ${SVCNAME} != "amavisd" ]; then
+        INSTANCE="${SVCNAME##*.}"
+        if [ -n "${INSTANCE}" ]; then
+                AMAVISD_OPTS="${AMAVISD_OPTS} -i ${INSTANCE}"
+        fi
+fi
+
 depend() {
 	need net
 	use logger
 	use antivirus
+	use p0f
 	before mta
 }
 
 start() {
-	ebegin "Starting amavisd-new"
-	start-stop-daemon --start --quiet --name amavisd --pidfile /var/amavis/amavisd.pid \
-	 --exec /usr/sbin/amavisd
+	ebegin "Starting amavisd-new${INSTANCE:+" (${INSTANCE})"}"
+	/usr/sbin/amavisd ${AMAVISD_OPTS} start >/dev/null 2>&1
 	eend $?
 }
 
 stop() {
-	ebegin "Stopping amavisd-new"
-	start-stop-daemon --stop --quiet --pidfile /var/run/amavis/amavisd.pid
+	ebegin "Stopping amavisd-new${INSTANCE:+" (${INSTANCE})"}"
+	/usr/sbin/amavisd ${AMAVISD_OPTS} stop >/dev/null 2>&1
 	eend $?
+}
+
+reload() {
+	ebegin "Reloading amavisd-new${INSTANCE:+" (${INSTANCE})"}"
+	/usr/sbin/amavisd ${AMAVISD_OPTS} reload >/dev/null 2>&1
+ 	eend $?
 }
