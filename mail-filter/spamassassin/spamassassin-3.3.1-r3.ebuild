@@ -16,7 +16,7 @@ LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~hppa ~ia64 ~sparc ~x86"
 # need keyword request for Mail-SPF ppc ppc64
-IUSE="berkdb qmail ssl doc ldap mysql postgres sqlite ipv6"
+IUSE="berkdb qmail ssl spf doc ldap mysql postgres sqlite ipv6"
 
 DEPEND=">=dev-lang/perl-5.8.8-r8
 	virtual/perl-MIME-Base64
@@ -32,7 +32,7 @@ DEPEND=">=dev-lang/perl-5.8.8-r8
 	app-crypt/gnupg
 	>=virtual/perl-IO-Zlib-1.04
 	>=dev-util/re2c-0.12.0
-	|| ( dev-perl/Mail-SPF mail-filter/libspf2 )
+	spf? ( dev-perl/Mail-SPF )
 	dev-perl/NetAddr-IP
 	ssl? (
 		dev-perl/IO-Socket-SSL
