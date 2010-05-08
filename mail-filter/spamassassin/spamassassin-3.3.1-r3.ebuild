@@ -127,7 +127,7 @@ src_install () {
 
 	# Add the init and config scripts.
 	newinitd "${FILESDIR}"/3.3.1-spamd.init spamd || die
-	newconfd "${FILESDIR}"/3.0.0-spamd.conf spamd || die
+	newconfd "${FILESDIR}"/3.3.1-spamd.conf spamd || die
 
 	use postgres && \
 		sed -i -e 's:@USEPOSTGRES@::' "${D}/etc/init.d/spamd" || \
