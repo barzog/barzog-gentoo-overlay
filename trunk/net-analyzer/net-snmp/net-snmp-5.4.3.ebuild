@@ -42,9 +42,6 @@ src_unpack() {
 	unpack ${A}
 	cd "${S}"
 
-	# Fix CVE-2008-6123
-	epatch "${FILESDIR}/CVE-2008-6123.patch"
-
 	# fix access violation in make check
 	sed -i -e 's/\(snmpd.*\)-Lf/\1-l/' testing/eval_tools.sh || \
 		die "sed eval_tools.sh failed"
