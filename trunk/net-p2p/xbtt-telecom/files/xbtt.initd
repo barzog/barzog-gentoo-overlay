@@ -1,0 +1,27 @@
+#!/bin/sh
+
+start() {
+        echo "Starting XBT Tracker"
+        start-stop-daemon --start --quiet --exec /usr/sbin/xbt_tracker -- --conf_file /etc/xbtt/xbt_tracker.conf
+        echo $?
+}
+
+stop() {
+        echo "Stopping XBT Tracker"
+        start-stop-daemon --stop --quiet --pidfile /var/run/xbt_tracker.pid
+        echo $?
+}
+
+case "$1" in
+        start)
+                start
+;;
+        stop)
+                stop
+;;
+        *)
+                echo "Usage: $0 {start|stop}"
+                exit 1
+esac
+
+exit 1
