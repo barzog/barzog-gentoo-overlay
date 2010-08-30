@@ -47,9 +47,9 @@ src_compile() {
 }
 
 src_install() {
-	dosbin Tracker/xbt_tracker
-	newinitd "${FILESDIR}/xbtt.initd" xbtt
-	dodir /etc/xbtt
-	insinto /etc/xbtt
+	newsbin Tracker/xbt_tracker xbt_tracker-telecom
+	newinitd "${FILESDIR}/xbtt.initd" xbtt-telecom
+	dodir /etc/xbtt-telecom
+	insinto /etc/xbtt-telecom.by
 	newins Tracker/xbt_tracker.conf.default xbt_tracker.conf.default
 }
