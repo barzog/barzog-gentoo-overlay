@@ -10,7 +10,7 @@ SRC_URI="http://ftputil.sschwarzer.net/trac/raw-attachment/wiki/Download/${P}.ta
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~x86"
+KEYWORDS="amd64 ppc x86 ~x86-fbsd"
 IUSE=""
 
 DEPEND=""
