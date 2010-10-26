@@ -13,7 +13,7 @@ ECVS_MODULE="ipt_netflow"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64 ~ppc ~ia64"
 IUSE=""
 
 RDEPEND="net-firewall/iptables
