@@ -18,7 +18,8 @@ IUSE="gtk libnotify"
 DEPEND=">=dev-lang/python-2.4
 	|| ( app-arch/xz-utils app-arch/lzma-utils )
 	dev-python/setuptools
-	|| ( >=dev-libs/boost-1.34 =dev-libs/boost-1.33*[threads] )"
+	|| ( >=dev-libs/boost-1.34 =dev-libs/boost-1.33*[threads] )
+	<net-libs/rb_libtorrent-0.15[python]"
 RDEPEND="${DEPEND}
 	dev-python/pyxdg
 	dev-python/pygobject
