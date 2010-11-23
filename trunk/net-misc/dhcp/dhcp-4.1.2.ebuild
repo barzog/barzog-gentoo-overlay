@@ -34,8 +34,6 @@ src_unpack() {
 	epatch "${FILESDIR}/${PN}"-3.0-fix-perms.patch
 	# Enable dhclient to equery NTP servers
 	epatch "${FILESDIR}/${PN}"-4.0-dhclient-ntp.patch
-	# resolvconf support in dhclient-script
-	epatch "${FILESDIR}/${PN}"-4.0-dhclient-resolvconf.patch
 	# Stop downing the interface on Linux as that breaks link daemons
 	# such as wpa_supplicant and netplug
 	epatch "${FILESDIR}/${PN}"-3.0.3-dhclient-no-down.patch
