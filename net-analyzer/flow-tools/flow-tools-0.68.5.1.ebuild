@@ -33,7 +33,7 @@ pkg_setup() {
 src_unpack() {
 	unpack ${A}
 	cd "${S}"
-	epatch "${FILESDIR}"/flow-tools-0.68.4.3-patch-src_flow-print.c
+	epatch "${FILESDIR}"/patch-src_flow-print.c
 }
 src_configure() {
 	local myconf="--sysconfdir=/etc/flow-tools"
