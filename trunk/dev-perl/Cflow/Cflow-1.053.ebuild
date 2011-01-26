@@ -13,7 +13,7 @@ SRC_URI="http://net.doit.wisc.edu/~plonka/${PN}/${P}.tar.gz
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~ppc x86"
+KEYWORDS="~ppc ~x86 ~amd64"
 IUSE=""
 
 DEPEND="dev-lang/perl"
