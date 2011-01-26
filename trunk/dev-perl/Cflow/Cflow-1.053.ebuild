@@ -21,3 +21,7 @@ DEPEND="dev-lang/perl"
 PDEPEND=">=net-analyzer/flow-tools-${FLOW_TOOLS_VERSION}"
 RDEPEND="${DEPEND}"
 
+src_unpack() {
+        perl-module_src_unpack
+        sed -i "s:../../lib/libft.a:/usr/lib/libft.a:" "${S}/Makefile.PL"
+}
