@@ -30,7 +30,7 @@ PDEPEND="lua? ( net-libs/lua )
 	python? ( net-libs/python )"
 
 src_compile() {
-	econf || die "Config failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
+	./configure --prefix=/usr || die "Config failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
 	emake || die "Make failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
 }
 
