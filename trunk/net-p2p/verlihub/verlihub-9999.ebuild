@@ -11,23 +11,12 @@ inherit git
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="amd64 amd64-fbsd x86 x86-fbsd"
-IUSE="lua iplog forbid messanger chatroom isp replacer stats python"
+KEYWORDS="~amd64 ~amd64-fbsd ~x86 ~x86-fbsd"
 
 DEPEND="dev-libs/libpcre
 	dev-libs/geoip
 	>=dev-db/mysql-5.0
 	sys-libs/zlib"
-
-PDEPEND="lua? ( net-libs/lua )
-	iplog? ( net-libs/iplog )
-	forbid? ( net-libs/forbid )
-	messanger? ( net-libs/messanger )
-	chatroom? ( net-libs/chatroom )
-	isp? ( net-libs/isp )
-	replacer? ( net-libs/replacer )
-	stats? ( net-libs/stats )
-	python? ( net-libs/python )"
 
 src_compile() {
 	./configure --prefix=/usr || die "Config failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
