@@ -47,8 +47,6 @@ src_install() {
 		COPYING \
 		ChangeLog \
 		INSTALL \
-		NEWS \
-		README \
 		TODO
 }
 
