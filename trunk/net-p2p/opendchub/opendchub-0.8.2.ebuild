@@ -31,7 +31,6 @@ src_install() {
 	einstall || die "install failed"
 	if use perl ; then
 		exeinto "${EPREFIX}/usr/bin"
-		doexe "${FILESDIR}/opendchub_setup.sh"
 		dodir "${EPREFIX}/usr/share/opendchub/scripts"
 		insinto "${EPREFIX}/usr/share/opendchub/scripts"
 		doins Samplescripts/*
@@ -40,9 +39,3 @@ src_install() {
 	newinitd "${FILESDIR}/opendchub.initd" opendchub
 }
 
-pkg_postinst() {
-	if use perl ; then
-		einfo "To set up perl scripts for opendchub to use, please run"
-		einfo "opendchub_setup.sh as the user you will be using opendchub as."
-	fi
-}
