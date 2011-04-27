@@ -4,12 +4,12 @@
 
 EAPI="2"
 
-inherit cvs eutils linux-mod multilib
+inherit git eutils linux-mod multilib
 
+EGIT_PROJECT="ipt_netflow"
+EGIT_REPO_URI="git://ipt-netflow.git.sourceforge.net/gitroot/ipt-netflow/ipt-netflow"
 DESCRIPTION="Netflow iptables module"
 HOMEPAGE="http://sourceforge.net/projects/ipt-netflow"
-ECVS_SERVER="ipt-netflow.cvs.sourceforge.net:/cvsroot/ipt-netflow"
-ECVS_MODULE="ipt_netflow"
 
 LICENSE="GPL-2"
 SLOT="0"
