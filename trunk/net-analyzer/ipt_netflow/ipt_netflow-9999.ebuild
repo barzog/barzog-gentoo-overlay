@@ -43,8 +43,8 @@ src_prepare() {
 }
 
 src_configure() {
-	# nothing to do here. go away
-	return
+	cd ${S}
+	./configure
 }
 
 src_compile() {
