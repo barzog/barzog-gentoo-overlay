@@ -18,7 +18,7 @@ LICENSE="WANPIPE"
 
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="bitstrm bscstrm bisync sdlc edu pos sdlc mpapi adccp tdm bigmem"
+IUSE="bitstrm bscstrm bisync sdlc edu pos sdlc mpapi adccp tdm ss7 bri"
 
 RDEPEND="
 	sys-libs/ncurses
@@ -69,13 +69,11 @@ src_compile() {
 	use mpapi && PROTOCOLS="$PROTOCOLS MPAPI"
 	use adccp && PROTOCOLS="$PROTOCOLS ADCCP"
 	use tdm && PROTOCOLS="$PROTOCOLS TDM"
+	use ss7 && PROTOCOLS="$PROTOCOLS SS7"
+	use bri && PROTOCOLS="$PROTOCOLS BRI"
 	PROTOCOLS="$(sed -re 's/^ //' -e 's/ $//' -e 's/ /,/g' <<< $PROTOCOLS)"
 
 	COMMON_ARGS="--silent --builddir=${S_BUILD} --with-linux=${S_BUILD} --usr-cc=$(tc-getCC) --protocol=${PROTOCOLS} --zaptel-path=${DAHDI_BUILD} --no-zaptel-compile"
-
-	if use bigmem ; then
-		COMMON_ARGS="$COMMON_ARGS --64bit_4GB"
-	fi
 
 	einfo "Building kernel modules ..."
 	./Setup drivers ${COMMON_ARGS}
@@ -102,16 +100,5 @@ src_install() {
 	mv ${D}/usr/share/doc/wanpipe ${D}/usr/share/doc/${P}
 
 	newinitd ${FILESDIR}/wanpipe.rc6 wanpipe
-}
-
-pkg_preinst() {
-	if [ "$(uname -m)" = "x86_64" ] ; then
-		# bigmem has no effect on non-x86_64 systems, so we don't check otherwise
-		if [ "$(grep MemTotal /proc/meminfo | sed -re 's/.*: +([0-9]+) .*/\1/')" -gt 4000000 ] ; then
-			use bigmem || die "bigmem must be enabled on 64-bit systems with >=4GB of RAM"
-		else
-			use bigmem && die "bigmem must be disabled on systems which are 32bit or have less than 4GB of RAM"
-		fi
-	fi
 }
 
