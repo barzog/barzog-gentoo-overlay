@@ -22,7 +22,7 @@ IUSE="bitstrm bscstrm bisync sdlc edu pos sdlc mpapi adccp tdm bigmem"
 
 RDEPEND="
 	sys-libs/ncurses
-	=net-misc/dahdi-${DAHDI_RELEASE}${DAHDVI_PV}
+	=net-misc/dahdi-${DAHDI_RELEASE}${DAHDI_PV}
 "
 DEPEND="
 	sys-devel/flex
