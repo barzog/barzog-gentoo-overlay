@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-  <herd>voip</herd>
+  <herd>barzog-overlay</herd>
+  <maintainer>
+  	<email>barzog@telecom.by</email>
+  	<name>Oleg Gawriloff</name>
+  </maintainer>
+  <use>
+  	<flag name='adccp'>ADCCP API protocol (LAPB)</flag>
+  	<flag name='bigmem'></flag>  	
+  	<flag name='bisync'>Multi-Point Bisync support</flag>  	
+  	<flag name='bitstrm'>BitStreaming protocol Support</flag>  	
+  	<flag name='bscstrm'>Nasdaq BiSync API protocol</flag>  	
+  	<flag name='edu'>Wan EduKit driver support</flag>  	
+  	<flag name='mpapi'>Multi Protocol API: X25, LAPB, DSP</flag>  	
+  	<flag name='pos'>POS (S509/S515) hw/prot support</flag>  	
+  	<flag name='sdlc'>SLDC API protocol support</flag>  	
+  	<flag name='tdm'>Hardware TDM Voice support for Asterisk PBX</flag>  	
+  	<flag name='ss7'>SS7 Level 2 API protocol support</flag>
+  	<flag name='bri'>Hardware/Software support for BRI and Sangoma Media Gateway</flag>
+  </use>  	
+  	<upstream>
+  		<changelog>http://wiki.sangoma.com/sangoma-linux-drivers-software-announcements</changelog>
+  	</upstream>
 </pkgmetadata>
