@@ -80,7 +80,6 @@ src_compile() {
 	./Setup drivers ${COMMON_ARGS}
 
 	einfo "Building utilities ..."
-	einfo "${COMMON_ARGS}"
 	./Setup utility ${COMMON_ARGS}
 
 	einfo "Building config ..."
