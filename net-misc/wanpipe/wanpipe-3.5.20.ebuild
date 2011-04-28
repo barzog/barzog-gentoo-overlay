@@ -48,7 +48,8 @@ src_unpack() {
 	ln -s ${KV_DIR}/Makefile
 	ln -s ${KV_DIR}/arch
 	ln -s ${KV_DIR}/scripts
-#	cp -ra ${S}/patches/kdrivers/include/* ${S_BUILD}/include/linux/
+#Without this strng WanCfg is not compiling
+	cp -ra ${S}/patches/kdrivers/include/* ${S_BUILD}/include/linux/
 	cd ${S}
 	epatch ${FILESDIR}/${PN}-3.5.20-setup.diff
 	epatch ${FILESDIR}/${PN}-3.4.1-zaptel.diff
@@ -79,6 +80,7 @@ src_compile() {
 	./Setup drivers ${COMMON_ARGS}
 
 	einfo "Building utilities ..."
+	einfo "${COMMON_ARGS}"
 	./Setup utility ${COMMON_ARGS}
 
 	einfo "Building config ..."
