@@ -1,0 +1,135 @@
+--- Setup.orig	2011-04-28 12:27:26.000000000 +0300
++++ Setup	2011-04-28 12:28:15.000000000 +0300
+@@ -1330,13 +1330,13 @@
+ 		WAN_CONF_DIR=/etc/wanpipe
+ 	fi
+ 
+-	if [ ! -d $WAN_CONF_DIR ]; then
+-		\mkdir -p $WAN_CONF_DIR
++	if [ ! -d $ROOT/$WAN_CONF_DIR ]; then
++		\mkdir -p $ROOT/$WAN_CONF_DIR
+ 	fi
+ 
+ 	# Check kernel source directory
+-	if [ ! -d $WAN_CONF_DIR ]; then
+-		echo -e "\nERROR: Directory $WAN_CONF_DIR not found !\n"
++	if [ ! -d $ROOT/$WAN_CONF_DIR ]; then
++		echo -e "\nERROR: Directory ks $WAN_CONF_DIR not found !\n"
+ 		getyn "Would you like to try again"
+ 		if [ $? -ne 0 ]; then
+ 			WAN_CONF_DIR=/etc/wanpipe
+@@ -1360,18 +1360,18 @@
+ 		if [ $response ]; then 
+ 			WAN_FIRMWARE_DIR=$response
+ 		else
+-			WAN_FIRMWARE_DIR=/etc/wanpipe/firmware
++			WAN_FIRMWARE_DIR=/lib/firmware
+ 		fi
+ 	else
+ 		WAN_FIRMWARE_DIR=/etc/wanpipe/firmware
+ 	fi
+ 
+-	if [ ! -d $WAN_FIRMWARE_DIR ]; then
+-		\mkdir -p $WAN_FIRMWARE_DIR
++	if [ ! -d $ROOT/$WAN_FIRMWARE_DIR ]; then
++		\mkdir -p $ROOT/$WAN_FIRMWARE_DIR
+ 	fi
+ 
+-	if [ ! -d $WAN_FIRMWARE_DIR ]; then
+-		echo -e "\nERROR: Directory $WAN_FIRMWARE_DIR not found !\n"
++	if [ ! -d $ROOT/$WAN_FIRMWARE_DIR ]; then
++		echo -e "\nERROR: Directory fw $WAN_FIRMWARE_DIR not found !\n"
+ 		getyn "Would you like to try again?"
+ 		if [ $? -ne 0 ]; then
+ 			WAN_FIRMWARE_DIR=/etc/wanpipe/firmware
+@@ -1389,8 +1389,8 @@
+ 
+ 	WAN_INTR_DIR=/etc/wanpipe/interfaces
+ 
+-	if [ ! -d $WAN_INTR_DIR ]; then
+-		\mkdir -p $WAN_INTR_DIR
++	if [ ! -d $ROOT/$WAN_INTR_DIR ]; then
++		\mkdir -p $ROOT/$WAN_INTR_DIR
+ 	fi
+ 
+ #	if [ -d "/etc/sysconfig/network-scripts" ]; then
+@@ -1433,7 +1433,7 @@
+ 		echo
+ 
+ 		# Check kernel source directory
+-		if [ ! -d $WAN_INTR_DIR ]; then
++		if [ ! -d $ROOT/$WAN_INTR_DIR ]; then
+ 			echo -e "\nERROR: Directory $WAN_INTR_DIR not found !\n"
+ 			getyn "Would you like to try again?"
+ 			if [ $? -ne 0 ]; then
+@@ -1475,9 +1475,9 @@
+ 	fi
+ 
+ 
+-	if [ -f $ROOT/etc/wanpipe/wanrouter.rc ]; then
+-		. /etc/wanpipe/wanrouter.rc
+-	fi  
++#	if [ -f $ROOT/etc/wanpipe/wanrouter.rc ]; then
++#		. /etc/wanpipe/wanrouter.rc
++#	fi  
+ 
+ 	if [ "$WAN_DEVICES" = "" ]; then
+ 		WAN_DEVICES="wanpipe1"
+@@ -3424,7 +3424,8 @@
+ 		 ;;
+ 	ia64*)    LD_ELF=" -T $SOURCEDIR/arch/ia64/module.lds "
+ 		 ;;
+-	i686*)   LD_ELF="-m elf_i386"
++	i686*)   ARCH=i386
++		 LD_ELF="-m elf_i386"
+ 		 ;;
+ 	i586*)   ARCH=i386
+ 		 LD_ELF="-m elf_i386" 
+@@ -4924,9 +4925,9 @@
+ 
+ 	echo "Installing  ${DISTR_NAME} Utilities in $ROOT/usr/sbin"
+ 
+-	if [ ! -e $WAN_CONF_DIR ]; then
+-		\mkdir -p $WAN_CONF_DIR
+-		\mkdir -p $WAN_CONF_DIR/util
++	if [ ! -e $ROOT/$WAN_CONF_DIR ]; then
++		\mkdir -p $ROOT/$WAN_CONF_DIR
++		\mkdir -p $ROOT/$WAN_CONF_DIR/util
+ 	fi
+ 
+ 	cd $PROD_HOME/util
+@@ -4954,8 +4955,8 @@
+ 	\mkdir -p $ROOT/etc/wanpipe/lib/
+ 	\cp -f $PROD_HOME/util/wancfg_legacy/lib/* $ROOT/etc/wanpipe/lib/
+ 
+-	echo "Installing firmware in $ROOT/etc/wanpipe/firmware"
+-	\cp -rf firmware $ROOT/etc/wanpipe/
++	echo "Installing firmware in $ROOT/lib/firmware"
++	\cp -rf firmware $ROOT/lib
+ 
+ 	if [ ! -f $ROOT/etc/wanpipe/interfaces ]; then
+ 		\mkdir -p $ROOT/etc/wanpipe/interfaces
+@@ -5001,8 +5002,8 @@
+ 		make install WAN_VIRTUAL=$ROOT > /dev/null 2> /dev/null  
+ 		cd $PROD_HOME
+ 
+-		if [ ! -e /dev/wanec ]; then
+-		       	mknod /dev/wanec c 242 0
++		if [ ! -e $ROOT/dev/wanec ]; then
++		       	mknod $ROOT/dev/wanec c 242 0
+ 		fi
+ 	else
+ 		echo "Hardware Echo Cancel Utilites Not Installed"
+@@ -7520,9 +7521,9 @@
+ LINUXDRIVERS_WAN="net/wanrouter"
+ 
+ superuser=NO;
+-if [ "$UID" = 0 ]; then
+-	superuser=YES;
+-fi
++#if [ "$UID" = 0 ]; then
++#	superuser=YES;
++#fi
+ 
+ # Check router home directory.
+ [ -d "$PROD_HOME" ] || {
