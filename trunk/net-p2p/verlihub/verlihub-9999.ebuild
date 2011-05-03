@@ -39,6 +39,8 @@ src_install() {
 	doins "${FILESDIR}/dbconfig"
 	insinto /etc/logrotate.d
 	newins "${FILESDIR}/verlihub.logrotate" verlihub
+	insinto /etc/verlihub/scripts
+	newins "${FILESDIR}/regme.lua" regme.lua
 	newinitd "${FILESDIR}/verlihub.initd" verlihub
 	newconfd "${FILESDIR}/verlihub.confd" verlihub
 	dosym /usr/lib/libreplacer_pi.so /etc/verlihub/plugins/
