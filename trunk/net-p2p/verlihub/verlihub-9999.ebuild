@@ -37,19 +37,19 @@ src_install() {
 	insinto /etc/verlihub
 	doins share/config/*
 	doins "${FILESDIR}/dbconfig"
-	newinitd "${FILESDER}/verlihub.initd" verlihub
+	newinitd "${FILESDIR}/verlihub.initd" verlihub
 	newconfd "${FILESDIR}/verlihub.confd" verlihub
-	ln -s /usr/lib/libreplacer_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libforbid_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libfloodprot_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libplug_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/liblua_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libiplog_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libchatroom_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libstats_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libpython_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libmessenger_pi.so /etc/verlihub/plugins/
-	ln -s /usr/lib/libisp_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libreplacer_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libforbid_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libfloodprot_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libplug_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/liblua_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libiplog_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libchatroom_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libstats_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libpython_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libmessenger_pi.so /etc/verlihub/plugins/
+	dosym ../usr/lib/libisp_pi.so /etc/verlihub/plugins/
 }
 
 pkg_posinst() {
