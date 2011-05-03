@@ -1,4 +1,3 @@
-#Sample MySQL DB Host file
 db_host = <MySQL Server IP addr>
 db_data = <VerliHub DB Name>
 db_user = <VerliHub DB User>

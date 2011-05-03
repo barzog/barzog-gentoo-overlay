@@ -3,6 +3,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
+LOG_DIR=/var/log/verlihub/
+
 depend() {
 	need net
 }
@@ -39,7 +41,7 @@ start() {
 	fi
 	start-stop-daemon -o --quiet --make-pidfile --background \
 		--start --startas /usr/bin/verlihub \
-		--pidfile /var/run/verlihub.pid -- ${PORT}
+		--pidfile /var/run/verlihub.pid -- ${PORT} > ${LOG_DIR}/verlihub.log 2> ${LOG_DIR}/verlihub.err
 
 	eend $?
 }
