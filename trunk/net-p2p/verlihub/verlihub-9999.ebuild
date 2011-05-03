@@ -37,6 +37,8 @@ src_install() {
 	insinto /etc/verlihub
 	doins share/config/*
 	doins "${FILESDIR}/dbconfig"
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}/verlihub.logrotate" verlihub
 	newinitd "${FILESDIR}/verlihub.initd" verlihub
 	newconfd "${FILESDIR}/verlihub.confd" verlihub
 	dosym /usr/lib/libreplacer_pi.so /etc/verlihub/plugins/
@@ -50,6 +52,13 @@ src_install() {
 	dosym /usr/lib/libpython_pi.so /etc/verlihub/plugins/
 	dosym /usr/lib/libmessenger_pi.so /etc/verlihub/plugins/
 	dosym /usr/lib/libisp_pi.so /etc/verlihub/plugins/
+	fowners -R verlihub:verlihub /var/log/verlihub
+	fowners -R verlihub:verlihub /etc/verlihub
+}
+
+pkg_setup() {
+	enewgroup verlihub
+	enewuser verlihub -1 -1 -1 verlihub
 }
 
 pkg_posinst() {

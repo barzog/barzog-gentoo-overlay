@@ -1,0 +1,6 @@
+/var/log/verlihub/verlihub.log /var/log/verlihub/verlihub.err {
+daily
+notifempty
+missingok
+copytruncate
+}
