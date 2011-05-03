@@ -39,8 +39,8 @@ start() {
 	if [ "${MISS_OPTIONAL_FILES_WARN}" ]; then
 		checkoptionalfiles
 	fi
-	start-stop-daemon -start --quiet --make-pidfile  --pidfile /var/run/verlihub.pid \
-		--exec /usr/bin/verlihub ${PORT} > ${LOG_DIR}/verlihub.log 2> ${LOG_DIR}/verlihub.err &
+	start-stop-daemon --start --quiet --make-pidfile  --pidfile /var/run/verlihub.pid \
+		--exec /usr/bin/verlihub -- ${PORT} >> ${LOG_DIR}/verlihub.log 2>> ${LOG_DIR}/verlihub.err &
 	eend $?
 }
 
