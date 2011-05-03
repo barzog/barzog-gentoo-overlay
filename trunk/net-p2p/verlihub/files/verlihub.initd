@@ -4,7 +4,7 @@
 # $Header: $
 
 depend() {
-	need net mysql
+	need net
 }
 
 checkconfig() {
