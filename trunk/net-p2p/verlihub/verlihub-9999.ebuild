@@ -32,7 +32,7 @@ src_install() {
 		ChangeLog \
 		INSTALL \
 		TODO
-	dodir /etc/verlihub /etc/verlihub/plugins
+	dodir /etc/verlihub /etc/verlihub/plugins /etc/verlihub/scripts /var/log/verlihub
 	keepdir /etc/verlihub
 	insinto /etc/verlihub
 	doins share/config/*
