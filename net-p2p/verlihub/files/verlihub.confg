@@ -1,0 +1,19 @@
+# /etc/conf.d/verlihub:
+# $Header: $
+
+# Configuration file for verlihub
+
+# Config directory
+CONF_DIR=/etc/verlihub
+
+# Files required for verlihub to run
+REQUIRED_FILES="dbconfig"
+
+# Optional files
+OPTIONAL_FILES="motd faq rules help_admin help_master help_op help_usr help_reg"
+
+# Set to any value to print warning messages if any optional files are missing
+MISS_OPTIONAL_FILES_WARN=1
+
+# If unset, value in database is used
+#PORT=411

@@ -1,0 +1,52 @@
+#!/sbin/runscript
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+depend() {
+	need net mysql
+}
+
+checkconfig() {
+	if [ ! -d ${CONF_DIR} ]; then
+		eerror "Missing configuration directory ${CONF_DIR}!"
+		return 1
+	fi;
+
+	for f in ${REQUIRED_FILES}; do
+		file=${CONF_DIR}/$f
+		if [ ! -e $file ]; then
+			eerror "Missing required file $file!"
+			return 1
+		fi;
+	done;
+}
+
+checkoptionalfiles() {
+	for f in ${OPTIONAL_FILES}; do
+		file=${CONF_DIR}/$f
+		if [ ! -e $file ]; then
+			ewarn "Missing file $file, some functionality will be disabled."
+		fi;
+	done;
+}
+
+start() {
+	checkconfig || return 1
+	ebegin "Starting verlihub"
+	if [ "${MISS_OPTIONAL_FILES_WARN}" ]; then
+		checkoptionalfiles
+	fi
+	start-stop-daemon -o --quiet --make-pidfile --background \
+		--start --startas /usr/bin/verlihub \
+		--pidfile /var/run/verlihub.pid -- ${PORT}
+
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping verlihub"
+	start-stop-daemon -o --quiet --stop --pidfile /var/run/verlihub.pid
+	rm /var/run/verlihub.pid
+	eend $?
+}

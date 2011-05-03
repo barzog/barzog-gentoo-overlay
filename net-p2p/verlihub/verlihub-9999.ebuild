@@ -25,11 +25,6 @@ src_compile() {
 
 src_install() {
 	make DESTDIR="${D}" install || die
-
-	docinto "scripts"
-	dodoc \
-		scripts/vh_runhub.in
-
 	docinto ""
 	dodoc \
 		AUTHORS \
@@ -37,38 +32,28 @@ src_install() {
 		ChangeLog \
 		INSTALL \
 		TODO
+	dodir /etc/verlihub /etc/verlihub/plugins
+	keepdir /etc/verlihub
+	insinto /etc/verlihub
+	doins share/config/*
+	doins "${FILESDIR}/dbconfig"
+	newinitd "${FILESDER}/verlihub.initd" verlihub
+	newconfd "${FILESDIR}/verlihub.confd" verlihub
+	ln -s /usr/lib/libreplacer_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libforbid_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libfloodprot_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libplug_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/liblua_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libiplog_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libchatroom_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libstats_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libpython_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libmessenger_pi.so /etc/verlihub/plugins/
+	ln -s /usr/lib/libisp_pi.so /etc/verlihub/plugins/
 }
 
-pkg_postinst() {
-	echo
-		einfo "You are now ready to use Verlihub into your system."
-		einfo "Do NOT report bugs to Gentoo's bugzilla"
-		einfo "Please report all bugs to Verlihub forums at http://forums.verlihubproject.org/viewforum.php?f=36"
-		einfo
-		einfo "Verlihub Project Team"
-		einfo
-	if [[ -f "/etc/verlihub/dbconfig" ]]
-	then
-		ewarn "Verlihub is already configured in /etc/verlihub"
-		ewarn "You can configure a new hub by typing:"
-		ewarn
-		ewarn "emerge --config =${CATEGORY}/${PF}"
-	else
-		ewarn "You MUST configure verlihub before starting it:"
-		ewarn
-		ewarn "emerge --config =${CATEGORY}/${PF}"
-		ewarn
-		ewarn "That way you can [re]configure your verlihub setup"
-	fi
-}
-
-pkg_config() {
-	ewarn "Configuring verlihub..."
-	/usr/bin/vh_install
-	if [[ $? ]]
-	then
-		einfo "You have not configured verlihub succesfully. Please try again"
-	else
-		ewarn "Configuration completed"
-	fi
+pkg_posinst() {
+        einfo   "NOTE: Please note: this software is under development, not completely
+                finished, the installation is not user friendly. You would need to
+                know how to create and edit files, create a mysql database."
 }
