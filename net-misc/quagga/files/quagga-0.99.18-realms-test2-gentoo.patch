@@ -1568,26 +1568,6 @@
    rib_add_ipv4_multipath (&p, rib);
    return 0;
  }
---- configure.ac.orig	2011-05-11 16:53:45.000000000 +0300
-+++ configure.ac	2011-05-11 16:54:45.000000000 +0300
-@@ -555,6 +555,17 @@
- 
- AC_SYS_LARGEFILE
- 
-+dnl ------------------------
-+dnl Integrated REALMS option
-+dnl ------------------------
-+if test "${enable_realms}" = "yes"; then
-+    if test "${opsys}" != "gnu-linux"; then
-+       echo "Sorry, only Linux has REALMS support"
-+       exit 1
-+    fi
-+    AC_DEFINE(SUPPORT_REALMS,, Realms support)
-+fi
-+                          
- dnl ---------------------
- dnl Integrated VTY option
- dnl ---------------------
 --- zebra/zebra_vty.c.orig	2011-05-11 17:33:07.000000000 +0300
 +++ zebra/zebra_vty.c	2011-05-11 18:26:06.000000000 +0300
 @@ -34,7 +34,11 @@
@@ -2037,3 +2017,32 @@
    install_element (CONFIG_NODE, &ip_route_distance_cmd);
    install_element (CONFIG_NODE, &ip_route_flags_distance_cmd);
    install_element (CONFIG_NODE, &ip_route_flags_distance2_cmd);
+--- configure.ac.orig	2011-05-11 18:46:39.000000000 +0300
++++ configure.ac	2011-05-11 18:48:33.000000000 +0300
+@@ -259,6 +259,8 @@
+ [  --disable-time-check          disable slow thread warning messages])
+ AC_ARG_ENABLE(pcreposix,
+ [  --enable-pcreposix          enable using PCRE Posix libs for regex functions])
++AC_ARG_ENABLE(realms,
++[  --enable-realms          enable unsupported realms patch])
+ 
+ if test x"${enable_gcc_ultra_verbose}" = x"yes" ; then
+   CFLAGS="${CFLAGS} -W -Wcast-qual -Wstrict-prototypes"
+@@ -555,6 +557,17 @@
+ 
+ AC_SYS_LARGEFILE
+ 
++dnl ------------------------
++dnl Integrated REALMS option
++dnl ------------------------
++if test "${enable_realms}" = "yes"; then
++    if test "${opsys}" != "gnu-linux"; then
++       echo "Sorry, only Linux has REALMS support"
++       exit 1
++    fi
++    AC_DEFINE(SUPPORT_REALMS,, Realms support)
++fi
++
+ dnl ---------------------
+ dnl Integrated VTY option
+ dnl ---------------------

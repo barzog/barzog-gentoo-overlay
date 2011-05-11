@@ -118,7 +118,4 @@ pkg_postinst() {
 	elog "You can pass additional options to the daemon by setting the EXTRA_OPTS"
 	elog "variable in their respective file in /etc/conf.d"
 	elog ""
-	elog "Starting from version 0.99.18, quagga no longer supports the realms patch."
-	elog "The patch was abandoned upstream and once again didn't apply; it needs a"
-	elog "dedicated maintainer, if it is still necessary."
 }
