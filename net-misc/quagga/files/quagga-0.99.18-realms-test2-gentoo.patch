@@ -1,0 +1,2039 @@
+--- bgpd/bgp_attr.c.orig	2011-05-10 17:12:04.000000000 +0300
++++ bgpd/bgp_attr.c	2011-05-10 17:21:02.000000000 +0300
+@@ -355,6 +355,9 @@
+       MIX(attr->extra->aggregator_addr.s_addr);
+       MIX(attr->extra->weight);
+       MIX(attr->extra->mp_nexthop_global_in.s_addr);
++#ifdef SUPPORT_REALMS
++      MIX(attr->extra->realmto);
++#endif      
+     }
+   
+   if (attr->aspath)
+@@ -402,6 +405,9 @@
+           && ae1->aggregator_as == ae2->aggregator_as
+           && ae1->aggregator_addr.s_addr == ae2->aggregator_addr.s_addr
+           && ae1->weight == ae2->weight
++#ifdef SUPPORT_REALMS
++          && ae1->realmto == ae2->realmto
++#endif          
+ #ifdef HAVE_IPV6
+           && ae1->mp_nexthop_len == ae2->mp_nexthop_len
+           && IPV6_ADDR_SAME (&ae1->mp_nexthop_global, &ae2->mp_nexthop_global)
+--- bgpd/bgp_attr.h.orig	2011-05-10 17:22:37.000000000 +0300
++++ bgpd/bgp_attr.h	2011-05-10 17:23:35.000000000 +0300
+@@ -85,6 +85,11 @@
+   
+   /* MP Nexthop length */
+   u_char mp_nexthop_len;
++  
++#ifdef SUPPORT_REALMS
++ /* Realm used */
++ u_int16_t realmto;
++#endif  
+ };
+ 
+ /* BGP core attribute structure. */
+--- bgpd/bgpd.c.orig	2011-05-10 17:24:57.000000000 +0300
++++ bgpd/bgpd.c	2011-05-10 17:34:16.000000000 +0300
+@@ -642,6 +642,9 @@
+   peer->keepalive = 0;
+   peer->connect = 0;
+   peer->v_connect = BGP_DEFAULT_CONNECT_RETRY;
++#ifdef SUPPORT_REALMS
++  peer->realm = 0;
++#endif  
+ }
+ 
+ /* Check peer's AS number and determin is this peer IBGP or EBGP */
+@@ -800,6 +803,9 @@
+   peer->status = Idle;
+   peer->ostatus = Idle;
+   peer->weight = 0;
++#ifdef SUPPORT_REALMS
++  peer->realm = 0;
++#endif  
+   peer->password = NULL;
+   peer->bgp = bgp;
+   peer = peer_lock (peer); /* initial reference */
+@@ -1419,6 +1425,11 @@
+   /* Weight */
+   peer->weight = conf->weight;
+ 
++#ifdef CONFIG_REALMS
++  /* Realm */
++    peer->realm = conf->realm;
++#endif
++    
+   /* peer flags apply */
+   peer->flags = conf->flags;
+   /* peer af_flags apply */
+@@ -3136,7 +3147,58 @@
+     }
+   return 0;
+ }
+-
++
++#ifdef SUPPORT_REALMS
++
++/* neighbor realm. */
++int
++peer_realm_set (struct peer *peer, u_int32_t realm)
++{
++  struct peer_group *group;
++  struct listnode *node, *nnode;
++    
++  SET_FLAG (peer->config, PEER_CONFIG_REALM);
++  peer->realm = realm;
++        
++  if (! CHECK_FLAG (peer->sflags, PEER_STATUS_GROUP))
++    return 0;
++              
++  /* peer-group member updates. */
++  group = peer->group;
++  for (ALL_LIST_ELEMENTS (group->peer, node, nnode, peer))
++    {
++      peer->realm = group->conf->realm;
++    }
++  return 0;
++}
++
++int
++peer_realm_unset (struct peer *peer)
++{
++  struct peer_group *group;
++  struct listnode *node, *nnode;
++
++  /* Set default realm. */
++  if (peer_group_active (peer))
++    peer->realm = peer->group->conf->realm;
++  else
++    peer->realm = 0;
++
++  UNSET_FLAG (peer->config, PEER_CONFIG_REALM);
++
++  if (! CHECK_FLAG (peer->sflags, PEER_STATUS_GROUP))
++    return 0;
++
++  /* peer-group member updates. */
++  group = peer->group;
++  for (ALL_LIST_ELEMENTS (group->peer, node, nnode, peer))
++    {
++      peer->realm = 0;
++    }
++  return 0;
++}
++#endif                
++                                                                       
+ int
+ peer_timers_set (struct peer *peer, u_int32_t keepalive, u_int32_t holdtime)
+ {
+@@ -4682,7 +4744,28 @@
+ 	    g_peer->weight != peer->weight)
+ 	  vty_out (vty, " neighbor %s weight %d%s", addr, peer->weight,
+ 		   VTY_NEWLINE);
++#ifdef SUPPORT_REALMS
+ 
++//#define REALM_PEER_AS  0xFFFFA
++//#define REALM_ORIGIN_AS        0xFFFFB
++
++      /* Default realm. */
++      if (CHECK_FLAG (peer->config, PEER_CONFIG_REALM))
++        if (! peer_group_active (peer) ||
++           g_peer->realm != peer->realm)
++       {
++         char realmbuf[64];
++//         if (peer->realm == REALM_PEER_AS)
++//           vty_out (vty, " neighbor %s realm peer-as%s", addr,
++//                  VTY_NEWLINE);
++//         else if (peer->realm == REALM_ORIGIN_AS)
++//           vty_out (vty, " neighbor %s realm origin-as%s", addr,
++//                  VTY_NEWLINE);
++         vty_out (vty, " neighbor %s realm %s%s", addr,
++              rtnl_rtrealm_n2a (peer->realm, realmbuf, sizeof (realmbuf)), VTY_NEWLINE);
++       }
++#endif
++                                                                             
+       /* Dynamic capability.  */
+       if (CHECK_FLAG (peer->flags, PEER_FLAG_DYNAMIC_CAPABILITY))
+         if (! peer_group_active (peer) ||
+--- bgpd/bgpd.h.orig	2011-05-10 17:34:57.000000000 +0300
++++ bgpd/bgpd.h	2011-05-10 17:35:53.000000000 +0300
+@@ -427,6 +427,11 @@
+   u_int32_t connect;
+   u_int32_t routeadv;
+ 
++#ifdef SUPPORT_REALMS
++#define PEER_CONFIG_REALM             (1 << 4) /* Default realm. */
++  u_int32_t realm;
++#endif
++  
+   /* Timer values. */
+   u_int32_t v_start;
+   u_int32_t v_connect;
+@@ -913,6 +918,11 @@
+ extern int peer_timers_set (struct peer *, u_int32_t, u_int32_t);
+ extern int peer_timers_unset (struct peer *);
+ 
++#ifdef SUPPORT_REALMS
++extern int peer_realm_set (struct peer *, u_int32_t);
++extern int peer_realm_unset (struct peer *);
++#endif
++
+ extern int peer_timers_connect_set (struct peer *, u_int32_t);
+ extern int peer_timers_connect_unset (struct peer *);
+ 
+--- bgpd/bgp_route.c.orig	2011-05-10 17:36:51.000000000 +0300
++++ bgpd/bgp_route.c	2011-05-10 17:48:14.000000000 +0300
+@@ -55,10 +55,24 @@
+ #include "bgpd/bgp_zebra.h"
+ #include "bgpd/bgp_vty.h"
+ 
++/* REALM SUPPORT */
++#ifdef SUPPORT_REALMS
++
++//#define REALM_PEER_AS  0xFFFFA
++//#define REALM_ORIGIN_AS        0xFFFFB
++
++/* Attr. Flags and Attr. Type Code. */
++#define AS_HEADER_SIZE        2
++
++/* Two octet is used for AS value. */
++#define AS_VALUE_SIZE         sizeof (as_t)
++
++#endif
++
+ /* Extern from bgp_dump.c */
+ extern const char *bgp_origin_str[];
+ extern const char *bgp_origin_long_str[];
+-
++
+ static struct bgp_node *
+ bgp_afi_node_get (struct bgp_table *table, afi_t afi, safi_t safi, struct prefix *p,
+ 		  struct prefix_rd *prd)
+@@ -88,7 +102,7 @@
+ 
+   return rn;
+ }
+-
++
+ /* Allocate bgp_info_extra */
+ static struct bgp_info_extra *
+ bgp_info_extra_new (void)
+@@ -642,7 +656,7 @@
+     }
+   return 0;
+ }
+-
++
+ static int
+ bgp_input_modifier (struct peer *peer, struct prefix *p, struct attr *attr,
+ 		    afi_t afi, safi_t safi)
+@@ -651,6 +665,45 @@
+   struct bgp_info info;
+   route_map_result_t ret;
+ 
++
++/* REALM SUPPORT */
++#ifdef SUPPORT_REALMS
++
++  u_int16_t realm_value = 0;
++  struct aspath *aspath;
++
++  struct assegment *assegment;
++
++  /* Apply default realm value. */
++  aspath = attr->aspath;
++/*
++  if (peer->realm == REALM_PEER_AS)
++  {
++      realm_value = peer->as;
++  }
++  else if (peer->realm == REALM_ORIGIN_AS)
++  {
++      if (aspath == NULL || aspath->segments == NULL)
++       return RMAP_PERMIT;
++
++      assegment = aspath->segments;
++
++      while (assegment) {
++        int i;
++        
++       for (i = 0; i < assegment->length; i++)
++           realm_value = assegment->as[i];
++           
++       assegment = assegment->next;
++      }
++  }
++  else */realm_value = (u_int16_t)(peer->realm & 0xFFFF);
++
++  // replace olg attr->extra->realmto
++  (bgp_attr_extra_get (attr))->realmto = realm_value;
++  
++#endif
++                                                                                    
+   filter = &peer->filter[afi][safi];
+ 
+   /* Apply default weight value. */
+@@ -689,6 +742,43 @@
+   struct bgp_info info;
+   route_map_result_t ret;
+ 
++/*REALM SUPPORT */
++#ifdef SUPPORT_REALMS
++
++  u_int16_t realm_value = 0;
++  struct aspath *aspath;
++  
++  struct assegment *assegment;
++  
++  /* Apply default realm value. */
++  aspath = attr->aspath;
++/*
++  if (peer->realm == REALM_PEER_AS)
++  {
++      realm_value = peer->as;
++  }
++  else if (peer->realm == REALM_ORIGIN_AS)
++  {
++      if (aspath == NULL || aspath->segments == NULL)
++       return RMAP_PERMIT;
++
++      assegment = aspath->segments;
++
++      while (assegment) {
++        int i;
++
++       for (i = 0; i < assegment->length; i++)
++           realm_value = assegment->as[i];
++
++       assegment = assegment->next;
++      }
++  }
++  else */realm_value = (u_int16_t)(peer->realm & 0xFFFF);
++
++  // replace olg attr->extra->realmto
++  (bgp_attr_extra_get (attr))->realmto = realm_value;
++#endif
++                                                                                                  
+   filter = &peer->filter[afi][safi];
+ 
+   /* Route map apply. */
+@@ -5559,7 +5649,9 @@
+ 	vty_out (vty, "       ");
+ 
+       vty_out (vty, "%7u ", (attr->extra ? attr->extra->weight : 0));
+-    
++#ifdef SUPPORT_REALMS
++      vty_out (vty, "%7u ", (attr->extra ? attr->extra->realmto : 0));
++#endif
+       /* Print aspath */
+       if (attr->aspath)
+         aspath_print_vty (vty, "%s", attr->aspath, " ");
+@@ -5902,7 +5994,14 @@
+ 
+       if (attr->extra && attr->extra->weight != 0)
+ 	vty_out (vty, ", weight %u", attr->extra->weight);
+-	
++
++#ifdef SUPPORT_REALMS
++      if (attr->extra && attr->extra->realmto != 0) {
++        char realmbuf[64];
++        vty_out (vty, ", realm %u", rtnl_rtrealm_n2a (attr->extra->realmto, realmbuf, sizeof (realmbuf)));
++      }
++#endif
++
+       if (! CHECK_FLAG (binfo->flags, BGP_INFO_HISTORY))
+ 	vty_out (vty, ", valid");
+ 
+@@ -5972,10 +6071,14 @@
+     }
+   vty_out (vty, "%s", VTY_NEWLINE);
+ }  
+-
++
+ #define BGP_SHOW_SCODE_HEADER "Status codes: s suppressed, d damped, h history, * valid, > best, i - internal,%s              r RIB-failure, S Stale, R Removed%s"
+ #define BGP_SHOW_OCODE_HEADER "Origin codes: i - IGP, e - EGP, ? - incomplete%s%s"
++#ifdef SUPPORT_REALMS
++#define BGP_SHOW_HEADER "   Network          Next Hop            Metric LocPrf Weight    Realm    Path%s"
++#else
+ #define BGP_SHOW_HEADER "   Network          Next Hop            Metric LocPrf Weight Path%s"
++#endif
+ #define BGP_SHOW_DAMP_HEADER "   Network          From             Reuse    Path%s"
+ #define BGP_SHOW_FLAP_HEADER "   Network          From            Flaps Duration Reuse    Path%s"
+ 
+--- bgpd/bgp_routemap.c.orig	2011-05-10 17:49:19.000000000 +0300
++++ bgpd/bgp_routemap.c	2011-05-10 17:59:29.000000000 +0300
+@@ -53,6 +53,20 @@
+ #include "bgpd/bgp_ecommunity.h"
+ #include "bgpd/bgp_vty.h"
+ 
++#ifdef SUPPORT_REALMS
++/* `set realm REALM' */
++
++//#define REALM_PEER_AS  0xFFFFA
++//#define REALM_ORIGIN_AS        0xFFFFB
++
++/* Attr. Flags and Attr. Type Code. */
++#define AS_HEADER_SIZE        2
++
++/* Two octet is used for AS value. */
++#define AS_VALUE_SIZE         sizeof (as_t)
++
++#endif
++
+ /* Memo of route-map commands.
+ 
+ o Cisco route-map
+@@ -896,7 +910,101 @@
+   route_set_ip_nexthop_compile,
+   route_set_ip_nexthop_free
+ };
+-
++
++#ifdef SUPPORT_REALMS
++static route_map_result_t
++route_set_realm (void *rule, struct prefix *prefix,
++                 route_map_object_t type, void *object)
++{
++  u_int32_t *realm;
++  u_int16_t realm_value = 0;
++  struct bgp_info *bgp_info;
++  struct aspath *aspath;
++  
++  struct assegment *assegment;
++  
++  if(type != RMAP_BGP)
++    return RMAP_OKAY;
++
++  bgp_info = object;
++  aspath = bgp_info->attr->aspath;
++  realm = (u_int32_t*) rule;
++
++/*  if (*realm == REALM_PEER_AS)
++  {
++      if (aspath == NULL || aspath->segments == NULL)
++       return RMAP_OKAY;
++       
++      realm_value = bgp_info->peer->as;
++  }
++  else if (*realm == REALM_ORIGIN_AS)
++  {
++      if (aspath == NULL || aspath->segments == NULL)
++       return RMAP_PERMIT;
++
++      assegment = aspath->segments;
++
++      while (assegment) {
++        int i;
++
++       for (i = 0; i < assegment->length; i++)
++           realm_value = assegment->as[i];
++
++       assegment = assegment->next;
++      }
++  }
++  else*/ realm_value = (u_int16_t)(*realm & 0xFFFF);
++
++  // Replace old attr->extra-> with (bgp_attr_extra_get (bgp_info->atttr))->
++  // bgp_info->attr->extra->realmto = realm_value;
++  (bgp_attr_extra_get (bgp_info->attr))->realmto = realm_value;
++  return RMAP_OKAY;
++}                                                                                
++
++/*
++ * set realm REALM - to set 'to' realm of route
++ */
++static void *
++route_set_realm_compile (char *arg)
++{
++  u_int32_t *realm;
++  u_int32_t realmid;
++
++/*  if (strcmp(arg, "peer-as") == 0)
++  {
++    realmid = REALM_PEER_AS;
++  }
++  else if (strcmp(arg, "origin-as") == 0)
++  {
++    realmid = REALM_ORIGIN_AS;
++  }
++  else*/ if (rtnl_rtrealm_a2n (&realmid, arg) < 0)
++  {
++    return NULL;
++  }
++
++  realm = XMALLOC (MTYPE_ROUTE_MAP_COMPILED, sizeof (u_int32_t));
++  *realm = (u_int32_t)realmid;
++  
++  return realm;
++}
++
++static void
++route_set_realm_free (void *rule)
++{
++  XFREE (MTYPE_ROUTE_MAP_COMPILED, rule);
++}
++
++/* Set realms rule structure. */
++struct route_map_rule_cmd route_set_realm_cmd =
++{
++  "realm",
++  route_set_realm,
++  route_set_realm_compile,
++  route_set_realm_free,
++};
++#endif
++                                                          
+ /* `set local-preference LOCAL_PREF' */
+ 
+ /* Set local preference. */
+@@ -962,7 +1070,7 @@
+   route_set_local_pref_compile,
+   route_set_local_pref_free,
+ };
+-
++
+ /* `set weight WEIGHT' */
+ 
+ /* Set weight. */
+@@ -1129,7 +1237,7 @@
+   route_set_metric_compile,
+   route_set_metric_free,
+ };
+-
++
+ /* `set as-path prepend ASPATH' */
+ 
+ /* For AS path prepend mechanism. */
+@@ -2875,6 +2983,58 @@
+        "Metric value for destination routing protocol\n"
+        "Add or subtract metric\n")
+ 
++#ifdef SUPPORT_REALMS
++DEFUN (set_realm,
++       set_realm_cmd,
++       "set realm (<1-255>|WORD)",
++       SET_STR
++       "Set realm id or name for Linux FIB routes\n"
++       "Realm id for Linux FIB routes\n"
++       "Realm name for Linux FIB routes\n")
++{
++  return bgp_route_set_add (vty, vty->index, "realm", argv[0]);
++}
++/*
++ALIAS (set_realm,
++       set_realm_origin_peer_cmd,
++       "set realm (origin-as|peer-as)",
++       MATCH_STR
++       "Set realm for Linux FIB routes\n"
++       "Use route origin AS as realm id\n"
++       "Use route peer AS as realm id\n")
++*/
++DEFUN (no_set_realm,
++       no_set_realm_cmd,
++       "no set realm",
++       NO_STR
++       SET_STR
++       "Realm value(s) for Linux FIB routes\n")
++{
++  if (argc == 0)
++    return bgp_route_set_delete (vty, vty->index, "realm", NULL);
++
++  return bgp_route_set_delete (vty, vty->index, "realm", argv[0]);
++}
++
++ALIAS (no_set_realm,
++       no_set_realm_val_cmd,
++       "no set realm (<0-255>|WORD)",
++       NO_STR
++       SET_STR
++       "Realm value(s) for Linux FIB routes\n"
++       "Realm value\n"
++       "Realm name\n")
++/*
++ALIAS (no_set_realm,
++       no_set_realm_origin_peer_cmd,
++       "no set realm (origin-as|peer-as)",
++       NO_STR
++       SET_STR
++       "Realm value(s) for Linux FIB routes\n"
++       "Origin AS - realm\n"
++       "Peer AS - realm\n")*/
++#endif
++                                                                                                                                                           
+ DEFUN (no_set_metric,
+        no_set_metric_cmd,
+        "no set metric",
+@@ -3731,7 +3891,10 @@
+   route_map_install_match (&route_match_ecommunity_cmd);
+   route_map_install_match (&route_match_metric_cmd);
+   route_map_install_match (&route_match_origin_cmd);
+-
++#ifdef SUPPORT_REALMS
++  route_map_install_set (&route_set_realm_cmd);
++#endif
++  
+   route_map_install_set (&route_set_ip_nexthop_cmd);
+   route_map_install_set (&route_set_local_pref_cmd);
+   route_map_install_set (&route_set_weight_cmd);
+@@ -3805,6 +3968,13 @@
+   install_element (RMAP_NODE, &set_metric_addsub_cmd);
+   install_element (RMAP_NODE, &no_set_metric_cmd);
+   install_element (RMAP_NODE, &no_set_metric_val_cmd);
++#ifdef SUPPORT_REALMS
++  install_element (RMAP_NODE, &set_realm_cmd);
++  //install_element (RMAP_NODE, &set_realm_origin_peer_cmd);
++  install_element (RMAP_NODE, &no_set_realm_cmd);
++  install_element (RMAP_NODE, &no_set_realm_val_cmd);
++  //install_element (RMAP_NODE, &no_set_realm_origin_peer_cmd);
++#endif
+   install_element (RMAP_NODE, &set_aspath_prepend_cmd);
+   install_element (RMAP_NODE, &set_aspath_exclude_cmd);
+   install_element (RMAP_NODE, &no_set_aspath_prepend_cmd);
+--- bgpd/bgp_vty.c.orig	2011-05-10 18:01:25.000000000 +0300
++++ bgpd/bgp_vty.c	2011-05-11 12:45:50.000000000 +0300
+@@ -49,6 +49,11 @@
+ #include "bgpd/bgp_table.h"
+ #include "bgpd/bgp_vty.h"
+ 
++#ifdef SUPPORT_REALMS
++//#define REALM_PEER_AS   0xFFFFA
++//#define REALM_ORIGIN_AS 0xFFFFB
++#endif
++
+ extern struct in_addr router_id_zebra;
+ 
+ /* Utility function to get address family from current node.  */
+@@ -3082,7 +3087,109 @@
+ {
+   return peer_flag_unset_vty (vty, argv[0], PEER_FLAG_STRICT_CAP_MATCH);
+ }
+-
++
++#ifdef SUPPORT_REALMS
++/* neighbor realm.*/
++static int
++peer_realm_set_vty (struct vty *vty, const char *ip_str,
++                     const char *realm_str)
++{
++  struct peer *peer;
++  u_int32_t realmid;
++/*
++  if (strcmp(realm_str, "peer-as") == 0)
++  {
++    realmid = REALM_PEER_AS;
++  }
++  else if (strcmp(realm_str, "origin-as") == 0)
++  {
++    realmid = REALM_ORIGIN_AS;
++  }
++  else
++  {*/
++  if (rtnl_rtrealm_a2n (&realmid, realm_str) < 0)
++    {
++       vty_out (vty, "%% Invalid realm value%s", VTY_NEWLINE);
++       return CMD_WARNING;
++    }
++//  }
++
++  peer = peer_and_group_lookup_vty (vty, ip_str);
++  if (! peer)
++    return CMD_WARNING;
++
++  peer_realm_set (peer, realmid);
++
++  return CMD_SUCCESS;
++}
++
++static int
++peer_realm_unset_vty (struct vty *vty, const char *ip_str)
++{
++  struct peer *peer;
++
++  peer = peer_and_group_lookup_vty (vty, ip_str);
++  if (! peer)
++    return CMD_WARNING;
++    
++  peer_realm_unset (peer);
++  
++  return CMD_SUCCESS;
++}
++
++DEFUN (neighbor_realm,
++       neighbor_realm_cmd,
++       NEIGHBOR_CMD2 "realm (<0-255>|WORD)",
++       NEIGHBOR_STR
++       NEIGHBOR_ADDR_STR2
++       "Set default realm for routes from this neighbor\n"
++       "default realm id\n"
++       "default realm name\n")
++{
++  return peer_realm_set_vty (vty, argv[0], argv[1]);
++}
++/*
++ALIAS (neighbor_realm,
++       neighbor_realm_origin_peer_cmd,
++       NEIGHBOR_CMD2 "realm (origin-as|peer-as)",
++       NEIGHBOR_STR
++       NEIGHBOR_ADDR_STR2
++       "Set default realm for routes from this neighbor\n"
++       "Set default realm to received route origin AS\n"
++       "Set default realm to peer AS")
++*/
++DEFUN (no_neighbor_realm,
++       no_neighbor_realm_cmd,
++       NO_NEIGHBOR_CMD2 "realm",
++       NO_STR
++       NEIGHBOR_STR
++       NEIGHBOR_ADDR_STR2
++       "Set default realm for routes from this neighbor\n")
++{
++  return peer_realm_unset_vty (vty, argv[0]);
++}
++
++ALIAS (no_neighbor_realm,
++       no_neighbor_realm_val_cmd,
++       NO_NEIGHBOR_CMD2 "realm (<0-255>|WORD)",
++       NO_STR
++       NEIGHBOR_STR
++       NEIGHBOR_ADDR_STR2
++       "Set default realm for routes from this neighbor\n"
++       "default realm id\n"
++       "default realm name\n")
++/*
++ALIAS (no_neighbor_realm,
++       no_neighbor_realm_origin_peer_cmd,
++       NO_NEIGHBOR_CMD2 "realm (origin-as|peer-as)",
++       NO_STR
++       NEIGHBOR_STR
++       NEIGHBOR_ADDR_STR2
++       "Set default realm for routes from this neighbor\n"
++       "Set default realm to received route origin AS\n"
++       "Set default realm to peer AS")*/
++#endif
++                                                                                                                                                                                                                                                                          
+ static int
+ peer_timers_set_vty (struct vty *vty, const char *ip_str, 
+                      const char *keep_str, const char *hold_str)
+@@ -7522,6 +7629,24 @@
+ 
+   vty_out (vty, "%s", VTY_NEWLINE);
+ 
++#ifdef SUPPORT_REALMS
++  /* Default realm */
++  if (CHECK_FLAG (p->config, PEER_CONFIG_REALM))
++  {
++    char realmbuf[64];
++/*    if (p->realm == REALM_PEER_AS)
++      vty_out (vty, "  Default realm is peer-as%s",
++          VTY_NEWLINE);
++    else if (p->realm == REALM_ORIGIN_AS)
++      vty_out (vty, "  Default realm is origin-as%s",
++          VTY_NEWLINE);
++    else*/ vty_out (vty, "  Default realm is %s%s",
++       rtnl_rtrealm_n2a (p->realm, realmbuf, sizeof (realmbuf)), VTY_NEWLINE);
++  }
++
++  vty_out (vty, "%s", VTY_NEWLINE);
++#endif
++                                                             
+   /* Address Family Information */
+   for (afi = AFI_IP ; afi < AFI_MAX ; afi++)
+     for (safi = SAFI_UNICAST ; safi < SAFI_MAX ; safi++)
+@@ -9337,6 +9462,15 @@
+   install_element (BGP_NODE, &no_neighbor_weight_cmd);
+   install_element (BGP_NODE, &no_neighbor_weight_val_cmd);
+ 
++#ifdef SUPPORT_REALMS
++  /* "neighbor realm" commands. */
++  install_element (BGP_NODE, &neighbor_realm_cmd);
++//  install_element (BGP_NODE, &neighbor_realm_origin_peer_cmd);
++  install_element (BGP_NODE, &no_neighbor_realm_cmd);
++//  install_element (BGP_NODE, &no_neighbor_realm_origin_peer_cmd);
++  install_element (BGP_NODE, &no_neighbor_realm_val_cmd);
++#endif
++        
+   /* "neighbor override-capability" commands. */
+   install_element (BGP_NODE, &neighbor_override_capability_cmd);
+   install_element (BGP_NODE, &no_neighbor_override_capability_cmd);
+--- bgpd/bgp_zebra.c.orig	2011-05-11 12:46:43.000000000 +0300
++++ bgpd/bgp_zebra.c	2011-05-11 12:47:34.000000000 +0300
+@@ -690,6 +690,14 @@
+ 	  api.distance = distance;
+ 	}
+ 
++#ifdef SUPPORT_REALMS
++      if (info->attr->extra->realmto && info->attr->extra->realmto)
++       {
++         SET_FLAG (api.message, ZAPI_MESSAGE_REALMTO);
++         api.realmto = info->attr->extra->realmto;
++       }
++#endif
++                                      
+       if (BGP_DEBUG(zebra, ZEBRA))
+ 	{
+ 	  char buf[2][INET_ADDRSTRLEN];
+--- lib/command.c.orig	2011-05-11 12:48:31.000000000 +0300
++++ lib/command.c	2011-05-11 12:49:27.000000000 +0300
+@@ -493,8 +493,8 @@
+ 
+   if (cnode == NULL) 
+     {
+-      fprintf (stderr, "Command node %d doesn't exist, please check it\n",
+-	       ntype);
++      fprintf (stderr, "Command node %d (%s) doesn't exist, please check it\n",
++               ntype, cmd->string);
+       exit (1);
+     }
+ 
+--- lib/Makefile.am.orig	2011-05-11 12:51:05.000000000 +0300
++++ lib/Makefile.am	2011-05-11 12:51:42.000000000 +0300
+@@ -12,7 +12,7 @@
+ 	sockunion.c prefix.c thread.c if.c memory.c buffer.c table.c hash.c \
+ 	filter.c routemap.c distribute.c stream.c str.c log.c plist.c \
+ 	zclient.c sockopt.c smux.c md5.c if_rmap.c keychain.c privs.c \
+-	sigevent.c pqueue.c jhash.c memtypes.c workqueue.c
++	sigevent.c pqueue.c jhash.c memtypes.c workqueue.c rt_names.c
+ 
+ BUILT_SOURCES = memtypes.h route_types.h
+ 
+@@ -27,7 +27,7 @@
+ 	str.h stream.h table.h thread.h vector.h version.h vty.h zebra.h \
+ 	plist.h zclient.h sockopt.h smux.h md5.h if_rmap.h keychain.h \
+ 	privs.h sigevent.h pqueue.h jhash.h zassert.h memtypes.h \
+-	workqueue.h route_types.h
++	workqueue.h route_types.h rt_names.h
+ 
+ EXTRA_DIST = regex.c regex-gnu.h memtypes.awk route_types.awk route_types.txt
+ 
+--- lib/rt_names.c.orig	1970-01-01 03:00:00.000000000 +0300
++++ lib/rt_names.c	2011-05-11 12:52:59.000000000 +0300
+@@ -0,0 +1,412 @@
++/*
++ * rt_names.c		rtnetlink names DB.
++ *
++ *		This program is free software; you can redistribute it and/or
++ *		modify it under the terms of the GNU General Public License
++ *		as published by the Free Software Foundation; either version
++ *		2 of the License, or (at your option) any later version.
++ *
++ * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
++ *
++ * Fix:		23 Apr 2005 	Calin Velea <vcalinus@gemenii.ro>
++ *		
++ *		bgpd-specific fixes
++ *		
++ *			- Modified rtnl_tab_initialize() function to free allocated entries
++ *			before re-reading table; rtnl_rtrealm_initialize() to zero
++ *			unused entries at first call
++ *			- Modified rtnl_rtrealm_a2n() to read realm table each time; otherwise
++ *			bgpd restart was necessary to be in sync with /etc/iproute2/rt_realms
++ *		
++ */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <syslog.h>
++#include <fcntl.h>
++#include <string.h>
++#include <sys/time.h>
++
++static void rtnl_tab_initialize(char *file, char **tab, int size)
++{
++	int i;
++	char buf[512];
++	FILE *fp;
++
++	for(i = 1; i < 255; i++)
++	    if(tab[i]) {
++		free(tab[i]);
++		tab[i] = NULL;
++	    }
++		
++
++	fp = fopen(file, "r");
++	if (!fp)
++		return;
++	while (fgets(buf, sizeof(buf), fp)) {
++		char *p = buf;
++		int id;
++		char namebuf[512];
++
++		while (*p == ' ' || *p == '\t')
++			p++;
++		if (*p == '#' || *p == '\n' || *p == 0)
++			continue;
++		if (sscanf(p, "0x%x %s\n", &id, namebuf) != 2 &&
++		    sscanf(p, "0x%x %s #", &id, namebuf) != 2 &&
++		    sscanf(p, "%d %s\n", &id, namebuf) != 2 &&
++		    sscanf(p, "%d %s #", &id, namebuf) != 2) {
++			fprintf(stderr, "Database %s is corrupted at %s\n",
++				file, p);
++			return;
++		}
++
++		if (id<0 || id>size)
++			continue;
++		
++		tab[id] = strdup(namebuf);
++	}
++	fclose(fp);
++}
++
++
++static char * rtnl_rtprot_tab[256] = {
++	"none",
++	"redirect",
++	"kernel",
++	"boot",
++	"static",
++	NULL,
++	NULL,
++	NULL,
++	"gated",
++	"ra",
++	"mrt",
++	"zebra",
++	"bird",
++};
++
++
++
++static int rtnl_rtprot_init;
++
++static void rtnl_rtprot_initialize(void)
++{
++	rtnl_rtprot_init = 1;
++	rtnl_tab_initialize("/etc/iproute2/rt_protos",
++			    rtnl_rtprot_tab, 256);
++}
++
++char * rtnl_rtprot_n2a(int id, char *buf, int len)
++{
++	if (id<0 || id>=256) {
++		snprintf(buf, len, "%d", id);
++		return buf;
++	}
++	if (!rtnl_rtprot_tab[id]) {
++		if (!rtnl_rtprot_init)
++			rtnl_rtprot_initialize();
++	}
++    if (rtnl_rtprot_tab[id])
++		return rtnl_rtprot_tab[id];
++	snprintf(buf, len, "%d", id);
++	return buf;
++}
++
++int rtnl_rtprot_a2n(u_int32_t *id, char *arg)
++{
++	static char *cache = NULL;
++	static unsigned long res;
++	char *end;
++	int i;
++
++	if (cache && strcmp(cache, arg) == 0) {
++		*id = res;
++		return 0;
++	}
++
++	if (!rtnl_rtprot_init)
++		rtnl_rtprot_initialize();
++
++	for (i=0; i<256; i++) {
++		if (rtnl_rtprot_tab[i] &&
++		    strcmp(rtnl_rtprot_tab[i], arg) == 0) {
++			cache = rtnl_rtprot_tab[i];
++			res = i;
++			*id = res;
++			return 0;
++		}
++	}
++
++	res = strtoul(arg, &end, 0);
++	if (!end || end == arg || *end || res > 255)
++		return -1;
++	*id = res;
++	return 0;
++}
++
++
++
++static char * rtnl_rtscope_tab[256] = {
++	"global",
++};
++
++static int rtnl_rtscope_init;
++
++static void rtnl_rtscope_initialize(void)
++{
++	rtnl_rtscope_init = 1;
++	rtnl_rtscope_tab[255] = "nowhere";
++	rtnl_rtscope_tab[254] = "host";
++	rtnl_rtscope_tab[253] = "link";
++	rtnl_rtscope_tab[200] = "site";
++	rtnl_tab_initialize("/etc/iproute2/rt_scopes",
++			    rtnl_rtscope_tab, 256);
++}
++
++char * rtnl_rtscope_n2a(int id, char *buf, int len)
++{
++	if (id<0 || id>=256) {
++		snprintf(buf, len, "%d", id);
++		return buf;
++	}
++	if (!rtnl_rtscope_tab[id]) {
++		if (!rtnl_rtscope_init)
++			rtnl_rtscope_initialize();
++	}
++	if (rtnl_rtscope_tab[id])
++		return rtnl_rtscope_tab[id];
++	snprintf(buf, len, "%d", id);
++	return buf;
++}
++
++int rtnl_rtscope_a2n(u_int32_t *id, char *arg)
++{
++	static char *cache = NULL;
++	static unsigned long res;
++	char *end;
++	int i;
++
++	if (cache && strcmp(cache, arg) == 0) {
++		*id = res;
++		return 0;
++	}
++
++	if (!rtnl_rtscope_init)
++		rtnl_rtscope_initialize();
++
++	for (i=0; i<256; i++) {
++		if (rtnl_rtscope_tab[i] &&
++		    strcmp(rtnl_rtscope_tab[i], arg) == 0) {
++			cache = rtnl_rtscope_tab[i];
++			res = i;
++			*id = res;
++			return 0;
++		}
++	}
++
++	res = strtoul(arg, &end, 0);
++	if (!end || end == arg || *end || res > 255)
++		return -1;
++	*id = res;
++	return 0;
++}
++
++
++
++static char * rtnl_rtrealm_tab[256] = {
++	"unknown",
++};
++
++static int rtnl_rtrealm_init = 0;
++
++static void rtnl_rtrealm_initialize(void)
++{
++	int i;
++	
++	if(!rtnl_rtrealm_init)
++	    for(i = 1; i < 255; i++)
++		rtnl_rtrealm_tab[i] = NULL;	
++	
++	rtnl_rtrealm_init = 1;
++	rtnl_tab_initialize("/etc/iproute2/rt_realms",
++			    rtnl_rtrealm_tab, 256);
++}
++
++char * rtnl_rtrealm_n2a(int id, char *buf, int len)
++{
++	if (id<0 || id>=256) {
++		snprintf(buf, len, "%d", id);
++		return buf;
++	}
++	if (!rtnl_rtrealm_tab[id]) {
++		if (!rtnl_rtrealm_init)
++			rtnl_rtrealm_initialize();
++	}
++	if (rtnl_rtrealm_tab[id])
++		return rtnl_rtrealm_tab[id];
++	snprintf(buf, len, "%d", id);
++	return buf;
++}
++
++
++int rtnl_rtrealm_a2n(u_int32_t *id, char *arg)
++{
++	static char *cache = NULL;
++	static unsigned long cache_res;
++	unsigned long res;
++	char *end;
++	int i;
++
++	if (cache && strcmp(cache, arg) == 0) {
++		*id = cache_res;
++		return 0;
++	}
++	rtnl_rtrealm_initialize();
++
++	for (i=0; i<256; i++) {
++		if (rtnl_rtrealm_tab[i] &&
++		    strcmp(rtnl_rtrealm_tab[i], arg) == 0) {
++			cache = rtnl_rtrealm_tab[i];
++			cache_res = i;
++			*id = cache_res;
++			return 0;
++		}
++	}
++
++	res = strtoul(arg, &end, 0);
++	if (!end || end == arg || *end || res > 255)
++		return -1;
++	*id = res;
++	return 0;
++}
++
++
++
++static char * rtnl_rttable_tab[256] = {
++	"unspec",
++};
++
++static int rtnl_rttable_init;
++
++static void rtnl_rttable_initialize(void)
++{
++	rtnl_rttable_init = 1;
++	rtnl_rttable_tab[255] = "local";
++	rtnl_rttable_tab[254] = "main";
++	rtnl_tab_initialize("/etc/iproute2/rt_tables",
++			    rtnl_rttable_tab, 256);
++}
++
++char * rtnl_rttable_n2a(int id, char *buf, int len)
++{
++	if (id<0 || id>=256) {
++		snprintf(buf, len, "%d", id);
++		return buf;
++	}
++	if (!rtnl_rttable_tab[id]) {
++		if (!rtnl_rttable_init)
++			rtnl_rttable_initialize();
++	}
++	if (rtnl_rttable_tab[id])
++		return rtnl_rttable_tab[id];
++	snprintf(buf, len, "%d", id);
++	return buf;
++}
++
++int rtnl_rttable_a2n(u_int32_t *id, char *arg)
++{
++	static char *cache = NULL;
++	static unsigned long res;
++	char *end;
++	int i;
++
++	if (cache && strcmp(cache, arg) == 0) {
++		*id = res;
++		return 0;
++	}
++
++	if (!rtnl_rttable_init)
++		rtnl_rttable_initialize();
++
++	for (i=0; i<256; i++) {
++		if (rtnl_rttable_tab[i] &&
++		    strcmp(rtnl_rttable_tab[i], arg) == 0) {
++			cache = rtnl_rttable_tab[i];
++			res = i;
++			*id = res;
++			return 0;
++		}
++	}
++
++	i = strtoul(arg, &end, 0);
++	if (!end || end == arg || *end || i > 255)
++		return -1;
++	*id = i;
++	return 0;
++}
++
++
++static char * rtnl_rtdsfield_tab[256] = {
++	"0",
++};
++
++static int rtnl_rtdsfield_init;
++
++static void rtnl_rtdsfield_initialize(void)
++{
++	rtnl_rtdsfield_init = 1;
++	rtnl_tab_initialize("/etc/iproute2/rt_dsfield",
++			    rtnl_rtdsfield_tab, 256);
++}
++
++char * rtnl_dsfield_n2a(int id, char *buf, int len)
++{
++	if (id<0 || id>=256) {
++		snprintf(buf, len, "%d", id);
++		return buf;
++	}
++	if (!rtnl_rtdsfield_tab[id]) {
++		if (!rtnl_rtdsfield_init)
++			rtnl_rtdsfield_initialize();
++	}
++	if (rtnl_rtdsfield_tab[id])
++		return rtnl_rtdsfield_tab[id];
++	snprintf(buf, len, "0x%02x", id);
++	return buf;
++}
++
++
++int rtnl_dsfield_a2n(u_int32_t *id, char *arg)
++{
++	static char *cache = NULL;
++	static unsigned long res;
++	char *end;
++	int i;
++
++	if (cache && strcmp(cache, arg) == 0) {
++		*id = res;
++		return 0;
++	}
++
++	if (!rtnl_rtdsfield_init)
++	    rtnl_rtdsfield_initialize();
++
++	for (i=0; i<256; i++) {
++		if (rtnl_rtdsfield_tab[i] &&
++		    strcmp(rtnl_rtdsfield_tab[i], arg) == 0) {
++			cache = rtnl_rtdsfield_tab[i];
++			res = i;
++			*id = res;
++			return 0;
++		}
++	}
++
++	res = strtoul(arg, &end, 16);
++	if (!end || end == arg || *end || res > 255)
++		return -1;
++	*id = res;
++	return 0;
++}
++
+--- lib/rt_names.h.orig	2011-05-11 12:53:52.000000000 +0300
++++ lib/rt_names.h	2011-05-11 12:54:13.000000000 +0300
+@@ -0,0 +1,28 @@
++#ifndef RT_NAMES_H_
++#define RT_NAMES_H_ 1
++
++const char* rtnl_rtprot_n2a(int id, char *buf, int len);
++const char* rtnl_rtscope_n2a(int id, char *buf, int len);
++const char* rtnl_rttable_n2a(int id, char *buf, int len);
++const char* rtnl_rtrealm_n2a(int id, char *buf, int len);
++const char* rtnl_dsfield_n2a(int id, char *buf, int len);
++int rtnl_rtprot_a2n(int *id, char *arg);
++int rtnl_rtscope_a2n(int *id, char *arg);
++int rtnl_rttable_a2n(int *id, char *arg);
++int rtnl_rtrealm_a2n(__u32 *id, char *arg);
++int rtnl_dsfield_a2n(__u32 *id, char *arg);
++
++const char *inet_proto_n2a(int proto, char *buf, int len);
++int inet_proto_a2n(char *buf);
++
++
++const char * ll_type_n2a(int type, char *buf, int len);
++
++const char *ll_addr_n2a(unsigned char *addr, int alen, int type, char *buf, int blen);
++int ll_addr_a2n(unsigned char *lladdr, int len, char *arg);
++
++const char * ll_proto_n2a(unsigned short id, char *buf, int len);
++int ll_proto_a2n(unsigned short *id, char *buf);
++
++
++#endif
+--- lib/zclient.c.orig	2011-05-11 14:54:17.000000000 +0300
++++ lib/zclient.c	2011-05-11 14:55:48.000000000 +0300
+@@ -471,6 +471,11 @@
+   if (CHECK_FLAG (api->message, ZAPI_MESSAGE_METRIC))
+     stream_putl (s, api->metric);
+ 
++#ifdef SUPPORT_REALMS
++  if (CHECK_FLAG (api->message, ZAPI_MESSAGE_REALMTO))
++    stream_putw (s, api->realmto);
++#endif
++      
+   /* Put length at the first point of the stream. */
+   stream_putw_at (s, 0, stream_get_endp (s));
+ 
+--- lib/zclient.h.orig	2011-05-11 14:56:18.000000000 +0300
++++ lib/zclient.h	2011-05-11 14:57:20.000000000 +0300
+@@ -87,6 +87,10 @@
+ #define ZAPI_MESSAGE_DISTANCE 0x04
+ #define ZAPI_MESSAGE_METRIC   0x08
+ 
++#ifdef SUPPORT_REALMS
++#define ZAPI_MESSAGE_REALMTO   0x10
++#endif
++
+ /* Zserv protocol message header */
+ struct zserv_header
+ {
+@@ -117,6 +121,10 @@
+   u_char distance;
+ 
+   u_int32_t metric;
++#ifdef SUPPORT_REALMS
++  u_int16_t realmto;
++#endif
++    
+ };
+ 
+ /* Prototypes of zebra client service functions. */
+--- lib/zebra.h.orig	2011-05-11 14:57:57.000000000 +0300
++++ lib/zebra.h	2011-05-11 14:58:32.000000000 +0300
+@@ -241,6 +241,10 @@
+ #include <libutil.h>
+ #endif /* HAVE_LIBUTIL_H */
+ 
++#ifdef SUPPORT_REALMS
++#include <rt_names.h>
++#endif
++
+ #ifdef HAVE_GLIBC_BACKTRACE
+ #include <execinfo.h>
+ #endif /* HAVE_GLIBC_BACKTRACE */
+--- zebra/connected.c.orig	2011-05-11 14:59:09.000000000 +0300
++++ zebra/connected.c	2011-05-11 15:00:55.000000000 +0300
+@@ -187,9 +187,13 @@
+      address. */
+   if (prefix_ipv4_any (&p))
+     return;
+-
++#ifndef SUPPORT_REALMS
++  rib_add_ipv4 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
++        RT_TABLE_MAIN, ifp->metric, 0);
++#else
+   rib_add_ipv4 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, NULL, ifp->ifindex,
+-	RT_TABLE_MAIN, ifp->metric, 0);
++        RT_TABLE_MAIN, ifp->metric, 0, 0);
++#endif
+ 
+   rib_update ();
+ }
+--- zebra/rib.h.orig	2011-05-11 15:01:32.000000000 +0300
++++ zebra/rib.h	2011-05-11 15:05:30.000000000 +0300
+@@ -81,6 +81,10 @@
+   u_char nexthop_num;
+   u_char nexthop_active_num;
+   u_char nexthop_fib_num;
++#ifdef SUPPORT_REALMS
++  /* Realm information */
++  u_int16_t realmto;
++#endif
+ };
+ 
+ /* meta-queue structure:
+@@ -126,6 +130,11 @@
+  see ZEBRA_FLAG_REJECT
+      ZEBRA_FLAG_BLACKHOLE
+  */
++
++#ifdef SUPPORT_REALMS
++  u_int16_t realmto;
++#endif
++   
+ };
+ 
+ #ifdef HAVE_IPV6
+@@ -249,7 +258,11 @@
+ extern int rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
+ 			 struct in_addr *gate, struct in_addr *src,
+ 			 unsigned int ifindex, u_int32_t vrf_id,
++#ifndef SUPPORT_REALMS
+ 			 u_int32_t, u_char);
++#else
++                         u_int32_t, u_char, u_int16_t);
++#endif
+ 
+ extern int rib_add_ipv4_multipath (struct prefix_ipv4 *, struct rib *);
+ 
+@@ -269,8 +282,12 @@
+ 
+ extern int
+ static_add_ipv4 (struct prefix *p, struct in_addr *gate, const char *ifname,
++#ifndef SUPPORT_REALMS
+        u_char flags, u_char distance, u_int32_t vrf_id);
+-
++#else
++       u_char flags, u_char distance, u_int32_t vrf_id, u_int16_t realmto);
++#endif
++       
+ extern int
+ static_delete_ipv4 (struct prefix *p, struct in_addr *gate, const char *ifname,
+ 		    u_char distance, u_int32_t vrf_id);
+--- zebra/rt_netlink.c.orig	2011-05-11 15:06:07.000000000 +0300
++++ zebra/rt_netlink.c	2011-05-11 15:13:29.000000000 +0300
+@@ -658,6 +658,11 @@
+   void *gate;
+   void *src;
+ 
++#ifdef SUPPORT_REALMS
++  u_int32_t rta_flow;
++  u_int16_t realmto = 0;
++#endif
++    
+   rtm = NLMSG_DATA (h);
+ 
+   if (h->nlmsg_type != RTM_NEWROUTE)
+@@ -723,7 +728,18 @@
+       memcpy (&p.prefix, dest, 4);
+       p.prefixlen = rtm->rtm_dst_len;
+ 
++#ifndef SUPPORT_REALMS
+       rib_add_ipv4 (ZEBRA_ROUTE_KERNEL, flags, &p, gate, src, index, table, metric, 0);
++#else
++      if (tb[RTA_FLOW])
++       {
++         rta_flow = *(u_int32_t *) RTA_DATA (tb[RTA_FLOW]);
++         realmto = rta_flow & 0xFFFF;
++       }
++//       printf ("1. rt_netlink: add RIB realmto %u\n", realmto);
++       rib_add_ipv4 (ZEBRA_ROUTE_KERNEL, flags, &p, gate, src, index, table, metric, 0,
++                    realmto);
++#endif
+     }
+ #ifdef HAVE_IPV6
+   if (rtm->rtm_family == AF_INET6)
+@@ -861,7 +877,20 @@
+         }
+ 
+       if (h->nlmsg_type == RTM_NEWROUTE)
++#ifndef SUPPORT_REALMS
+         rib_add_ipv4 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, src, index, table, 0, 0);
++#else
++       {
++         if (tb[RTA_FLOW])
++           {
++             u_int32_t rta_flow = *(u_int32_t *) RTA_DATA (tb[RTA_FLOW]);
++             u_int16_t realmto = rta_flow & 0xFFFF;
++//             printf ("2. rt_netlink: add RIB realmto %u\n", realmto);
++             rib_add_ipv4 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, src, index, table, 0, 0,
++                         realmto);
++           }
++       }
++#endif
+       else
+         rib_delete_ipv4 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, index, table);
+     }
+@@ -1219,7 +1248,12 @@
+ /* Routing table change via netlink interface. */
+ static int
+ netlink_route (int cmd, int family, void *dest, int length, void *gate,
++#ifdef SUPPORT_REALMS
++              int index, int zebra_flags, int table,
++              u_int16_t realmto, u_int16_t realmfrom)
++#else
+                int index, int zebra_flags, int table)
++#endif
+ {
+   int ret;
+   int bytelen;
+@@ -1277,7 +1311,18 @@
+       if (index > 0)
+         addattr32 (&req.n, sizeof req, RTA_OIF, index);
+     }
++#ifdef SUPPORT_REALMS
++  if (realmto || realmfrom)
++    {
++//      printf ("3. rt_netlink: addattr32 realmto %u, realmfrom &u", realmto, realmfrom);
++      u_int32_t rta_flow;
++      rta_flow = ((u_int32_t) realmfrom) << 16;
++      rta_flow |= (u_int32_t) realmto;
+ 
++      addattr32 (&req.n, sizeof req, RTA_FLOW, rta_flow);
++    }
++#endif
++                                  
+   /* Destination netlink address. */
+   memset (&snl, 0, sizeof snl);
+   snl.nl_family = AF_NETLINK;
+@@ -1353,7 +1398,13 @@
+           SET_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB);
+       goto skip;
+     }
+-
++#ifdef SUPPORT_REALMS
++  if (rib->realmto) {
++//      printf ("4. rt_netlink: addattr32 Realmto %u\n", rib->realmto);
++      addattr32 (&req.n, sizeof req, RTA_FLOW, rib->realmto);
++    }
++#endif
++            
+   /* Multipath case. */
+   if (rib->nexthop_active_num == 1 || MULTIPATH_NUM == 1)
+     {
+@@ -1748,10 +1799,14 @@
+                         unsigned int index, int flags, int table)
+ {
+   return netlink_route (RTM_DELROUTE, AF_INET6, &dest->prefix,
++#ifndef SUPPORT_REALMS
+                         dest->prefixlen, gate, index, flags, table);
++#else
++                        dest->prefixlen, gate, index, flags, table, 0, 0);
++#endif
+ }
+ #endif /* HAVE_IPV6 */
+-
++
+ /* Interface address modification. */
+ static int
+ netlink_address (int cmd, int family, struct interface *ifp,
+--- zebra/zebra_rib.c.orig	2011-05-11 16:20:26.000000000 +0300
++++ zebra/zebra_rib.c	2011-05-11 16:23:17.000000000 +0300
+@@ -1492,7 +1492,11 @@
+ rib_add_ipv4 (int type, int flags, struct prefix_ipv4 *p, 
+ 	      struct in_addr *gate, struct in_addr *src,
+ 	      unsigned int ifindex, u_int32_t vrf_id,
++#ifndef SUPPORT_REALMS
+ 	      u_int32_t metric, u_char distance)
++#else
++              u_int32_t metric, u_char distance, u_int16_t realmto)
++#endif
+ {
+   struct rib *rib;
+   struct rib *same = NULL;
+@@ -1576,7 +1580,11 @@
+   if (IS_ZEBRA_DEBUG_RIB)
+     zlog_debug ("%s: calling rib_addnode (%p, %p)", __func__, rn, rib);
+   rib_addnode (rn, rib);
+-  
++
++#ifdef SUPPORT_REALMS
++  rib->realmto = realmto;
++#endif
++    
+   /* Free implicit route.*/
+   if (same)
+   {
+@@ -1996,7 +2004,10 @@
+       rib->distance = si->distance;
+       rib->metric = 0;
+       rib->nexthop_num = 0;
+-
++#ifdef SUPPORT_REALMS
++      rib->realmto = si->realmto;
++#endif
++      
+       switch (si->type)
+         {
+           case STATIC_IPV4_GATEWAY:
+@@ -2099,7 +2110,11 @@
+ /* Add static route into static route configuration. */
+ int
+ static_add_ipv4 (struct prefix *p, struct in_addr *gate, const char *ifname,
++#ifndef SUPPORT_REALMS
+ 		 u_char flags, u_char distance, u_int32_t vrf_id)
++#else
++                 u_char flags, u_char distance, u_int32_t vrf_id, u_int16_t realmto)
++#endif
+ {
+   u_char type = 0;
+   struct route_node *rn;
+@@ -2153,6 +2168,10 @@
+   si->distance = distance;
+   si->flags = flags;
+ 
++#ifdef SUPPORT_REALMS
++  si->realmto = realmto;
++#endif
++  
+   if (gate)
+     si->gate.ipv4 = *gate;
+   if (ifname)
+--- zebra/zserv.c.orig	2011-05-11 16:52:06.000000000 +0300
++++ zebra/zserv.c	2011-05-11 16:52:53.000000000 +0300
+@@ -803,6 +803,13 @@
+     
+   /* Table */
+   rib->table=zebrad.rtm_table_default;
++#ifdef SUPPORT_REALMS
++  if (CHECK_FLAG (message, ZAPI_MESSAGE_REALMTO))
++    rib->realmto = stream_getw (s);
++  else
++    rib->realmto = 0;
++//  printf ("zserv.c: rib_add_ipv4_multipath realm %u\n", rib->realmto);
++#endif
+   rib_add_ipv4_multipath (&p, rib);
+   return 0;
+ }
+--- configure.ac.orig	2011-05-11 16:53:45.000000000 +0300
++++ configure.ac	2011-05-11 16:54:45.000000000 +0300
+@@ -555,6 +555,17 @@
+ 
+ AC_SYS_LARGEFILE
+ 
++dnl ------------------------
++dnl Integrated REALMS option
++dnl ------------------------
++if test "${enable_realms}" = "yes"; then
++    if test "${opsys}" != "gnu-linux"; then
++       echo "Sorry, only Linux has REALMS support"
++       exit 1
++    fi
++    AC_DEFINE(SUPPORT_REALMS,, Realms support)
++fi
++                          
+ dnl ---------------------
+ dnl Integrated VTY option
+ dnl ---------------------
+--- zebra/zebra_vty.c.orig	2011-05-11 17:33:07.000000000 +0300
++++ zebra/zebra_vty.c	2011-05-11 18:26:06.000000000 +0300
+@@ -34,7 +34,11 @@
+ static int
+ zebra_static_ipv4 (struct vty *vty, int add_cmd, const char *dest_str,
+ 		   const char *mask_str, const char *gate_str,
++#ifndef SUPPORT_REALMS
+ 		   const char *flag_str, const char *distance_str)
++#else
++                   const char *flag_str, const char *distance_str, const char *realm_str)
++#endif
+ {
+   int ret;
+   u_char distance;
+@@ -43,7 +47,23 @@
+   struct in_addr mask;
+   const char *ifname;
+   u_char flag = 0;
+-  
++
++#ifdef SUPPORT_REALMS
++  u_int16_t realmto = 0;
++  u_int32_t realmid;
++  int res;
++
++  if (realm_str != NULL) {
++      res = rtnl_rtrealm_a2n (&realmid, realm_str);
++      if (res < 0) {
++        vty_out (vty, "%%Realm '%s' not found in rt_realms has invalid value%s",
++            realm_str, VTY_NEWLINE);
++      return CMD_ERR_INCOMPLETE;
++    }
++    realmto = (u_int16_t)realmid;
++  }
++#endif
++                                                          
+   ret = str2prefix (dest_str, &p);
+   if (ret <= 0)
+     {
+@@ -81,7 +101,11 @@
+           return CMD_WARNING;
+         }
+       if (add_cmd)
++#ifndef SUPPORT_REALMS
+         static_add_ipv4 (&p, NULL, NULL, ZEBRA_FLAG_BLACKHOLE, distance, 0);
++#else
++        static_add_ipv4 (&p, NULL, NULL, ZEBRA_FLAG_BLACKHOLE, distance, 0, realmto);
++#endif
+       else
+         static_delete_ipv4 (&p, NULL, NULL, distance, 0);
+       return CMD_SUCCESS;
+@@ -107,7 +131,11 @@
+   if (gate_str == NULL)
+   {
+     if (add_cmd)
++#ifndef SUPPORT_REALMS
+       static_add_ipv4 (&p, NULL, NULL, flag, distance, 0);
++#else
++      static_add_ipv4 (&p, NULL, NULL, flag, distance, 0, realmto);
++#endif
+     else
+       static_delete_ipv4 (&p, NULL, NULL, distance, 0);
+ 
+@@ -123,7 +151,11 @@
+     ifname = gate_str;
+ 
+   if (add_cmd)
++#ifndef SUPPORT_REALMS
+     static_add_ipv4 (&p, ifname ? NULL : &gate, ifname, flag, distance, 0);
++#else
++    static_add_ipv4 (&p, ifname ? NULL : &gate, ifname, flag, distance, 0, realmto);
++#endif
+   else
+     static_delete_ipv4 (&p, ifname ? NULL : &gate, ifname, distance, 0);
+ 
+@@ -141,7 +173,11 @@
+        "IP gateway interface name\n"
+        "Null interface\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], NULL, NULL);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], NULL, NULL, NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_flags,
+@@ -155,7 +191,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], argv[2], NULL);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], argv[2], NULL, NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_flags2,
+@@ -167,7 +207,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], NULL, NULL, argv[1], NULL);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, NULL, argv[1], NULL, NULL);
++#endif
+ }
+ 
+ /* Mask as A.B.C.D format.  */
+@@ -182,7 +226,11 @@
+        "IP gateway interface name\n"
+        "Null interface\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], NULL, NULL);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], NULL, NULL, NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_mask_flags,
+@@ -197,7 +245,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], argv[3], NULL);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], argv[3], NULL, NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_mask_flags2,
+@@ -210,7 +262,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], argv[1], NULL, argv[2], NULL);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], NULL, argv[2], NULL, NULL);
++#endif
+ }
+ 
+ /* Distance option value.  */
+@@ -225,7 +281,11 @@
+        "Null interface\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], NULL, argv[2]);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], NULL, argv[2], NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_flags_distance,
+@@ -240,7 +300,11 @@
+        "Silently discard pkts when matched\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], argv[2], argv[3]);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], argv[2], argv[3], NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_flags_distance2,
+@@ -253,7 +317,11 @@
+        "Silently discard pkts when matched\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], NULL, NULL, argv[1], argv[2]);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, NULL, argv[1], argv[2], NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_mask_distance,
+@@ -268,7 +336,11 @@
+        "Null interface\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], NULL, argv[3]);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], NULL, argv[3], NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_mask_flags_distance,
+@@ -284,7 +356,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], argv[3], argv[4]);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], argv[3], argv[4], NULL);
++#endif
+ }
+ 
+ DEFUN (ip_route_mask_flags_distance2,
+@@ -298,7 +374,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 1, argv[0], argv[1], NULL, argv[2], argv[3]);
++#else
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], NULL, argv[2], argv[3], NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route, 
+@@ -312,7 +392,11 @@
+        "IP gateway interface name\n"
+        "Null interface\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], NULL, argv[1], NULL, NULL);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], NULL, argv[1], NULL, NULL, NULL);
++#endif
+ }
+ 
+ ALIAS (no_ip_route,
+@@ -337,7 +421,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], NULL, NULL, NULL, NULL);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], NULL, NULL, NULL, NULL, NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_mask,
+@@ -352,7 +440,11 @@
+        "IP gateway interface name\n"
+        "Null interface\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], argv[1], argv[2], NULL, NULL);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], argv[1], argv[2], NULL, NULL, NULL);
++#endif
+ }
+ 
+ ALIAS (no_ip_route_mask,
+@@ -379,7 +471,11 @@
+        "Emit an ICMP unreachable when matched\n"
+        "Silently discard pkts when matched\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], argv[1], NULL, NULL, NULL);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], argv[1], NULL, NULL, NULL, NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_distance,
+@@ -394,7 +490,11 @@
+        "Null interface\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], NULL, argv[1], NULL, argv[2]);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], NULL, argv[1], NULL, argv[2], NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_flags_distance,
+@@ -410,7 +510,11 @@
+        "Silently discard pkts when matched\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], NULL, argv[1], argv[2], argv[3]);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], NULL, argv[1], argv[2], argv[3], NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_flags_distance2,
+@@ -424,7 +528,11 @@
+        "Silently discard pkts when matched\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], NULL, NULL, argv[1], argv[2]);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], NULL, NULL, argv[1], argv[2], NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_mask_distance,
+@@ -440,7 +548,11 @@
+        "Null interface\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], argv[1], argv[2], NULL, argv[3]);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], argv[1], argv[2], NULL, argv[3], NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_mask_flags_distance,
+@@ -457,7 +569,11 @@
+        "Silently discard pkts when matched\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], argv[1], argv[2], argv[3], argv[4]);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], argv[1], argv[2], argv[3], argv[4], NULL);
++#endif
+ }
+ 
+ DEFUN (no_ip_route_mask_flags_distance2,
+@@ -472,8 +588,69 @@
+        "Silently discard pkts when matched\n"
+        "Distance value for this route\n")
+ {
++#ifndef SUPPORT_REALMS
+   return zebra_static_ipv4 (vty, 0, argv[0], argv[1], NULL, argv[2], argv[3]);
++#else
++  return zebra_static_ipv4 (vty, 0, argv[0], argv[1], NULL, argv[2], argv[3], NULL);
++#endif
++}
++
++#ifdef SUPPORT_REALMS
++DEFUN (ip_route_realm,
++       ip_route_realm_cmd,
++       "ip route A.B.C.D/M (A.B.C.D|INTERFACE) realm (<1-255>|WORD)",
++       IP_STR
++       "Establish static routes\n"
++       "IP destination prefix (e.g. 10.0.0.0/8)\n"
++       "IP gateway address\n"
++       "IP gateway interface name\n"
++       "Destination realm value or name\n")
++{
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], NULL, NULL, argv[2]);
++}
++
++DEFUN (ip_route_mask_realm,
++       ip_route_mask_realm_cmd,
++       "ip route A.B.C.D A.B.C.D (A.B.C.D|INTERFACE) realm (<1-255>|WORD)",
++       IP_STR
++       "Establish static routes\n"
++       "IP destination prefix\n"
++       "IP destination prefix mask\n"
++       "IP gateway address\n"
++       "IP gateway interface name\n"
++       "Destination realm value or name\n")
++{
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], NULL, NULL, argv[3]);
++}
++
++DEFUN (ip_route_pref_realm,
++       ip_route_pref_realm_cmd,
++       "ip route A.B.C.D/M (A.B.C.D|INTERFACE) <1-255> realm (<1-255>|WORD)",
++       IP_STR
++       "Establish static routes\n"
++       "IP destination prefix (e.g. 10.0.0.0/8)\n"
++       "IP gateway address\n"
++       "IP gateway interface name\n"
++       "Distance value for this route\n"
++       "Destination realm value or name\n")
++{
++  return zebra_static_ipv4 (vty, 1, argv[0], NULL, argv[1], NULL, argv[2], argv[3]);
++}
++
++DEFUN (ip_route_mask_pref_realm,
++       ip_route_mask_pref_realm_cmd,
++       "ip route A.B.C.D A.B.C.D (A.B.C.D|INTERFACE) <1-255> realm (<1-255>|WORD)",
++       IP_STR
++       "Establish static routes\n"
++       "IP destination prefix\n"
++       "IP destination prefix mask\n"
++       "IP gateway address\n"
++       "IP gateway interface name\n"
++       "Distance value for this route\n")
++{
++  return zebra_static_ipv4 (vty, 1, argv[0], argv[1], argv[2], NULL, argv[3], argv[4]);
+ }
++#endif /* SUPPORT_REALMS */
+ 
+ char *proto_rm[AFI_MAX][ZEBRA_ROUTE_MAX+1];	/* "any" == ZEBRA_ROUTE_MAX */
+ 
+@@ -546,6 +723,10 @@
+ 	vty_out (vty, ", best");
+       if (rib->refcnt)
+ 	vty_out (vty, ", refcnt %ld", rib->refcnt);
++#ifdef SUPPORT_REALMS
++      if (rib->realmto)
++       vty_out (vty, ", realm %5u", rib->realmto);
++#endif
+       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_BLACKHOLE))
+        vty_out (vty, ", blackhole");
+       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_REJECT))
+@@ -612,6 +793,13 @@
+ 	  if (! CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_ACTIVE))
+ 	    vty_out (vty, " inactive");
+ 
++#ifdef SUPPORT_REALMS
++         if (rib->realmto) {
++           char realmbuf[50];
++           vty_out (vty, " realm %5s", rtnl_rtrealm_n2a (rib->realmto, realmbuf, sizeof (realmbuf)));
++         }
++#endif
++                                        
+ 	  if (CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_RECURSIVE))
+ 	    {
+ 	      vty_out (vty, " (recursive");
+@@ -1186,6 +1374,13 @@
+         if (si->distance != ZEBRA_STATIC_DISTANCE_DEFAULT)
+           vty_out (vty, " %d", si->distance);
+ 
++#ifdef SUPPORT_REALMS
++       if (si->realmto) {
++         char realmbuf[11];
++         vty_out (vty, " realm %s", rtnl_rtrealm_n2a (si->realmto, realmbuf, sizeof realmbuf));
++       }
++#endif
++                                
+         vty_out (vty, "%s", VTY_NEWLINE);
+ 
+         write = 1;
+@@ -2110,6 +2305,12 @@
+   install_element (CONFIG_NODE, &no_ip_route_mask_cmd);
+   install_element (CONFIG_NODE, &no_ip_route_mask_flags_cmd);
+   install_element (CONFIG_NODE, &no_ip_route_mask_flags2_cmd);
++#ifdef SUPPORT_REALMS
++  install_element (CONFIG_NODE, &ip_route_realm_cmd);
++  install_element (CONFIG_NODE, &ip_route_mask_realm_cmd);
++  install_element (CONFIG_NODE, &ip_route_pref_realm_cmd);
++  install_element (CONFIG_NODE, &ip_route_mask_pref_realm_cmd);
++#endif
+   install_element (CONFIG_NODE, &ip_route_distance_cmd);
+   install_element (CONFIG_NODE, &ip_route_flags_distance_cmd);
+   install_element (CONFIG_NODE, &ip_route_flags_distance2_cmd);
