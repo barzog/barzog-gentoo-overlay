@@ -8,7 +8,7 @@ CLASSLESS_BGP_PATCH=ht-20040304-classless-bgp.patch
 
 BACKPORTS=2
 
-inherit eutils multilib autotools pam
+inherit eutils multilib autotools pam linux-info
 
 DESCRIPTION="A free routing daemon replacing Zebra supporting RIP, OSPF and BGP."
 HOMEPAGE="http://quagga.net/"
@@ -34,6 +34,7 @@ DEPEND="${COMMON_DEPEND}
 	>=sys-devel/libtool-2.2.4"
 RDEPEND="${COMMON_DEPEND}
 	sys-apps/iproute2"
+CONFIG_CHECK="realms? (~CONFIG_IP_ADVANCED_ROUTER ~CONFIG_IP_MULTIPLE_TABLES)"
 
 pkg_setup() {
 	enewgroup quagga
