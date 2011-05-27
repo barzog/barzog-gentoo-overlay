@@ -25,7 +25,8 @@ RDEPEND="net-firewall/iptables
 	>=net-libs/libnetfilter_log-1.0
 	mysql? ( virtual/mysql )
 	postgres? ( dev-db/postgresql-base )
-	pcap? ( net-libs/libpcap )"
+	pcap? ( net-libs/libpcap )
+	dev-db/libdbi"
 
 DEPEND="${RDEPEND}
 	sys-devel/autoconf:2.5
@@ -39,13 +40,17 @@ pkg_setup() {
 	enewuser ulogd -1 -1 /var/log/ulogd ulogd
 }
 
-src_compile() {
+src_unpack() {
+	git_src_unpack
+	cd ${S}
 	eautoreconf
+}
+
+src_compile() {
         econf \
                 $(use_with mysql) \
                 $(use_with postgres pgsql) \
                 $(use_with pcap pcap /usr) \
-                --without-sqlite3 #$(use_with sqlite sqlite3)
 
         emake || die "emake failed"
 
