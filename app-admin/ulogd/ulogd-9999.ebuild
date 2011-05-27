@@ -21,7 +21,7 @@ IUSE="doc mysql postgres pcap"
 
 RDEPEND="net-firewall/iptables
 	>=net-libs/libnfnetlink-0.0.39
-	>=net-libs/libnetfilter_conntrack-0.0.95
+	>=net-libs/libnetfilter_conntrack-0.9.1
 	>=net-libs/libnetfilter_log-1.0
 	mysql? ( virtual/mysql )
 	postgres? ( dev-db/postgresql-base )
