@@ -4,8 +4,7 @@
 
 EAPI="2"
 
-inherit subversion cmake-utils
-
+inherit cmake-utils subversion
 DESCRIPTION="XBT BitTorrent tracker"
 HOMEPAGE="http://xbtt.sourceforge.net/tracker/"
 ESVN_REPO_URI="https://xbtt.svn.sourceforge.net/svnroot/xbtt/trunk/xbt"
