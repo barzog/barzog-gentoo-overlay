@@ -2,52 +2,44 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="1"
+EAPI="2"
 
-ESVN_REPO_URI="https://xbtt.svn.sourceforge.net/svnroot/xbtt/trunk/xbt"
-
-inherit subversion
+inherit subversion cmake-utils
 
 DESCRIPTION="XBT BitTorrent tracker"
 HOMEPAGE="http://xbtt.sourceforge.net/tracker/"
+ESVN_REPO_URI="https://xbtt.svn.sourceforge.net/svnroot/xbtt/trunk/xbt"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-DEPEND=""
+IUSE=""
 
 RDEPEND="dev-libs/boost
-	dev-util/cmake
 	virtual/mysql
 	sys-libs/zlib"
+DEPEND="${RDEPEND}"
 
-src_compile() {
-	cd Tracker
-	$(tc-getCXX) -DNDEBUG -I ../misc -I . -O3 -o xbt_tracker  \
-        ../misc/sql/database.cpp \
-        ../misc/sql/sql_query.cpp \
-        ../misc/sql/sql_result.cpp \
-        ../misc/bt_misc.cpp \
-        ../misc/bvalue.cpp \
-        ../misc/sha1.cpp \
-        ../misc/socket.cpp \
-        ../misc/virtual_binary.cpp \
-        ../misc/xcc_z.cpp \
-        config.cpp \
-        connection.cpp \
-        epoll.cpp \
-        server.cpp \
-        tcp_listen_socket.cpp \
-        tracker_input.cpp \
-        transaction.cpp \
-        udp_listen_socket.cpp \
-        "XBT Tracker.cpp" \
-        `mysql_config --libs` && strip xbt_tracker || die "compile xbtt failed"
+src_prepare() {
+	sed -i -e \
+		's:add_subdirectory("BT Test")::g' \
+		CMakeLists.txt || die "CMakeLists.txt remove test failed!"
+
+	sed -i -e \
+		's:add_subdirectory("Client Command Line Interface")::g' \
+		CMakeLists.txt || die "CMakeLists.txt remove client failed!"
 }
 
 src_install() {
-	dosbin Tracker/xbt_tracker
-	newinitd "${FILESDIR}/xbtt.initd" xbtt
+	cmake-utils_src_install
+
+	newinitd "${FILESDIR}/xbt_tracker.initd" xbt_tracker
 	dodir /etc/xbtt
 	insinto /etc/xbtt
-	newins Tracker/xbt_tracker.conf.default xbt_tracker.conf.default
+	newins "${FILESDIR}/xbt_tracker.conf.default" xbt_tracker.conf.default
+	newins "${FILESDIR}/xbt_tracker.sql" xbt_tracker.sql
+}
+
+pkg_postinst() {
+	enewgroup xbtt
+	enewuser xbtt -1 -1 /dev/null xbtt
 }

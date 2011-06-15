@@ -1,27 +1,19 @@
-#!/bin/sh
+#!/sbin/runscript
+
+depend() {
+	need net mysql
+}
+
+XBTT_CONFIG=${XBTT_CONFIG:-/etc/xbtt/xbt_tracker.conf}
 
 start() {
-        echo "Starting XBT Tracker"
-        start-stop-daemon --start --quiet --exec /usr/sbin/xbt_tracker -- --conf_file /etc/xbtt/xbt_tracker.conf
-        echo $?
+        ebegin "Starting XBT Tracker"
+        start-stop-daemon --start --quiet --chuid xbtt:xbtt --exec /usr/bin/xbt_tracker -- --conf_file ${XBTT_CONFIG}
+        eend $?
 }
 
 stop() {
-        echo "Stopping XBT Tracker"
-        start-stop-daemon --stop --quiet --pidfile /var/run/xbt_tracker.pid
-        echo $?
+        ebegin "Stopping XBT Tracker"
+        start-stop-daemon --stop --quiet --name ${SVCNAME}
+        eend $?
 }
-
-case "$1" in
-        start)
-                start
-;;
-        stop)
-                stop
-;;
-        *)
-                echo "Usage: $0 {start|stop}"
-                exit 1
-esac
-
-exit 1
