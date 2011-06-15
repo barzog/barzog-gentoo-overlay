@@ -1,0 +1,17 @@
+mysql_host = localhost
+mysql_user = xbtt
+mysql_password = defaultpasswd
+mysql_database = xbt_tracker
+
+announce_interval = 1800
+anonymous_connect = 0
+anonymous_announce = 0
+anonymous_scrape = 0
+auto_register = 0
+
+listen_ipa = 127.0.0.1
+listen_port = 2710
+
+log_access = 1
+log_announce = 1
+log_scrape = 1
