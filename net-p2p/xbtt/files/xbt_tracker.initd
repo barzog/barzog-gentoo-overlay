@@ -1,7 +1,7 @@
 #!/sbin/runscript
 
 depend() {
-	need net mysql
+	need net
 }
 
 XBTT_CONFIG=${XBTT_CONFIG:-/etc/xbtt/xbt_tracker.conf}
