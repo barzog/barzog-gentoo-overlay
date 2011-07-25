@@ -19,7 +19,7 @@ DEPEND="dev-libs/libpcre
 	sys-libs/zlib"
 
 src_compile() {
-	epatch "{$FILESDIR}/cforbid.diff"
+	epatch "${FILESDIR}/cforbid.diff"
 	./configure --prefix=/usr || die "Config failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
 	emake || die "Make failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
 }
