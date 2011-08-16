@@ -56,7 +56,7 @@ SRC_URI="http://sysoev.ru/nginx/${P}.zip
 	nginx_modules_http_upload? ( http://www.grid.net.ru/nginx/download/${HTTP_UPLOAD_MODULE_P}.tar.gz )
 	nginx_modules_http_ey_balancer? ( https://github.com/ry/nginx-ey-balancer/tarball/v${HTTP_EY_BALANCER_MODULE_PV} -> ${HTTP_EY_BALANCER_MODULE_P}.tar.gz )
 	nginx_modules_http_slowfs_cache? ( http://labs.frickle.com/files/${HTTP_SLOWFS_CACHE_MODULE_P}.tar.gz )"
-
+KEYWORDS="amd64 ~ppc x86 ~x86-fbsd"
 LICENSE="as-is BSD BSD-2 GPL-2 MIT"
 SLOT="0"
 
