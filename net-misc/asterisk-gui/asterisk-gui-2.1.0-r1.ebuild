@@ -29,4 +29,5 @@ src_install() {
 	newins providers.conf.sample providers.conf
 
 	dodoc README CREDITS requests.txt security.txt other/sqlite.js
+	chown -R asterisk:asterisk /var/lib/asterisk/static-http/config
 }
