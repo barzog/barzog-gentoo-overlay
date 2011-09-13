@@ -12,7 +12,7 @@ ESVN_REPO_URI="http://svn.digium.com/svn/asterisk-gui/tags/2.1.0-rc1"
 
 LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~x86 ~amd64"
 IUSE=""
 
 RDEPEND=">=net-misc/asterisk-1.8.5.0"
