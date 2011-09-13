@@ -1,0 +1,22 @@
+# ChangeLog for net-misc/asterisk-core-sounds
+# Copyright 1999-2011 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/net-misc/asterisk-core-sounds/ChangeLog,v 1.4 2011/02/27 19:00:35 chainsaw Exp $
+
+  27 Feb 2011; Tony Vroon <chainsaw@gentoo.org>
+  asterisk-core-sounds-1.4.19.ebuild:
+  Mark stable on AMD64 for security bug #352059. Arch testing by Agostino "ago"
+  Sarubbo.
+
+  26 Feb 2011; Thomas Kahle <tomka@gentoo.org>
+  asterisk-core-sounds-1.4.19.ebuild:
+  x86 stable per bug 352059
+
+  01 Dec 2010; <chainsaw@gentoo.org> asterisk-core-sounds-1.4.19.ebuild:
+  Adjust Asterisk dependency in preparation for 1.4 ebuilds.
+
+*asterisk-core-sounds-1.4.19 (20 Aug 2010)
+
+  20 Aug 2010; <chainsaw@gentoo.org> +asterisk-core-sounds-1.4.19.ebuild,
+  +metadata.xml:
+  Initial commit, ebuild by Jaco Kroon. For bug #328513.
+
