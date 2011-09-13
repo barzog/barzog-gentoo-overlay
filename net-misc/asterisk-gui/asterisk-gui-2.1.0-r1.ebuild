@@ -19,7 +19,7 @@ RDEPEND=">=net-misc/asterisk-1.8.5.0"
 DEPEND="${RDEPEND}"
 
 src_configure() {
-	econf --localstatedir=/var/lib
+	econf --localstatedir=/var
 }
 
 src_install() {
