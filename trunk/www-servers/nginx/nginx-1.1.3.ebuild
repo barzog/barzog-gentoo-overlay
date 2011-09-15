@@ -64,7 +64,7 @@ KEYWORDS="~amd64 ~ppc ~x86 ~x86-fbsd"
 NGINX_MODULES_STD="access auth_basic autoindex browser charset empty_gif fastcgi
 geo gzip limit_req limit_zone map memcached proxy referer rewrite scgi ssi
 split_clients upstream_ip_hash userid uwsgi"
-NGINX_MODULES_OPT="addition dav degradation flv geoip gzip_static image_filter
+NGINX_MODULES_OPT="addition dav degradation flv mp4 geoip gzip_static image_filter
 perl random_index realip secure_link stub_status sub xslt"
 NGINX_MODULES_MAIL="imap pop3 smtp"
 NGINX_MODULES_3RD="http_cache_purge http_headers_more http_passenger http_push
