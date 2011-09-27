@@ -40,7 +40,7 @@ start() {
 		checkoptionalfiles
 	fi
 	export LANG="C"
-	ulimit -n 2048
+	ulimit -n 4096
 	start-stop-daemon --start --quiet --make-pidfile  --pidfile /var/run/verlihub.pid --chuid verlihub \
 		--exec /usr/bin/verlihub -- ${PORT} >> ${LOG_DIR}/verlihub.log 2>> ${LOG_DIR}/verlihub.err &
 	eend $?
