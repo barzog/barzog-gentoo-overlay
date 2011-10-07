@@ -5,7 +5,7 @@
  void cForbidden::AddFields()
  {
 -	AddCol("word","varchar(100)","", false,mModel.mWord);
-+	AddCol("word","varchar(500)","", false,mModel.mWord);
++	AddCol("word","varchar(330)","", false,mModel.mWord);
  	AddPrimaryKey("word");
  	AddCol("check_mask","tinyint(4)","1",true,mModel.mCheckMask); // mask 1 -> public, mask 2 -> private
  	AddCol("afclass","tinyint(4)", "4", true, mModel.mAfClass); // affected class. normal=1, vip=2, cheef=3, op=4, admin=5, master=10
