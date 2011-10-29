@@ -1,0 +1,3 @@
+# /etc/conf.d/londiste
+
+LONDISTE_CONF="/etc/skytools/londiste.ini"

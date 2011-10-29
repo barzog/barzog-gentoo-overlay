@@ -1,0 +1,33 @@
+#!/sbin/runscript
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+depend() {
+	need net
+	use postgresql
+}
+
+checkconfig() {
+	if [ ! -f ${LONDISTE_CONF} ] ; then
+		eerror "Please create ${LONDISTE_CONF}"
+		eerror "Sample conf:
+/usr/share/doc/skytools/conf/londiste.ini"
+		return 1
+	fi
+	return 0
+}
+
+start() {
+	checkconfig || return $?
+
+	ebegin "Starting londiste"
+	/usr/bin/londiste.py -d ${LONDISTE_CONF} replay
+	eend $? "Failed to start londiste"
+}
+
+stop() {
+	ebegin "Stopping londiste"
+	/usr/bin/londiste.py -s ${LONDISTE_CONF}
+	eend $? "Failed to stop londiste"
+}
