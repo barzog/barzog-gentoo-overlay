@@ -12,6 +12,10 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~sparc ~amd64"
 IUSE="asciidoc"
+EAPI="3"
+PYTHON_DEPEND="2"
+SUPPORT_PYTHON_ABIS="1"
+RESTRICT_PYTHON_ABIS="3.* *-jython"
 
 DEPEND=">=dev-db/postgresql-server-8.2
 		asciidoc? ( app-text/asciidoc )
