@@ -16,6 +16,7 @@ EAPI="3"
 PYTHON_DEPEND="2"
 SUPPORT_PYTHON_ABIS="1"
 RESTRICT_PYTHON_ABIS="3.* *-jython"
+python_enable_pyc
 
 DEPEND=">=dev-db/postgresql-server-8.2
 		asciidoc? ( app-text/asciidoc )
@@ -28,10 +29,14 @@ src_unpack(){
 	eautoreconf
 }
 
+src_configure() {
+        econf \
+                $(use_with asciidoc) || die
+
+}
+
 src_compile(){
-	econf \
-		$(use_with asciidoc) || die
-	emake || die
+        emake || die
 }
 
 src_install(){
@@ -44,11 +49,3 @@ src_install(){
 	doconfd ${FILESDIR}/${PV}/conf.d/pgqadm ${FILESDIR}/${PV}/conf.d/londiste
 }
 
-pkg_postinst(){
-	python_mod_optimize skytools pgq londiste
-	einfo "See overview.txt for links for How-To's"
-}
-
-pkg_postrm(){
-	python_mod_cleanup skytools pgq londiste
-}
