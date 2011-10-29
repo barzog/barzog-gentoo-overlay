@@ -11,10 +11,10 @@ SRC_URI="http://pgfoundry.org/frs/download.php/1940/${P}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~sparc ~amd64"
-IUSE=""
+IUSE="asciidoc"
 
 DEPEND=">=dev-db/postgresql-server-8.2
-		app-text/asciidoc
+		asciidoc? ( app-text/asciidoc )
 		dev-libs/libevent
 		dev-python/psycopg"
 RDEPEND="${DEPENDS}"
@@ -26,7 +26,8 @@ src_unpack(){
 }
 
 src_compile(){
-	econf || die
+	econf \
+		$(use_with asciidoc) || die
 	emake || die
 }
 
