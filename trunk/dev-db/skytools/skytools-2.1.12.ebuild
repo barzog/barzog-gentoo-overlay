@@ -45,10 +45,10 @@ src_install(){
 }
 
 pkg_postinst(){
-	python_mod_optimize
+	python_mod_optimize skytools pgq londiste
 	einfo "See overview.txt for links for How-To's"
 }
 
 pkg_postrm(){
-	python_mod_cleanup
+	python_mod_cleanup skytools pgq londiste
 }
