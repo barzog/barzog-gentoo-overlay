@@ -1,0 +1,3 @@
+# /etc/conf.d/pgqadm
+
+PGQADM_CONF="/etc/skytools/pgqadm.ini"
