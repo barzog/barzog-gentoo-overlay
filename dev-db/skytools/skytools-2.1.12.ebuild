@@ -2,11 +2,11 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit autotools python
+inherit eutils autotools python
 
 DESCRIPTION="Database management tools from Skype: WAL shipping, queueing,replication."
 HOMEPAGE="http://pgfoundry.org/projects/skytools/"
-SRC_URI="http://pgfoundry.org/frs/download.php/1940/${P}.tar.gz"
+SRC_URI="http://pgfoundry.org/frs/download.php/2872/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
@@ -15,7 +15,6 @@ IUSE="asciidoc"
 
 DEPEND=">=dev-db/postgresql-server-8.2
 		asciidoc? ( app-text/asciidoc )
-		dev-libs/libevent
 		dev-python/psycopg"
 RDEPEND="${DEPENDS}"
 
