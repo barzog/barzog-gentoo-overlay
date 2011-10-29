@@ -7,6 +7,5 @@ SLOT="0"
 DEPEND="" 
 src_install() {
     dobin timelimit || die "make bin failed" 
-    dodoc ChangeLog || die "make doc failed" 
     doman timelimit.1 || die "make man failed" 
 }
