@@ -45,7 +45,9 @@ src_install(){
 	cd ${S}/doc
 	dodoc overview.txt
 	dodir /etc/skytools /var/log/skytools
-	doinitd ${FILESDIR}/${PV}/init.d/pgqadm ${FILESDIR}/${PV}/init.d/londiste
-	doconfd ${FILESDIR}/${PV}/conf.d/pgqadm ${FILESDIR}/${PV}/conf.d/londiste
+	newinitd "${FILESDIR}/pgqadm.initd" pgqadm
+	newinitd "${FILESDIR}/londiste.initd" londiste
+	newconfd "${FILESDIR}/pgqadm.confd" pgqadm
+	newconfd "${FILESDIR}/londiste.confd" londiste
 }
 
