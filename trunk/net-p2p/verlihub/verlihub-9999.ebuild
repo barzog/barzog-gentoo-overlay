@@ -16,7 +16,8 @@ KEYWORDS="~amd64 ~amd64-fbsd ~x86 ~x86-fbsd"
 DEPEND="dev-libs/libpcre
 	dev-libs/geoip
 	>=dev-db/mysql-5.0
-	sys-libs/zlib"
+	sys-libs/zlib
+	dev-lang/lua"
 
 src_compile() {
 	epatch "${FILESDIR}/cforbid.diff"
