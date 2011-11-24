@@ -1,7 +1,7 @@
---- configure.ac.orig   2011-11-24 11:19:50.000000000 +0300
-+++ configure.ac        2011-11-24 11:21:21.000000000 +0300
+--- configure.ac	2011-11-24 11:39:32.000000000 +0300
++++ configure.ac.patched	2011-11-24 11:43:37.000000000 +0300
 @@ -209,26 +209,18 @@
-
+ 
  AC_MSG_CHECKING([µTP])
  build_utp="no"
 -if test "x$HAVE_CXX" = "xyes" ; then
@@ -15,19 +15,19 @@
 -              [want_utp=${have_utp}])
 +              [want_utp="yes"])
  if test "x$want_utp" = "xyes" ; then
--    if test "x$have_utp" = "xyes"; then
-+    if test "x$HAVE_CXX" = "xyes"; then
+-    if test "x$have_utp" = "xyes"; then 
++    if test "x$HAVE_CXX" = "xyes"; then 
          LIBUTP_CFLAGS="-I\$(top_srcdir)/third-party/"
 -        LIBUTP_LIBS="\$(top_builddir)/third-party/libutp/libutp.a"
 -        if test "x$libutp_extra_libs" != "x" ; then
 -            LIBUTP_LIBS="$LIBUTP_LIBS $libutp_extra_libs"
 -        fi
-+       LIBUTP_LIBS="\$(top_builddir)/third-party/libutp/libutp.a $libutp_extra_libs"
++	LIBUTP_LIBS="\$(top_builddir)/third-party/libutp/libutp.a $libutp_extra_libs"
          AC_DEFINE([WITH_UTP],[1])
          build_utp="yes"
-     else
--      AC_MSG_ERROR("Unable to build uTP support -- C++ compiler not found")
-+       AC_MSG_ERROR("Unable to build uTP support -- C++ compiler not found; consider --disable-utp")
-     fi
- fi
+     else 
+-      AC_MSG_ERROR("Unable to build uTP support -- C++ compiler not found") 
++	AC_MSG_ERROR("Unable to build uTP support -- C++ compiler not found; consider --disable-utp")
+     fi 
+ fi 
  AC_SUBST(LIBUTP_CFLAGS)
