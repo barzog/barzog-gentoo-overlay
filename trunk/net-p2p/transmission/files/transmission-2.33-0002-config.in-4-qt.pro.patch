@@ -1,34 +1,5 @@
---- configure.ac	2011-11-24 11:47:35.000000000 +0300
-+++ configure.ac.patch	2011-11-24 11:51:35.000000000 +0300
-@@ -217,6 +217,7 @@
-     if test "x$HAVE_CXX" = "xyes"; then 
-         LIBUTP_CFLAGS="-I\$(top_srcdir)/third-party/"
- 	LIBUTP_LIBS="\$(top_builddir)/third-party/libutp/libutp.a $libutp_extra_libs"
-+	LIBUTP_LIBS_QT="\$\${TRANSMISSION_TOP}/third-party/libutp/libutp.a $libutp_extra_libs"
-         AC_DEFINE([WITH_UTP],[1])
-         build_utp="yes"
-     else 
-@@ -225,6 +226,7 @@
- fi 
- AC_SUBST(LIBUTP_CFLAGS)
- AC_SUBST(LIBUTP_LIBS)
-+AC_SUBST(LIBUTP_LIBS_QT)
- AM_CONDITIONAL([BUILD_UTP],[test "x$build_utp" = "xyes"])
- AC_MSG_RESULT([$build_utp])
- 
-@@ -423,8 +425,8 @@
-                  web/javascript/Makefile
-                  web/javascript/jquery/Makefile
-                  web/stylesheets/Makefile
--                 po/Makefile.in])
--
-+		 po/Makefile.in
-+		qt/config])
- AC_OUTPUT
- 
- echo "
---- qtr.pro	2011-10-20 04:57:51.000000000 +0300
-+++ qtr.pro.patch	2011-11-24 11:53:12.000000000 +0300
+--- qt/qtr.pro	2011-10-20 04:57:51.000000000 +0300
++++ qt/qtr.pro.patch	2011-11-24 11:53:12.000000000 +0300
 @@ -16,12 +16,12 @@
  PKGCONFIG = fontconfig libcurl openssl libevent
  
@@ -45,3 +16,7 @@
  LIBS += $${TRANSMISSION_TOP}/third-party/dht/libdht.a
  LIBS += $${TRANSMISSION_TOP}/third-party/miniupnp/libminiupnp.a
  LIBS += $${TRANSMISSION_TOP}/third-party/libnatpmp/libnatpmp.a
+--- /dev/null	2011-10-26 18:57:13.781254505 +0300
++++ qt/config.in	2011-11-25 10:25:38.000000000 +0300
+@@ -0,0 +1 @@
++LIBUTP_LIBS = @LIBUTP_LIBS_QT@
