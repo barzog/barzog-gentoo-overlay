@@ -3,7 +3,7 @@
 
 EAPI=2
 
-inherit eutils git linux-mod cmake-utils
+inherit eutils git-2 linux-mod cmake-utils
 
 EGIT_REPO_URI="git://accel-ppp.git.sourceforge.net/gitroot/accel-ppp/accel-ppp"
 
@@ -33,7 +33,7 @@ PREFIX="/"
 MODULE_NAMES="pptp(extra:${S}/driver/)"
 
 src_unpack () {
-	git_src_unpack
+	git-2_src_unpack
 }
 
 src_prepare() {
