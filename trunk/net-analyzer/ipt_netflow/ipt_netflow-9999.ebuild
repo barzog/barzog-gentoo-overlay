@@ -4,7 +4,7 @@
 
 EAPI="2"
 
-inherit git eutils linux-mod multilib
+inherit git-2 eutils linux-mod multilib
 
 EGIT_PROJECT="ipt_netflow"
 EGIT_REPO_URI="git://ipt-netflow.git.sourceforge.net/gitroot/ipt-netflow/ipt-netflow"
