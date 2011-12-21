@@ -1,0 +1,11 @@
+--- plugins/isp/cisps_orig.cpp	2011-12-21 10:51:29.000000000 +0300
++++ plugins/isp/cisps.cpp	2011-12-21 10:54:01.000000000 +0300
+@@ -168,7 +168,7 @@
+ 	AddCol("cc","varchar(32)","",true,mModel.mCC);
+ 	AddPrimaryKey("ipmin");
+ 	AddCol("name","varchar(64)","",true,mModel.mName);
+-	AddCol("descprefix","varchar(16)","[???]",true, mModel.mAddDescPrefix);
++	AddCol("descprefix","varchar(32)","[???]",true, mModel.mAddDescPrefix);
+ 	AddCol("nickpattern","varchar(64)","\\[---\\]",true, mModel.mNickPattern);
+ 	AddCol("errmsg","varchar(128)","Your nick must be like this patern %[pattern]", true, mModel.mPatternMessage);
+ 	AddCol("conntype","varchar(64)","",true,mModel.mConnPattern);
