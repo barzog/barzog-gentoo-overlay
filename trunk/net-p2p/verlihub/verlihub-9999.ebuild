@@ -7,7 +7,7 @@ HOMEPAGE="http://www.verlihub-project.org"
 EGIT_PROJECT="verlihub"
 EGIT_REPO_URI="git://verlihub.git.sourceforge.net/gitroot/verlihub/verlihub"
 
-inherit git
+inherit git-2 eutils
 
 LICENSE="GPL-2"
 SLOT="0"
