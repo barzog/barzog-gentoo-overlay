@@ -21,6 +21,7 @@ DEPEND="dev-libs/libpcre
 
 src_compile() {
 	epatch "${FILESDIR}/cforbid.diff"
+	epatch "${FILESDIR}/cisps.cpp.diff"
 	./configure --prefix=/usr || die "Config failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
 	emake || die "Make failed; please report problems or bugs to http://forums.verlihub-project.org/viewforum.php?f=36"
 }
