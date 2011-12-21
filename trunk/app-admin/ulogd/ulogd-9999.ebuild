@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-admin/ulogd/ulogd-2.0.0_beta4.ebuild,v 1.1 2010/10/07 05:31:53 wormo Exp $
 
-EAPI="1"
+EAPI="2"
 
-inherit eutils git autotools
+inherit eutils git-2 autotools
 
 MY_P=${P/_/}
 S="${WORKDIR}/${MY_P}"
@@ -41,7 +41,7 @@ pkg_setup() {
 }
 
 src_unpack() {
-	git_src_unpack
+	git-2_src_unpack
 	cd ${S}
 	eautoreconf
 }
