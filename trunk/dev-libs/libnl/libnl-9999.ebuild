@@ -4,7 +4,7 @@
 
 EGIT_REPO_URI="git://git.kernel.org/pub/scm/libs/netlink/libnl.git"
 EGIT_BOOTSTRAP="eautoreconf"
-inherit git autotools eutils
+inherit git-2 autotools eutils
 
 DESCRIPTION="Netlink library"
 HOMEPAGE="http://infradead.org/~tgr/libnl"
