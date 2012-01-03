@@ -34,7 +34,9 @@ src_unpack() {
 	unpack ${A}
 	cd "${S}"
 	epatch "${FILESDIR}"/patch-src_flow-print.c
+	epatch "${FILESDIR}"/patch-ftlib.h
 }
+
 src_configure() {
 	local myconf="--sysconfdir=/etc/flow-tools"
 	use mysql && myconf="${myconf} --with-mysql"
