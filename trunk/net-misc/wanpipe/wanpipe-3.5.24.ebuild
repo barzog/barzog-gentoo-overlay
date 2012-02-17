@@ -54,6 +54,7 @@ src_unpack() {
 	epatch ${FILESDIR}/${PN}-3.5.20-setup.diff
 	epatch ${FILESDIR}/${PN}-3.4.1-zaptel.diff
 	epatch ${FILESDIR}/${PN}-3.4.1-wancfg.diff
+	epatch ${FILESDIR}/${PN}-3.5.24-setup.diff
 }
 
 src_compile() {

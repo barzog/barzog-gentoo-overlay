@@ -1,0 +1,12 @@
+--- Setup.orig  2012-02-17 12:32:22.000000000 +0300
++++ Setup       2012-02-17 12:32:27.000000000 +0300
+@@ -7350,7 +7350,7 @@
+ setup_install_quick="NO"
+ MODSYM=Module.symvers
+ DEFAULT_KERNEL_VERSION="NO"
+-TDM_VOICE_ONLY=NO      #used to detect whether this is a zaptel/dahdi only install...no API compile then
++TDM_VOICE_ONLY=YES      #used to detect whether this is a zaptel/dahdi only install...no API compile then
+
+ echo > $CMP_LOG
+ echo "WANPIPE DRIVER COMPILE LOG" >> $CMP_LOG
+
