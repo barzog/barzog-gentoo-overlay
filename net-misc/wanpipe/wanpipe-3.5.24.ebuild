@@ -26,7 +26,7 @@ RDEPEND="
 "
 DEPEND="
 	sys-devel/flex
-	>=virtual/linux-sources-2.6
+	virtual/linux-sources
 	${RDEPEND}
 "
 S="${WORKDIR}/${P//_beta/}"
