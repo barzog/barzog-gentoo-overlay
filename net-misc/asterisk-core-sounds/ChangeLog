@@ -1,6 +1,30 @@
 # ChangeLog for net-misc/asterisk-core-sounds
-# Copyright 1999-2011 Gentoo Foundation; Distributed under the GPL v2
-# $Header: /var/cvsroot/gentoo-x86/net-misc/asterisk-core-sounds/ChangeLog,v 1.4 2011/02/27 19:00:35 chainsaw Exp $
+# Copyright 1999-2012 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/net-misc/asterisk-core-sounds/ChangeLog,v 1.9 2012/02/16 18:43:47 phajdan.jr Exp $
+
+  16 Feb 2012; Pawel Hajdan jr <phajdan.jr@gentoo.org>
+  asterisk-core-sounds-1.4.21-r1.ebuild:
+  x86 stable wrt bug #400447
+
+  07 Feb 2012; Agostino Sarubbo <ago@gentoo.org>
+  asterisk-core-sounds-1.4.21-r1.ebuild:
+  Stable for amd64, wrt bug #400447
+
+*asterisk-core-sounds-1.4.21-r1 (07 Feb 2012)
+
+  07 Feb 2012; Tony Vroon <chainsaw@gentoo.org>
+  +asterisk-core-sounds-1.4.21-r1.ebuild:
+  Revision bump. Make it impossible to unset GSM, as unsetting all USE-flags
+  caused QA warnings and did not install any files. Closes bug #402439 by
+  Maurizio "k01" Camisaschi. Added more detailed progress reporting for unpack
+  & install stages.
+
+*asterisk-core-sounds-1.4.21 (20 Sep 2011)
+
+  20 Sep 2011; Tony Vroon <chainsaw@gentoo.org>
+  +asterisk-core-sounds-1.4.21.ebuild:
+  Version bump. Add support for es & ru LINGUAS as per Oleg Gawriloff in bug
+  #382881.
 
   27 Feb 2011; Tony Vroon <chainsaw@gentoo.org>
   asterisk-core-sounds-1.4.19.ebuild:
