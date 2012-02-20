@@ -14,4 +14,6 @@ src_install() {
 	dosbin qloader.pl
 	newinitd "${FILESDIR}/qloaderd.initd" qloaderd
 	newconfd "${FILESDIR}/qloaderd.confd" qloaderd
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}/qloaderd.logrotate" qloaderd
 }

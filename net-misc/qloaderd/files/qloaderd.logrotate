@@ -1,0 +1,7 @@
+/var/log/asterisk/debug /var/log/asterisk/full {
+        missingok
+        notifempty
+        daily
+	rotate 7
+	copytruncate
+}
