@@ -1,0 +1,22 @@
+#!/sbin/runscript
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+depend() {
+        need net
+}
+
+start() {
+        ebegin "Starting qloaderd"
+        start-stop-daemon --start --exec /usr/sbin/qloader.pl \
+                --pidfile ${PIDFILE} --background \
+                -- -h ${MYSQL_HOST} -d ${MYSQL_DB} -u ${MYSQL_USER} -p ${MYSQL_PASSWORD} ${QUEUE_LOG_FILE} ${PARTITION_NAME} ${QLOADER_LOG} >/dev/null 2>&1
+        eend $?
+}
+
+stop() {
+        ebegin "Stopping qloaderd"
+        start-stop-daemon --stop --quiet --exec /usr/sbin/qloader.pl \
+                --pidfile ${PIDFILE}
+        eend $?
+}

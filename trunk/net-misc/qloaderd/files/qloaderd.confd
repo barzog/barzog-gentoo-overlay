@@ -1,0 +1,8 @@
+PIDFILE=/var/run/qloader.pid
+MYSQL_HOST=localhost
+MYSQL_DB=asteriskcdr
+MYSQL_USER=mysql
+MYSQL_PASSWORD=mysql
+QUEUE_LOG_FILE=/var/log/asterisk/queue_log
+PARTITION_NAME=P001
+QLOADER_LOG=/var/log/asterisk/qloader.log
