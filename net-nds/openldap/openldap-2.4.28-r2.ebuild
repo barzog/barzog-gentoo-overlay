@@ -1,18 +1,23 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-nds/openldap/openldap-2.4.28.ebuild,v 1.5 2012/02/21 00:19:44 robbat2 Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-nds/openldap/openldap-2.4.28-r1.ebuild,v 1.12 2012/03/02 21:35:40 ranger Exp $
 
 EAPI="3"
-WANT_AUTOMAKE=1.9
+
 inherit db-use eutils flag-o-matic multilib ssl-cert versionator toolchain-funcs autotools
+
+BIS_PN=rfc2307bis.schema
+BIS_PV=20100722
+BIS_P="${BIS_PN}-${BIS_PV}"
 
 DESCRIPTION="LDAP suite of application and development tools"
 HOMEPAGE="http://www.OpenLDAP.org/"
-SRC_URI="mirror://openldap/openldap-release/${P}.tgz"
+SRC_URI="mirror://openldap/openldap-release/${P}.tgz
+		 http://simon.kisikew.org/src/ldap/${BIS_PN} -> ${BIS_P}"
 
 LICENSE="OPENLDAP"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~sparc-fbsd ~x86-fbsd ~x86-freebsd ~amd64-linux ~x86-linux ~x86-solaris"
+KEYWORDS="alpha amd64 arm hppa ia64 ~mips ppc ppc64 s390 sh sparc x86 ~sparc-fbsd ~x86-fbsd ~x86-freebsd ~amd64-linux ~x86-linux ~x86-solaris"
 
 IUSE_DAEMON="crypt icu samba slp tcpd experimental minimal"
 IUSE_BACKEND="+berkdb"
@@ -44,7 +49,8 @@ RDEPEND="sys-libs/ncurses
 		cxx? ( dev-libs/cyrus-sasl )
 	)
 	selinux? ( sec-policy/selinux-openldap )"
-DEPEND="${RDEPEND}"
+DEPEND="${RDEPEND}
+	sys-apps/groff"
 
 # for tracking versions
 OPENLDAP_VERSIONTAG=".version-tag"
@@ -122,6 +128,7 @@ openldap_find_versiontags() {
 					eerror
 					eerror "For a HOWTO on exporting the data, see instructions in the ebuild"
 					eerror
+					openldap_upgrade_howto
 					die "Please move the datadir ${CURRENT_TAGDIR} away"
 				fi
 			fi
@@ -207,10 +214,11 @@ pkg_setup() {
 	if ! use sasl && use cxx ; then
 		die "To build the ldapc++ library you must emerge openldap with sasl support"
 	fi
-	if use minimal && has_version "net-nds/openldap" && built_with_use net-nds/openldap minimal ; then
-		einfo
+	# Bug #322787
+	if use minimal && ! has_version "net-nds/openldap" ; then
+		einfo "No datadir scan needed, openldap not installed"
+	elif use minimal && has_version "net-nds/openldap" && built_with_use net-nds/openldap minimal ; then
 		einfo "Skipping scan for previous datadirs as requested by minimal useflag"
-		einfo
 	else
 		openldap_find_versiontags
 	fi
@@ -241,7 +249,13 @@ src_prepare() {
 
 	# bug #281495
 	epatch "${FILESDIR}"/${PN}-2.4.28-gnutls-gcrypt.patch
-	epatch "${FILESDIR}"/operation.c.patch
+
+	# bug #294350
+	epatch "${FILESDIR}"/${PN}-2.4.6-evolution-ntlm.patch
+
+	# unbreak /bin/sh -> dash
+	epatch "${FILESDIR}"/${PN}-2.4.28-fix-dash.patch
+        epatch "${FILESDIR}"/operation.c.patch
 
 	cd "${S}"/build
 	einfo "Making sure upstream build strip does not do stripping too early"
@@ -363,6 +377,9 @@ src_configure() {
 		myconf="${myconf} --enable-${basicflag}"
 	done
 
+	# connectionless ldap per bug #342439
+	append-cppflags -DLDAP_CONNECTIONLESS
+
 	tc-export CC AR CXX
 	STRIP=/bin/true \
 	econf \
@@ -419,6 +436,15 @@ src_compile() {
 				KRB5_INC="$(krb5-config --cflags)" \
 				CC="${CC}" libexecdir="${EPREFIX}/usr/$(get_libdir)/openldap" \
 				|| die "emake smbk5pwd failed"
+		fi
+
+		if use overlays ; then
+			einfo "Building contrib-module: samba4"
+			cd "${S}/contrib/slapd-modules/samba4"
+
+			emake \
+				CC="${CC}" libexecdir="/usr/$(get_libdir)/openldap" \
+				|| die "emake samba4 failed"
 		fi
 
 		if use kerberos ; then
@@ -532,11 +558,16 @@ src_install() {
 		eend
 
 		# install our own init scripts
-		newinitd "${FILESDIR}"/slapd-initd2 slapd
-		newconfd "${FILESDIR}"/slapd-confd slapd
+		newinitd "${FILESDIR}"/slapd-initd-2.4.28-r1 slapd
+		newconfd "${FILESDIR}"/slapd-confd-2.4.28-r1 slapd
 		if [ $(get_libdir) != lib ]; then
 			sed -e "s,/usr/lib/,/usr/$(get_libdir)/," -i "${ED}"etc/init.d/slapd
 		fi
+		# If built without SLP, we don't need to be before avahi
+		use slp \
+			|| sed -i \
+				-e '/before/{s/avahi-daemon//g}' \
+				"${ED}"etc/init.d/slapd
 
 		 if use cxx ; then
 		 	einfo "Install the ldapc++ library"
@@ -550,6 +581,13 @@ src_install() {
 			cd "${S}/contrib/slapd-modules/smbk5pwd"
 			emake DESTDIR="${D}" libexecdir="${EPREFIX}/usr/$(get_libdir)/openldap" install || die "emake install smbk5pwd failed"
 			newdoc README smbk5pwd-README
+		fi
+
+		if use overlays ; then
+			einfo "Install the samba4 module"
+			cd "${S}/contrib/slapd-modules/samba4"
+			emake DESTDIR="${D}" libexecdir="/usr/$(get_libdir)/openldap" install || die "emake install samba4 failed"
+			newdoc README samba4-README
 		fi
 
 		einfo "Installing contrib modules"
@@ -574,6 +612,9 @@ src_install() {
 		doins  */*.so
 		docinto contrib
 		newdoc addrdnvalues/README addrdnvalues-README
+
+		insinto /etc/openldap/schema
+		newins "${DISTDIR}"/${BIS_P} ${BIS_PN}
 	fi
 }
 
@@ -608,7 +649,7 @@ pkg_postinst() {
 		chmod 0755 "${EROOT}"var/run/openldap
 		use prefix || chown root:ldap "${EROOT}"etc/openldap/slapd.conf{,.default}
 		chmod 0640 "${EROOT}"etc/openldap/slapd.conf{,.default}
-		use prefix || chown ldap:ldap "${EROOT}"var/lib/openldap-{data,ldbm}
+		use prefix || chown ldap:ldap "${EROOT}"var/lib/openldap-data
 	fi
 
 	elog "Getting started using OpenLDAP? There is some documentation available:"
