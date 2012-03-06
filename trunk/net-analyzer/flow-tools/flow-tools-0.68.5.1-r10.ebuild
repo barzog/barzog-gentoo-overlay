@@ -1,8 +1,8 @@
-# Copyright 1999-2010 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-analyzer/flow-tools/flow-tools-0.68.5-r1.ebuild,v 1.1 2010/03/02 16:47:12 jer Exp $
+# $Header: /var/cvsroot/gentoo-x86/net-analyzer/flow-tools/flow-tools-0.68.5.1-r1.ebuild,v 1.1 2012/02/21 16:18:46 jer Exp $
 
-EAPI="2"
+EAPI=4
 
 inherit eutils
 
@@ -12,18 +12,20 @@ SRC_URI="http://${PN}.googlecode.com/files/${P}.tar.bz2"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64 ~ia64 ~ppc ~x86"
-IUSE="mysql postgres debug ssl"
+KEYWORDS="~amd64 ~ppc ~x86"
+IUSE="debug mysql postgres ssl static-libs"
 
 RDEPEND="sys-apps/tcp-wrappers
 	sys-libs/zlib
-	sys-devel/flex
 	mysql? ( virtual/mysql )
-	postgres? ( virtual/postgresql-base )
+	postgres? ( dev-db/postgresql-base )
 	ssl? ( dev-libs/openssl )"
 
 DEPEND="${RDEPEND}
+	sys-devel/flex
 	sys-devel/bison"
+
+DOCS=( ChangeLog README SECURITY TODO )
 
 pkg_setup() {
 	enewgroup flows
@@ -31,10 +33,12 @@ pkg_setup() {
 }
 
 src_unpack() {
-	unpack ${A}
-	cd "${S}"
-	epatch "${FILESDIR}"/patch-src_flow-print.c
+       unpack ${A}
+       cd "${S}"
+       epatch "${FILESDIR}"/patch-src_flow-print.c
+       epatch "${FILESDIR}"/patch-ftlib.h
 }
+
 src_configure() {
 	local myconf="--sysconfdir=/etc/flow-tools"
 	use mysql && myconf="${myconf} --with-mysql"
@@ -44,12 +48,11 @@ src_configure() {
 		myconf="${myconf} --with-postgresql=no"
 	fi
 	use ssl && myconf="${myconf} --with-openssl"
-	econf ${myconf} || die "econf failed"
+	econf ${myconf} $(use_enable static-libs static)
 }
 
 src_install() {
-	emake DESTDIR="${D}" install || die "emake install failed"
-	dodoc ChangeLog README SECURITY TODO
+	default
 
 	keepdir /var/lib/flows
 	keepdir /var/lib/flows/bin
@@ -60,6 +63,9 @@ src_install() {
 	newinitd "${FILESDIR}/flowcapture.initd" flowcapture
 	newconfd "${FILESDIR}/flowcapture.confd" flowcapture
 
+	if ! use static-libs; then
+		rm -f "${D}"/usr/lib*/libft.la || die
+	fi
 }
 
 pkg_postinst() {
