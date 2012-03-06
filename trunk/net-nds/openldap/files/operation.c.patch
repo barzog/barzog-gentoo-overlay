@@ -1,0 +1,10 @@
+--- servers/slapd/operation.c.orig	2012-03-06 15:55:27.000000000 +0300
++++ servers/slapd/operation.c	2012-03-06 15:55:33.000000000 +0300
+@@ -129,6 +129,7 @@
+ 	op->o_bd = NULL;
+ 	BER_BVZERO( &op->o_req_dn );
+ 	BER_BVZERO( &op->o_req_ndn );
++	memset( op->o_hdr, 0, sizeof( *op->o_hdr ));
+ 	memset( &op->o_request, 0, sizeof( op->o_request ));
+ 	memset( &op->o_do_not_cache, 0, sizeof( Operation ) - offsetof( Operation, o_do_not_cache ));
+ 	memset( opbuf->ob_controls, 0, sizeof( opbuf->ob_controls ));
