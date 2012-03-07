@@ -1,0 +1,19 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+PtokaX_CONFIG="/etc/PtokaX"
+
+start() {
+	ebegin "Starting PtoKaX DC++ Hub"	
+	start-stop-daemon --start --quiet --chuid ptokax:ptokax --exec /usr/bin/PtokaX -- -c ${PtokaX_CONFIG} -d
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping PtokaX DC++ Hub"
+	start-stop-daemon --stop --quiet --name ${SVCNAME}
+	eend $?
+}
