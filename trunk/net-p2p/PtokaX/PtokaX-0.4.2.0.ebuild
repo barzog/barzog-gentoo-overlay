@@ -43,6 +43,7 @@ src_compile() {
 
 src_install() {
 	dobin PtokaX
+	keepdir /etc/PtokaX
 	insinto /etc/PtokaX/cfg
 	doins -r ${S}/cfg.example/*
 	insinto /etc/PtokaX/language
