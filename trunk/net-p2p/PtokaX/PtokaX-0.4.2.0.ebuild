@@ -50,7 +50,7 @@ src_install() {
 	newinitd "${FILESDIR}/PtokaX.initd" PtokaX
 	mkdir /etc/PtokaX/scripts
 	mkdir /etc/PtokaX/texts
-	mkdir /var/log/PtokaX
+	dodir /var/log/PtokaX
 	ln -S /var/log/PtokaX /etc/PtokaX/logs
 }
 
