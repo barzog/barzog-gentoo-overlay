@@ -43,10 +43,15 @@ src_compile() {
 
 src_install() {
 	dobin PtokaX
-	insinto /etc/PtokaX
+	insinto /etc/PtokaX/cfg
 	doins -r ${S}/cfg.example/*
+	insinto /etc/PtokaX/language
 	doins -r ${S}/language/*
 	newinitd "${FILESDIR}/PtokaX.initd" PtokaX
+	mkdir /etc/PtokaX/scripts
+	mkdir /etc/PtokaX/texts
+	mkdir /var/log/PtokaX
+	ln -S /var/log/PtokaX /etc/PtokaX/logs
 }
 
 pkg_postinst() {
