@@ -1,0 +1,6 @@
+/var/log/PtokaX/system.log {
+daily
+notifempty
+missingok
+copytruncate
+}

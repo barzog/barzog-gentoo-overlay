@@ -55,9 +55,11 @@ src_install() {
 	dosym /var/log/PtokaX /etc/PtokaX/logs
 	fowners -R ptokax:ptokax /etc/PtokaX
 	fowners -R ptokax:ptokax /var/log/PtokaX
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}/PtokaX.logrotate" PtokaX
 }
 
-pkg_postinst() {
+pkg_setup() {
 	enewgroup ptokax
 	enewuser ptokax -1 -1 /dev/null ptokax
 }
