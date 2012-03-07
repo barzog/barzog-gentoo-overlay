@@ -52,9 +52,11 @@ src_install() {
 	dodir /etc/PtokaX/texts
 	dodir /var/log/PtokaX
 	dosym /var/log/PtokaX /etc/PtokaX/logs
+	fowners -R ptokax:ptokax /etc/PtokaX
+	fowners -R ptokax:ptokax /var/log/PtokaX
 }
 
 pkg_postinst() {
 	enewgroup ptokax
-	enewuser ptokax -1 -1 /dev/nul ptokax
+	enewuser ptokax -1 -1 /dev/null ptokax
 }
