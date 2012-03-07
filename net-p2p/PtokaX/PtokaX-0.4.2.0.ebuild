@@ -48,10 +48,10 @@ src_install() {
 	insinto /etc/PtokaX/language
 	doins -r ${S}/language/*
 	newinitd "${FILESDIR}/PtokaX.initd" PtokaX
-	mkdir /etc/PtokaX/scripts
-	mkdir /etc/PtokaX/texts
+	dodir /etc/PtokaX/scripts
+	dodir /etc/PtokaX/texts
 	dodir /var/log/PtokaX
-	ln -S /var/log/PtokaX /etc/PtokaX/logs
+	dosym /var/log/PtokaX /etc/PtokaX/logs
 }
 
 pkg_postinst() {
