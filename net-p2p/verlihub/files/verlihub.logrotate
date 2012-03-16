@@ -1,6 +1,7 @@
 /var/log/verlihub/verlihub.log /var/log/verlihub/verlihub.err {
-daily
-notifempty
-missingok
-copytruncate
+	su verlihub verlihub
+	daily
+	notifempty
+	missingok
+	copytruncate
 }
