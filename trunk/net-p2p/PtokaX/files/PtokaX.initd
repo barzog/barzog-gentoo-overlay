@@ -8,7 +8,7 @@ PtokaX_CONFIG="/etc/PtokaX"
 
 start() {
 	ebegin "Starting PtoKaX DC++ Hub"	
-	start-stop-daemon --start --quiet -u ptokax:ptokax --exec /usr/bin/PtokaX -- -c ${PtokaX_CONFIG} -d
+	start-stop-daemon --start --quiet -u ptokax:ptokax --exec /usr/bin/PtokaX -- -c ${PtokaX_CONFIG} -d ${PtokaX_CONFIG}
 	eend $?
 }
 
