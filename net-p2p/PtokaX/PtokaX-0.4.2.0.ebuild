@@ -14,11 +14,11 @@ SRC_URI="http://www.czdc.org/PtokaX/${PV}-nix-src.tgz
 LICENSE="MIT GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="lua-scripts"
+IUSE="lua-scripts mysql postgresql sqlite"
 
 RDEPEND="dev-libs/tinyxml
 	dev-lang/lua
-	lua-scripts? ( dev-lua/luafilesystem dev-lua/luasocket dev-lua/luadbi )"
+	lua-scripts? ( dev-lua/luafilesystem dev-lua/luasocket dev-lua/luadbi[mysql?,postgresql?,sqlite?] )"
 DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}"
