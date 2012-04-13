@@ -18,6 +18,7 @@ BUILD_TARGETS="clean install"
 MODULE_NAMES="igb(drivers/net:${S}/src)"
 
 src_compile() {
+	CONFIG_CHECK="!CONFIG_IGB"
 	cd "${S}/src"
 	emake
 }
