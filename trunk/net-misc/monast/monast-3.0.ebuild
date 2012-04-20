@@ -30,7 +30,7 @@ RDEPEND="${DEPEND}"
 src_install() {
 	insinto /opt/monast/bin
 	doins -r pymon/.
-	fowners 755 /opt/monast/bin/monast.py
+	fperms 755 /opt/monast/bin/monast.py
 	dosym /opt/monast/bin/monast.py /usr/bin/monast
 	insinto /opt/monast/html
 	doins -r *.php css image template lib js
