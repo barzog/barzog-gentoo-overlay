@@ -4,7 +4,7 @@ depend() {
 	need net
 }
 
-PtokaX_CONFIG="/etc/PtokaX"
+PtokaX_DIR="/etc/PtokaX"
 PtokaX_PID="/var/run/PtokaX.pid"
 
 start() {
