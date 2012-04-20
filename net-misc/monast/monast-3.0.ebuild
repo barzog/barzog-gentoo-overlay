@@ -16,6 +16,7 @@ KEYWORDS="amd64 ~ppc x86 ~x86-fbsd"
 IUSE=""
 
 DEPEND=">=dev-python/twisted-10.1
+	>=dev-python/twisted-web-10.1
 	>=net-zope/zope-interface-3.6
 	dev-python/starpy
 	dev-php/PEAR-HTTP_Client
@@ -29,6 +30,7 @@ RDEPEND="${DEPEND}"
 src_install() {
 	insinto /opt/monast/bin
 	doins -r pymon/.
+	fowners 755 /opt/monast/bin/monast.py
 	dosym /opt/monast/bin/monast.py /usr/bin/monast
 	insinto /opt/monast/html
 	doins -r *.php css image template lib js
@@ -37,6 +39,7 @@ src_install() {
 	doins -r pymon/monast.conf
 	insinto /etc/init.d
 	mv contrib/init.d/rc.gentoo.monast contrib/init.d/monast
+	sed -i 's:/opt/monast/monast.py:/opt/monast/bin/monast.py:' contrib/init.d/monast
 	doins -r contrib/init.d/monast
 	fperms 755 /etc/init.d/monast
 }
