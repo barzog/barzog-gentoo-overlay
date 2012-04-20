@@ -31,7 +31,7 @@ src_install() {
 	doins -r pymon/.
 	dosym /opt/monast/bin/monast.py /usr/bin/monast
 	insinto /opt/monast/html
-	doins -r *.php css image template lib
+	doins -r *.php css image template lib js
 	insinto /etc
 	mv pymon/monast.conf.sample pymon/monast.conf
 	doins -r pymon/monast.conf
