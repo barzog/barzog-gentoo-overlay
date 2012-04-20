@@ -18,7 +18,7 @@ IUSE=""
 DEPEND=">=dev-python/twisted-10.1
 	>=net-zope/zope-interface-3.6
 	dev-python/starpy
-	dev-php/PEAR-HTTP
+	dev-php/PEAR-HTTP_Client
 	www-servers/apache"
 RDEPEND="${DEPEND}"
 
