@@ -5,15 +5,16 @@ depend() {
 }
 
 PtokaX_CONFIG="/etc/PtokaX"
+PtokaX_PID="/var/run/PtokaX.pid"
 
 start() {
 	ebegin "Starting PtoKaX DC++ Hub"	
-	start-stop-daemon --start --quiet -u ptokax:ptokax --exec /usr/bin/PtokaX -- -c ${PtokaX_CONFIG} -d ${PtokaX_CONFIG}
+	start-stop-daemon --start --quiet -u ptokax:ptokax --chdir ${PtokaX_DIR} --make-pidfile --pidfile ${PtokaX_PID} --background --exec /usr/bin/PtokaX -- -c ${PtokaX_DIR}
 	eend $?
 }
 
 stop() {
 	ebegin "Stopping PtokaX DC++ Hub"
-	start-stop-daemon --stop --quiet --name ${SVCNAME}
+	start-stop-daemon --stop --quiet --pidfile ${PtokaX_PID} --name ${SVCNAME}
 	eend $?
 }
