@@ -33,9 +33,16 @@ src_install() {
 	insinto /opt/monast/html
 	doins -r *.php css image template lib
 	insinto /etc
-	doins -r pymon/monast.conf.sample
+	mv pymon/monast.conf.sample pymon/monast.conf
+	doins -r pymon/monast.conf
 	insinto /etc/init.d
 	mv contrib/init.d/rc.gentoo.monast contrib/init.d/monast
 	doins -r contrib/init.d/monast
 	fperms 755 /etc/init.d/monast
+}
+
+pkg_posinst() {
+	einfo "Don't forget to make necessary changes to /etc/monast.conf"
+	einfo "Also apache alias must be set to /opt/monast/html"
+	einfo "To start as daemon: rc-update add monast default"
 }
