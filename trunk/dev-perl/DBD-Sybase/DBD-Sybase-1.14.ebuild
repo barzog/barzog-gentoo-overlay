@@ -16,7 +16,12 @@ IUSE="test"
 
 DEPEND="virtual/perl-Module-Build
 	test? ( virtual/perl-Test-Simple )
-"
-RDEPEND=""
+	dev-db/freetds"
+RDEPEND="${DEPEND}"
 
 SRC_TEST="do"
+
+src_configure() {
+	export SYBASE=/usr
+	perl-module_src_configure
+}
