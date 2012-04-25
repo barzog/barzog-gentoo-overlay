@@ -16,7 +16,7 @@ IUSE="test"
 
 DEPEND="virtual/perl-Module-Build
 	test? ( virtual/perl-Test-Simple )
-	dev-db/freetds"
+	dev-db/freetds[mssql]"
 RDEPEND="${DEPEND}"
 
 SRC_TEST="do"
