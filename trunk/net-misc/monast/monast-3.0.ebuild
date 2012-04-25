@@ -3,6 +3,7 @@
 # $Header: $
 
 EAPI="3"
+inherit eutils
 
 BETA_REV="b4"
 
