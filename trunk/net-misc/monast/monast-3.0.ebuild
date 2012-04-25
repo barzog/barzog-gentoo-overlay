@@ -42,7 +42,7 @@ src_install() {
 	insinto /etc/init.d
 	mv contrib/init.d/rc.gentoo.monast contrib/init.d/monast
 	sed -i 's:/opt/monast/monast.py:/opt/monast/bin/monast.py:' contrib/init.d/monast
-	sed -i 's:--oknodo:-u monast\:monast:' contrib/init.d/monast
+	sed -i 's:--oknodo:-u monast\:monast -d /tmp:' contrib/init.d/monast
 	doins -r contrib/init.d/monast
 	fperms 755 /etc/init.d/monast
 }
