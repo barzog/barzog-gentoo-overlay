@@ -17,7 +17,6 @@ SRC_URI="
 LICENSE="WANPIPE"
 
 SLOT="0"
-KEYWORDS="~x86 ~amd64"
 IUSE="bitstrm bscstrm bisync sdlc edu pos sdlc mpapi adccp tdm ss7 bri"
 
 RDEPEND="

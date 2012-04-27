@@ -48,13 +48,14 @@ src_unpack() {
 	ln -s ${KV_DIR}/Makefile
 	ln -s ${KV_DIR}/arch
 	ln -s ${KV_DIR}/scripts
-#Without this strng WanCfg is not compiling
+#Without this (and Setup patch 3.5.26) kdrvtmp is not compiling
+	ln -s ${DAHDI_BUILD}/.version ${DAHDI_BUILD}/include/.version
+#Without this string WanCfg is not compiling
 	cp -ra ${S}/patches/kdrivers/include/* ${S_BUILD}/include/linux/
 	cd ${S}
-	epatch ${FILESDIR}/${PN}-3.5.20-setup.diff
 	epatch ${FILESDIR}/${PN}-3.4.1-zaptel.diff
 	epatch ${FILESDIR}/${PN}-3.4.1-wancfg.diff
-	epatch ${FILESDIR}/${PN}-3.5.24-setup.diff
+	epatch ${FILESDIR}/${PN}-3.5.26-setup.diff
 }
 
 src_compile() {
@@ -76,7 +77,6 @@ src_compile() {
 	PROTOCOLS="$(sed -re 's/^ //' -e 's/ $//' -e 's/ /,/g' <<< $PROTOCOLS)"
 
 	COMMON_ARGS="--silent --builddir=${S_BUILD} --with-linux=${S_BUILD} --usr-cc=$(tc-getCC) --protocol=${PROTOCOLS} --zaptel-path=${DAHDI_BUILD} --no-zaptel-compile"
-
 	einfo "Building kernel modules ..."
 	./Setup drivers ${COMMON_ARGS}
 
