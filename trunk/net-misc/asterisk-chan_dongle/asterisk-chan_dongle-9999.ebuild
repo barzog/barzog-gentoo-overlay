@@ -17,14 +17,13 @@ IUSE=""
 RDEPEND=">=net-misc/asterisk-1.6.2.0"
 DEPEND="${RDEPEND}"
 
-WANT_AUTOMAKE="1.11.1"
+AT_NOEAUTOMAKE=yes
 
 src_prepare() {
 	cd ${S}
-	touch Makefile.am
-#	eaclocal
-#	eautoconf
-	eautomake	
+	eaclocal
+	eautoconf
+	automake -a
 }
 
 src_install() {
