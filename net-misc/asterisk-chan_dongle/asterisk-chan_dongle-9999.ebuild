@@ -31,7 +31,8 @@ src_install() {
 	insinto /usr/$(get_libdir)/asterisk/modules
 	doins "${PN/*-/}.so"
 	insinto /etc/asterisk
-	doins etc/datacard.conf
+	doins etc/dongle.conf
 	newdoc README.txt README
 	newdoc LICENSE.txt LICENSE
+	newdoc etc/extensions.conf extensions.conf.chan_dongle
 }
