@@ -1,0 +1,164 @@
+--- Setup.orig	2012-04-27 15:51:08.000000000 +0300
++++ Setup	2012-04-27 15:52:16.000000000 +0300
+@@ -864,7 +864,7 @@
+ 		return 1
+ 	fi
+ 
+-	eval "./patches/clean_old_wanpipe.sh $DRIVER_INC_DIR $SOURCEDIR/include/linux"
++#	eval "./patches/clean_old_wanpipe.sh $DRIVER_INC_DIR $SOURCEDIR/include/linux"
+ 
+ 	wan_update_headers;  
+ 
+@@ -1333,13 +1333,13 @@
+ 		WAN_CONF_DIR=/etc/wanpipe
+ 	fi
+ 
+-	if [ ! -d $WAN_CONF_DIR ]; then
+-		\mkdir -p $WAN_CONF_DIR
++	if [ ! -d $ROOT/$WAN_CONF_DIR ]; then
++		\mkdir -p $ROOT/$WAN_CONF_DIR
+ 	fi
+ 
+ 	# Check kernel source directory
+-	if [ ! -d $WAN_CONF_DIR ]; then
+-		echo -e "\nERROR: Directory $WAN_CONF_DIR not found !\n"
++	if [ ! -d $ROOT/$WAN_CONF_DIR ]; then
++		echo -e "\nERROR: Directory ks $WAN_CONF_DIR not found !\n"
+ 		getyn "Would you like to try again"
+ 		if [ $? -ne 0 ]; then
+ 			WAN_CONF_DIR=/etc/wanpipe
+@@ -1363,18 +1363,18 @@
+ 		if [ $response ]; then 
+ 			WAN_FIRMWARE_DIR=$response
+ 		else
+-			WAN_FIRMWARE_DIR=/etc/wanpipe/firmware
++			WAN_FIRMWARE_DIR=/lib/firmware
+ 		fi
+ 	else
+ 		WAN_FIRMWARE_DIR=/etc/wanpipe/firmware
+ 	fi
+ 
+-	if [ ! -d $WAN_FIRMWARE_DIR ]; then
+-		\mkdir -p $WAN_FIRMWARE_DIR
++	if [ ! -d $ROOT/$WAN_FIRMWARE_DIR ]; then
++		\mkdir -p $ROOT/$WAN_FIRMWARE_DIR
+ 	fi
+ 
+-	if [ ! -d $WAN_FIRMWARE_DIR ]; then
+-		echo -e "\nERROR: Directory $WAN_FIRMWARE_DIR not found !\n"
++	if [ ! -d $ROOT/$WAN_FIRMWARE_DIR ]; then
++		echo -e "\nERROR: Directory fw $WAN_FIRMWARE_DIR not found !\n"
+ 		getyn "Would you like to try again?"
+ 		if [ $? -ne 0 ]; then
+ 			WAN_FIRMWARE_DIR=/etc/wanpipe/firmware
+@@ -1392,8 +1392,8 @@
+ 
+ 	WAN_INTR_DIR=/etc/wanpipe/interfaces
+ 
+-	if [ ! -d $WAN_INTR_DIR ]; then
+-		\mkdir -p $WAN_INTR_DIR
++	if [ ! -d $ROOT/$WAN_INTR_DIR ]; then
++		\mkdir -p $ROOT/$WAN_INTR_DIR
+ 	fi
+ 
+ #	if [ -d "/etc/sysconfig/network-scripts" ]; then
+@@ -1436,7 +1436,7 @@
+ 		echo
+ 
+ 		# Check kernel source directory
+-		if [ ! -d $WAN_INTR_DIR ]; then
++		if [ ! -d $ROOT/$WAN_INTR_DIR ]; then
+ 			echo -e "\nERROR: Directory $WAN_INTR_DIR not found !\n"
+ 			getyn "Would you like to try again?"
+ 			if [ $? -ne 0 ]; then
+@@ -1478,9 +1478,9 @@
+ 	fi
+ 
+ 
+-	if [ -f $ROOT/etc/wanpipe/wanrouter.rc ]; then
+-		. /etc/wanpipe/wanrouter.rc
+-	fi  
++#	if [ -f $ROOT/etc/wanpipe/wanrouter.rc ]; then
++#		. /etc/wanpipe/wanrouter.rc
++#	fi  
+ 
+ 	if [ "$WAN_DEVICES" = "" ]; then
+ 		WAN_DEVICES="wanpipe1"
+@@ -3426,7 +3426,8 @@
+ 		 ;;
+ 	ia64*)    LD_ELF=" -T $SOURCEDIR/arch/ia64/module.lds "
+ 		 ;;
+-	i686*)   LD_ELF="-m elf_i386"
++	i686*)   ARCH=i386
++		 LD_ELF="-m elf_i386"
+ 		 ;;
+ 	i586*)   ARCH=i386
+ 		 LD_ELF="-m elf_i386" 
+@@ -4967,9 +4968,9 @@
+ 
+ 	echo "Installing  ${DISTR_NAME} Utilities in $ROOT/usr/sbin"
+ 
+-	if [ ! -e $WAN_CONF_DIR ]; then
+-		\mkdir -p $WAN_CONF_DIR
+-		\mkdir -p $WAN_CONF_DIR/util
++	if [ ! -e $ROOT/$WAN_CONF_DIR ]; then
++		\mkdir -p $ROOT/$WAN_CONF_DIR
++		\mkdir -p $ROOT/$WAN_CONF_DIR/util
+ 	fi
+ 
+ 	cd $PROD_HOME/util
+@@ -4999,8 +5000,8 @@
+ 	\mkdir -p $ROOT/etc/wanpipe/lib/
+ 	\cp -f $PROD_HOME/util/wancfg_legacy/lib/* $ROOT/etc/wanpipe/lib/
+ 
+-	echo "Installing firmware in $ROOT/etc/wanpipe/firmware"
+-	\cp -rf firmware $ROOT/etc/wanpipe/
++	echo "Installing firmware in $ROOT/lib/firmware"
++	\cp -rf firmware $ROOT/lib
+ 
+ 	if [ ! -f $ROOT/etc/wanpipe/interfaces ]; then
+ 		\mkdir -p $ROOT/etc/wanpipe/interfaces
+@@ -5048,8 +5049,8 @@
+ 		make install WAN_VIRTUAL=$ROOT > /dev/null 2> /dev/null  
+ 		cd $PROD_HOME
+ 
+-		if [ ! -e /dev/wanec ]; then
+-		       	mknod /dev/wanec c 242 0
++		if [ ! -e $ROOT/dev/wanec ]; then
++		       	mknod $ROOT/dev/wanec c 242 0
+ 		fi
+ 	else
+ 		echo "Hardware Echo Cancel Utilites Not Installed"
+@@ -6830,8 +6831,8 @@
+ 					echo "Dahdi source unmodified"
+ 					echo "                        "
+ 					TDM_DCHAN="(DCHAN)"
+-					DAHDI_MAJOR=`cat $ZAPTEL_SOURCE_DIR/dahdi/version.h |  grep define | cut -d'"' -f2 | cut -d'.' -f1`
+-					DAHDI_MINOR=`cat $ZAPTEL_SOURCE_DIR/dahdi/version.h |  grep define | cut -d'"' -f2 | cut -d'.' -f2`
++					DAHDI_MAJOR=`cat $ZAPTEL_SOURCE_DIR/.version | cut -d'.' -f1`
++					DAHDI_MINOR=`cat $ZAPTEL_SOURCE_DIR/.version | cut -d'.' -f2`
+ 					PROTOCOL_DEFINES="$PROTOCOL_DEFINES -DCONFIG_PRODUCT_WANPIPE_TDM_VOICE_DCHAN -DDAHDI_$DAHDI_MAJOR$DAHDI_MINOR -DCONFIG_PRODUCT_WANPIPE_TDM_VOICE_DCHAN_ZAPTEL -DDAHDI_ISSUES"
+ 				fi
+ 	
+@@ -7384,7 +7385,7 @@
+ setup_install_quick="NO"
+ MODSYM=Module.symvers
+ DEFAULT_KERNEL_VERSION="NO"
+-TDM_VOICE_ONLY=NO      #used to detect whether this is a zaptel/dahdi only install...no API compile then
++TDM_VOICE_ONLY=YES      #used to detect whether this is a zaptel/dahdi only install...no API compile then
+ 
+ echo > $CMP_LOG
+ echo "WANPIPE DRIVER COMPILE LOG" >> $CMP_LOG
+@@ -7577,9 +7578,9 @@
+ LINUXDRIVERS_WAN="net/wanrouter"
+ 
+ superuser=NO;
+-if [ "$UID" = 0 ]; then
+-	superuser=YES;
+-fi
++#if [ "$UID" = 0 ]; then
++#	superuser=YES;
++#fi
+ 
+ # Check router home directory.
+ [ -d "$PROD_HOME" ] || {
