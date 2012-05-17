@@ -22,6 +22,7 @@ DEPEND=">=dev-db/postgresql-server-8.2
 		asciidoc? ( app-text/asciidoc )
 		dev-python/psycopg"
 RDEPEND="${DEPENDS}"
+S="${WORKDIR}/skytools-2.1.12"
 
 src_unpack(){
 	unpack ${A}
