@@ -6,11 +6,10 @@ inherit eutils autotools python
 
 DESCRIPTION="Database management tools from Skype: WAL shipping, queueing,replication."
 HOMEPAGE="http://pgfoundry.org/projects/skytools/"
-SRC_URI="http://pgfoundry.org/frs/download.php/2872/${P}.tar.gz"
+SRC_URI="http://pgfoundry.org/frs/download.php/3232/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~x86 ~sparc ~amd64"
 IUSE="asciidoc"
 EAPI="3"
 PYTHON_DEPEND="2"
@@ -22,7 +21,6 @@ DEPEND=">=dev-db/postgresql-server-8.2
 		asciidoc? ( app-text/asciidoc )
 		dev-python/psycopg"
 RDEPEND="${DEPENDS}"
-S="${WORKDIR}/skytools-2.1.12"
 
 src_unpack(){
 	unpack ${A}
