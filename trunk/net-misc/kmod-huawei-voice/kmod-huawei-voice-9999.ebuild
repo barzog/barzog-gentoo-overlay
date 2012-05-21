@@ -22,12 +22,24 @@ DEPEND="${RDEPEND}
 
 BUILD_TARGETS="all"
 ARCH=$(tc-arch-kernel)
-MODULE_NAMES="option(option:${S})
-		huawei_voice(huawei_voice:${S}"
+
+MODULE_NAMES="option_huawei(option_huawei:${S})
+                huawei_voice(huawei_voice:${S}"
 
 pkg_setup() {
-	linux-info_pkg_setup
-	CONFIG_CHECK="!CONFIG_USB_SERIAL_OPTION"
-	linux-mod_pkg_setup
+        linux-info_pkg_setup
+        CONFIG_CHECK="!CONFIG_USB_SERIAL_OPTION"
+        linux-mod_pkg_setup
 }
 
+src_prepare() {
+        cd ${S}
+        sed -i 's:option.o:option_huawei.o:' Makefile
+        mv option.c option_huawei.c
+}
+
+pkg_posinst() {
+        ewarn "In order to use modified option module you should do following:"
+        ewarn "Disable load/use of stock option module"
+        ewarn "Load option_huawei and huawei_voice modules instead"
+}
