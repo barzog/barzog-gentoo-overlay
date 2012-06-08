@@ -17,7 +17,7 @@ DEPEND="${RDEPEND}
         dev-lang/python
         sys-apps/ethtool
         sys-apps/lm_sensors
-        sys-libs/lib-compat
+#        sys-libs/lib-compat
         snmp? ( net-analyzer/net-snmp )
         ssl? ( dev-libs/openssl )"
 
