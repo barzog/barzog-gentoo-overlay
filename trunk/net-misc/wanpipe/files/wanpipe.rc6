@@ -3,6 +3,10 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
+depend() {
+        need dahdi
+}
+
 start() {
 	/usr/sbin/wanrouter start
 }
