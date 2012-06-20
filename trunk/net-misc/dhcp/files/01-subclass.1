@@ -1,0 +1,147 @@
+diff -ruN orig/dhcp-4.2.3-P2/includes/dhcpd.h dhcp-4.2.3-P2/includes/dhcpd.h
+--- orig/dhcp-4.2.3-P2/includes/dhcpd.h	2011-12-31 00:17:04.000000000 +0100
++++ dhcp-4.2.3-P2/includes/dhcpd.h	2012-04-02 22:50:55.437921000 +0200
+@@ -896,6 +896,7 @@
+ 		permit_after
+ 	} type;
+ 	struct class *class;
++	struct data_string hash_string;
+ 	TIME after;	/* date after which this clause applies */
+ };
+ 
+diff -ruN orig/dhcp-4.2.3-P2/server/confpars.c dhcp-4.2.3-P2/server/confpars.c
+--- orig/dhcp-4.2.3-P2/server/confpars.c	2011-07-01 13:58:53.000000000 +0200
++++ dhcp-4.2.3-P2/server/confpars.c	2012-04-02 22:49:42.996750000 +0200
+@@ -1378,6 +1378,21 @@
+ }
+ #endif /* defined (FAILOVER_PROTOCOL) */
+ 
++
++/* Permit_same_class returns 1 if both permit structs contain
++ * the same class and the same hash_string aka subclass. */
++
++int permit_same_class(struct permit *plp, struct permit *prp)
++{
++	if (plp -> class != prp -> class)
++		return 0;
++	if (plp -> hash_string.len == 0 ||
++	    plp -> hash_string.len != prp -> hash_string.len)
++		return 0;
++	return memcmp(plp -> hash_string.data,
++		      prp -> hash_string.data, prp -> hash_string.len) == 0;
++}
++
+ /* Permit_list_match returns 1 if every element of the permit list in lhs
+    also appears in rhs.   Note that this doesn't by itself mean that the
+    two lists are equal - to check for equality, permit_list_match has to
+@@ -1397,7 +1412,7 @@
+ 		for (prp = rhs; prp; prp = prp -> next) {
+ 			if (prp -> type == plp -> type &&
+ 			    (prp -> type != permit_class ||
+-			     prp -> class == plp -> class)) {
++			     permit_same_class(prp, plp))) {
+ 				matched = 1;
+ 				break;
+ 			}
+@@ -1424,6 +1439,7 @@
+ 	struct lease *lpchain = (struct lease *)0, *lp;
+ 	TIME t;
+ 	int is_allow = 0;
++	struct data_string *dp;
+ 
+ 	pool = (struct pool *)0;
+ 	status = pool_allocate (&pool, MDL);
+@@ -1598,10 +1614,39 @@
+ 				}
+ 				permit -> type = permit_class;
+ 				permit -> class = (struct class *)0;
++
+ 				find_class (&permit -> class, val, MDL);
+-				if (!permit -> class)
++				if (!permit -> class) {
+ 					parse_warn (cfile,
+ 						    "no such class: %s", val);
++					break;
++				}
++
++				dp = &permit -> hash_string;
++
++				token = peek_token (&val, (unsigned *)0, cfile);
++				if (token == STRING) {
++					token = next_token(&val,
++							&dp -> len, cfile);
++					dp -> buffer = (struct buffer *)0;
++					if (!buffer_allocate (&dp -> buffer,
++					    dp -> len + 1, MDL)) {
++						free_permit(permit, MDL);
++						continue;
++					}
++					dp -> terminated = 1;
++					dp -> data = &dp -> buffer -> data [0];
++					memcpy ((char *)dp -> buffer -> data,
++						val, dp -> len + 1);
++				} else if (token == NUMBER_OR_NAME ||
++					   token == NUMBER) {
++					memset (dp, 0, sizeof *dp);
++					if (!parse_cshl (dp, cfile)) {
++						free_permit(permit, MDL);
++						continue;
++					}
++				}
++
+ 				break;
+ 
+ 			      case AFTER:
+diff -ruN orig/dhcp-4.2.3-P2/server/dhcp.c dhcp-4.2.3-P2/server/dhcp.c
+--- orig/dhcp-4.2.3-P2/server/dhcp.c	2011-07-20 00:22:49.000000000 +0200
++++ dhcp-4.2.3-P2/server/dhcp.c	2012-04-02 22:47:00.838775000 +0200
+@@ -4239,12 +4239,28 @@
+ 			
+ 		      case permit_class:
+ 			for (i = 0; i < packet -> class_count; i++) {
+-				if (p -> class == packet -> classes [i])
+-					return 1;
+-				if (packet -> classes [i] &&
+-				    packet -> classes [i] -> superclass &&
+-				    (packet -> classes [i] -> superclass ==
+-				     p -> class))
++				int r = 0;
++				struct class *pc = packet -> classes[i];
++
++				/* Does packet class or superclass match ? */
++				if (!p -> class || !pc)
++					continue;
++				if (p -> class == pc)
++					r = 1;
++				if (p -> class == pc -> superclass)
++					r = 1;
++
++				/* Does the subclass match as well ? */
++				if (r && p -> hash_string.len) {
++
++					if (p -> hash_string.len !=
++					    pc -> hash_string.len ||
++					    memcmp(p -> hash_string.data,
++						   pc -> hash_string.data,
++						   pc -> hash_string.len))
++							r = 0;
++				}
++				if (r)
+ 					return 1;
+ 			}
+ 			break;
+diff -ruN orig/dhcp-4.2.3-P2/server/salloc.c dhcp-4.2.3-P2/server/salloc.c
+--- orig/dhcp-4.2.3-P2/server/salloc.c	2009-11-20 02:49:03.000000000 +0100
++++ dhcp-4.2.3-P2/server/salloc.c	2012-04-02 22:47:00.844773000 +0200
+@@ -248,7 +248,10 @@
+ 	const char *file;
+ 	int line;
+ {
+-	if (permit -> type == permit_class)
++	if (permit -> type == permit_class) {
+ 		class_dereference (&permit -> class, MDL);
++		if (permit -> hash_string.buffer)
++			buffer_dereference(&permit -> hash_string.buffer, MDL);
++	}
+ 	dfree (permit, file, line);
+ }
