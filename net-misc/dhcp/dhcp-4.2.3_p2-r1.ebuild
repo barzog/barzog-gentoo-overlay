@@ -115,7 +115,7 @@ src_prepare() {
 	cd bind-*/
 	epatch "${FILESDIR}"/${PN}-4.2.2-bind-parallel-build.patch #380717
 	epatch "${FILESDIR}"/${PN}-4.2.2-bind-build-flags.patch
-	if use subsclasess ; then
+	if use subsclasses ; then
 		cd ${S}
 		epatch "${FILESDIR}"/01-subclass
 		epatch "${FILESDIR}"/02-log-agent-options	
