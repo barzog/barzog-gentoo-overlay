@@ -1,0 +1,10 @@
+--- includes/dhcpd.h.orig	2012-06-20 16:11:24.000000000 +0300
++++ includes/dhcpd.h	2012-06-20 16:11:53.000000000 +0300
+@@ -896,6 +896,7 @@
+ 		permit_after
+ 	} type;
+ 	struct class *class;
++	struct data_string hash_string;
+ 	TIME after;	/* date after which this clause applies */
+ };
+ 
