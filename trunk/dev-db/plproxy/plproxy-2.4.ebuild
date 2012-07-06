@@ -7,7 +7,7 @@ inherit eutils autotools
 
 DESCRIPTION="PL/Proxy is database partitioning system implemented as PL language."
 HOMEPAGE="http://pgfoundry.org/projects/plproxy/"
-SRC_URI="http://pgfoundry.org/frs/download.php/3160/${P}.tar.gz"
+SRC_URI="http://pgfoundry.org/frs/download.php/3274/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
