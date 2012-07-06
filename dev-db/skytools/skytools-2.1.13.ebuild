@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
+EAPI="3"
+
 inherit eutils autotools python
 
 DESCRIPTION="Database management tools from Skype: WAL shipping, queueing,replication."
@@ -11,7 +13,7 @@ SRC_URI="http://pgfoundry.org/frs/download.php/3232/${P}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 IUSE="asciidoc"
-EAPI="3"
+
 PYTHON_DEPEND="2"
 SUPPORT_PYTHON_ABIS="1"
 RESTRICT_PYTHON_ABIS="3.* *-jython"
