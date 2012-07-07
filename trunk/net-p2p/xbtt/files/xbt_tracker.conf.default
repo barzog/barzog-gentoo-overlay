@@ -2,6 +2,7 @@ mysql_host = localhost
 mysql_user = xbtt
 mysql_password = defaultpasswd
 mysql_database = xbt_tracker
+pid_file = /var/run/xbtt/xbt_tracker.pid
 
 announce_interval = 1800
 anonymous_connect = 0

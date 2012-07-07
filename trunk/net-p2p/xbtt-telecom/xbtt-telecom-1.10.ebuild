@@ -50,6 +50,10 @@ src_install() {
 	newsbin xbt/xbt_tracker xbt_tracker-telecom
 	newinitd "${FILESDIR}/xbtt.initd" xbtt-telecom
 	dodir /etc/xbtt-telecom
-	insinto /etc/xbtt-telecom.by
+	insinto /etc/xbtt-telecom
 	newins xbt/xbt_tracker.conf.default xbt_tracker.conf.default
+        dodir /var/run/xbtt
+        fowners xbtt:xbtt /var/run/xbtt
+        fowners xbtt:xbtt /etc/xbtt-telecom
+        fperms 750 /etc/xbtt-telecom
 }

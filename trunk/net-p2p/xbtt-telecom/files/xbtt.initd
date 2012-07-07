@@ -6,7 +6,7 @@ depend() {
         
 start() {
         ebegin "Starting XBT Tracker (Telecom)"
-        start-stop-daemon --start --quiet -b -m -p /var/run/xbt_tracker-telecom.pid --user xbtt:xbtt --exec /usr/sbin/xbt_tracker-telecom -- --conf_file /etc/xbtt-telecom/xbt_tracker-telecom.conf
+        start-stop-daemon --start --quiet --user xbtt:xbtt --exec /usr/sbin/xbt_tracker-telecom -- --conf_file /etc/xbtt-telecom/xbt_tracker-telecom.conf
         eend $?
 }
 
