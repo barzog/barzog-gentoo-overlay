@@ -36,6 +36,10 @@ src_install() {
 	insinto /etc/xbtt
 	newins "${FILESDIR}/xbt_tracker.conf.default" xbt_tracker.conf.default
 	newins "${FILESDIR}/xbt_tracker.sql" xbt_tracker.sql
+	dodir /var/run/xbtt
+	fowners xbtt:xbtt /var/run/xbtt
+	fowners xbtt:xbtt /etc/xbtt
+	fperms 750 /etc/xbtt
 }
 
 pkg_postinst() {
