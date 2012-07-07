@@ -1,27 +1,18 @@
-#!/bin/sh
+#!/sbin/runscript
 
+depend() {
+        need net
+}
+        
 start() {
-        echo "Starting XBT Tracker (Telecom)"
-        start-stop-daemon --start --quiet --exec /usr/sbin/xbt_tracker-telecom -- --conf_file /etc/xbtt-telecom/xbt_tracker-telecom.conf
-        echo $?
+        ebegin "Starting XBT Tracker (Telecom)"
+        start-stop-daemon --start --quiet -b -m -p /var/run/xbt_tracker-telecom.pid --user xbtt:xbtt --exec /usr/sbin/xbt_tracker-telecom -- --conf_file /etc/xbtt-telecom/xbt_tracker-telecom.conf
+        eend $?
 }
 
 stop() {
-        echo "Stopping XBT Tracker (Telecom)"
+        ebegin "Stopping XBT Tracker (Telecom)"
         start-stop-daemon --stop --quiet --pidfile /var/run/xbt_tracker-telecom.pid
-        echo $?
+        eend $?
 }
 
-case "$1" in
-        start)
-                start
-;;
-        stop)
-                stop
-;;
-        *)
-                echo "Usage: $0 {start|stop}"
-                exit 1
-esac
-
-exit 1
