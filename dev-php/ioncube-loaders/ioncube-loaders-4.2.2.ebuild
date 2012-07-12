@@ -8,7 +8,7 @@ PHP_EXT_NAME="ioncube_loader"
 PHP_EXT_ZENDEXT="yes"
 PHP_EXT_INI="yes"
 
-inherit php-ext-source-r2
+inherit php-ext-source-r2 depend.php
 
 KEYWORDS="~amd64 ~x86"
 
