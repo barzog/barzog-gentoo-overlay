@@ -45,7 +45,12 @@ pkg_setup() {
 src_unpack() {
     unpack ${A}
 
-    IONCUBE_SO_FILE="${PHP_EXT_NAME}_lin_${PHP_VER}.so"
+# Detect if we use ZTS and change the file path accordingly
+    if has_zts ; then
+	IONCUBE_SO_FILE="${PHP_EXT_NAME}_lin_${PHP_VER}_ts.so"
+    else
+        IONCUBE_SO_FILE="${PHP_EXT_NAME}_lin_${PHP_VER}.so"
+    fi
     cd ${S}
     mkdir modules
     mv ${IONCUBE_SO_FILE} "modules/${PHP_EXT_NAME}.so"
@@ -60,11 +65,8 @@ src_install() {
     php-ext-source-r2_src_install
 
     # Install the binary
-#    insinto ${EXT_DIR}
-#    doins "${PHP_EXT_NAME}.so" 
-
-    insinto "${PHP_LIB_DIR}"
-    doins loader-wizard.php
+    insinto ${EXT_DIR}
+    doins "${PHP_EXT_NAME}.so" 
 
     dodoc-php README.txt
     dodoc-php LICENSE.txt
