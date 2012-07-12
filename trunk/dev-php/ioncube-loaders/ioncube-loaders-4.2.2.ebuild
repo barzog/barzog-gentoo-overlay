@@ -8,7 +8,7 @@ PHP_EXT_NAME="ioncube_loader"
 PHP_EXT_ZENDEXT="yes"
 PHP_EXT_INI="yes"
 
-inherit php-ext-source-r2 depend.php
+inherit php-ext-source-r2
 
 KEYWORDS="~amd64 ~x86"
 
@@ -38,19 +38,12 @@ pkg_setup() {
     PHP_VER=$(echo ${PHP_VER} | sed -e's#dev-lang/php-\([0-9]*\.[0-9]*\)\..*#\1#')
     QA_TEXTRELS="${EXT_DIR/\//}/${PHP_EXT_NAME}.so"
     QA_EXECSTACK="${EXT_DIR/\//}/${PHP_EXT_NAME}.so"
-
-    php_binary_extension
 }
 
 src_unpack() {
     unpack ${A}
 
-# Detect if we use ZTS and change the file path accordingly
-    if has_zts ; then
-	IONCUBE_SO_FILE="${PHP_EXT_NAME}_lin_${PHP_VER}_ts.so"
-    else
-        IONCUBE_SO_FILE="${PHP_EXT_NAME}_lin_${PHP_VER}.so"
-    fi
+    IONCUBE_SO_FILE="${PHP_EXT_NAME}_lin_${PHP_VER}.so"
     cd ${S}
     mkdir modules
     mv ${IONCUBE_SO_FILE} "modules/${PHP_EXT_NAME}.so"
