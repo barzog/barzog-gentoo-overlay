@@ -18,7 +18,7 @@ IUSE="debug messages"
 
 DEPEND="net-libs/libpcap"
 
-S="${WORKDIR}/dns_flood_detector"
+S="${WORKDIR}/dns_flood_detector_1.2"
 QA_PRESTRIPPED="/usr/sbin/dns_flood_detector"
 
 src_compile() {
