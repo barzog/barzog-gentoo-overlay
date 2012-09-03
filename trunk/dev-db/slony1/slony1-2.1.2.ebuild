@@ -46,7 +46,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}/${PN}-${PV}-ldflags.patch"
+	epatch "${FILESDIR}/slony1-2.1.1-ldflags.patch"
 }
 
 src_configure() {
