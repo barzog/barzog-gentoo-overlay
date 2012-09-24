@@ -21,7 +21,7 @@ RDEPEND="$(ruby_implementation_depend ruby18 '>=' -1.8.6)[ssl]"
 ruby_add_rdepend "
 	dev-ruby/rails:2.3
 	>=dev-ruby/rubygems-1.3.7
-	~dev-ruby/rack-1.1.0
+	>=dev-ruby/rack-1.1.0
 	dev-ruby/rake
 	dev-ruby/haml
 	dev-ruby/sass
