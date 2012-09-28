@@ -1,0 +1,191 @@
+--- includes/dhcpd.h.original	2012-09-28 10:12:31.000000000 +0300
++++ includes/dhcpd.h	2012-09-28 10:14:28.000000000 +0300
+@@ -719,6 +719,7 @@
+ # define SV_LDAP_TLS_RANDFILE           77
+ #endif
+ #endif
++# define SV_ONE_LEASE_PER_MAC		100
+ 
+ #if !defined (DEFAULT_PING_TIMEOUT)
+ # define DEFAULT_PING_TIMEOUT 1
+--- server/dhcp.c.original	2012-09-28 10:14:48.000000000 +0300
++++ server/dhcp.c	2012-09-28 10:27:25.000000000 +0300
+@@ -3291,6 +3291,34 @@
+ 	int have_client_identifier = 0;
+ 	struct data_string client_identifier;
+ 	struct hardware h;
++        /* XXX (Bart Van den Broeck <bart@kuleuven.net>)
++         * XXX (bart) Record whether the one-lease-per-mac option is set.
++         * XXX If it is, client identifier mismatches will be ignored. */
++        int one_lease_per_mac = 0;
++        int one_lease_per_mac_fx = 0;
++        struct option_state *options = (struct option_state *)0;
++        int ignorep;
++
++        option_state_allocate (&options, MDL);
++        execute_statements_in_scope ((struct binding_value **)0,
++                                     (struct packet *)0,
++                                     (struct lease *)0,
++                                     (struct client_state *)0,
++                                     (struct option_state *)0,
++                                     options, &global_scope,
++                                     root_group,
++                                     (struct group *)0);
++        if ((oc = lookup_option (&server_universe, options,
++                                 SV_ONE_LEASE_PER_MAC)) &&
++            evaluate_boolean_option_cache (&ignorep,
++                                           (struct packet *)0,
++                                           (struct lease *)0,
++                                           (struct client_state *)0,
++                                           options, (struct option_state *)0,
++                                           &global_scope, oc, MDL)) {
++                one_lease_per_mac = 1;
++        }
++        option_state_dereference (&options, MDL);
+ 
+ #if defined(FAILOVER_PROTOCOL)
+ 	/* Quick check to see if the peer has leases. */
+@@ -3546,19 +3574,29 @@
+ 		 * may be assigned to a differently /client-identified/ client
+ 		 * with the same MAC address.
+ 		 */
++                /* XXX (bart) Only consider client identifier mismatches
++                 * XXX if the one-lease-per-mac option is not set. */		 
+ 		if (hw_lease -> binding_state != FTS_FREE &&
+ 		    hw_lease -> binding_state != FTS_BACKUP &&
+ 		    hw_lease -> uid &&
+ 		    (!have_client_identifier ||
+ 		     hw_lease -> uid_len != client_identifier.len ||
+ 		     memcmp (hw_lease -> uid, client_identifier.data,
+-			     hw_lease -> uid_len))) {
++                             hw_lease -> uid_len)) &&
++                    (one_lease_per_mac_fx = 1) && !one_lease_per_mac) {		     
+ #if defined (DEBUG_FIND_LEASE)
+ 			log_info ("wrong client identifier: %s",
+ 				  piaddr (hw_lease -> ip_addr));
+ #endif
+ 			goto n_hw;
+ 		}
++#if defined (DEBUG_FIND_LEASE)
++                if (one_lease_per_mac && one_lease_per_mac_fx == 1) {
++                        log_info ("Skipping \"%s%s\" due to one-lease-per-mac set",
++                                  "wrong client identifier: ",
++                                  piaddr (hw_lease -> ip_addr));
++                }
++#endif		
+ 		if (hw_lease -> subnet -> shared_network != share) {
+ #if defined (DEBUG_FIND_LEASE)
+ 			log_info ("wrong network segment: %s",
+@@ -3639,12 +3677,20 @@
+ 	 * mismatch).  In this case we may not want to give the client the
+ 	 * lease, if doing so may potentially be an addressing conflict.
+ 	 */
++        /* XXX (bart) Only consider client identifier mismatches
++         * XXX if the one-lease-per-mac option is not set. */	 
+ 	if (ip_lease &&
+ 	    (ip_lease -> uid ?
+-	     (!have_client_identifier ||
+-	      ip_lease -> uid_len != client_identifier.len ||
+-	      memcmp (ip_lease -> uid, client_identifier.data,
+-		      ip_lease -> uid_len)) :
++             ((!have_client_identifier ||
++               ip_lease -> uid_len != client_identifier.len ||
++               memcmp (ip_lease -> uid, client_identifier.data,
++                       ip_lease -> uid_len)) &&
++              (!one_lease_per_mac || !(one_lease_per_mac_fx = 3) ||
++               (ip_lease -> hardware_addr.hbuf [0] != packet -> raw -> htype ||
++                ip_lease -> hardware_addr.hlen != packet -> raw -> hlen + 1 ||
++                memcmp (&ip_lease -> hardware_addr.hbuf [1],
++                        packet -> raw -> chaddr,
++                        (unsigned)(ip_lease -> hardware_addr.hlen - 1))))) :
+ 	     (ip_lease -> hardware_addr.hbuf [0] != packet -> raw -> htype ||
+ 	      ip_lease -> hardware_addr.hlen != packet -> raw -> hlen + 1 ||
+ 	      memcmp (&ip_lease -> hardware_addr.hbuf [1],
+@@ -3670,6 +3716,15 @@
+ 			lease_dereference (&ip_lease, MDL);
+ 		}
+ 	}
++#if defined (DEBUG_FIND_LEASE)
++        if (one_lease_per_mac && one_lease_per_mac_fx == 3) {
++                if (ip_lease -> binding_state != FTS_FREE &&
++                    ip_lease -> binding_state != FTS_BACKUP) {
++                        log_info ("Skipping \"%s\" due to one-lease-per-mac set.",
++                                  "rejecting lease for requested address.");
++                }
++        }
++#endif
+ 
+ 	/*
+ 	 * If we got an ip_lease and a uid_lease or hw_lease, and ip_lease
+@@ -3748,12 +3803,21 @@
+ 				"database conflict - call for help!");
+ 		}
+ 
+-		if (ip_lease && ip_lease != uid_lease) {
++                /* XXX (bart) Ignore client identifier mismatches
++                 * XXX if the one-lease-per-mac option is set. */
++                if (ip_lease && ip_lease != uid_lease &&
++                    (one_lease_per_mac_fx = 4) && !one_lease_per_mac) {
+ #if defined (DEBUG_FIND_LEASE)
+ 			log_info ("requested address not available.");
+ #endif
+ 			lease_dereference (&ip_lease, MDL);
+ 		}
++#if defined (DEBUG_FIND_LEASE)
++                if (one_lease_per_mac && one_lease_per_mac_fx == 4) {
++                        log_info ("Skipping \"%s\" due to one-lease-per-mac set.",
++                                  "requested address not available.");
++                }
++#endif		
+ 	}
+ 
+ 	/* If we get to here with both fixed_lease and ip_lease not
+@@ -3904,18 +3968,32 @@
+ 			   send a client identifier and it's a bootp client,
+ 			   but the lease has a client identifier, we still
+ 			   let the client have a lease. */
++                        /* XXX (bart) Ignore client identifier mismatches
++                         * XXX if the one-lease-per-mac option is set. */			   
+ 			if (!hw_lease -> uid_len ||
+ 			    (have_client_identifier
+-			     ? (hw_lease -> uid_len ==
+-				client_identifier.len &&
+-				!memcmp (hw_lease -> uid,
+-					 client_identifier.data,
+-					 client_identifier.len))
+-			     : packet -> packet_type == 0)) {
++                             ? ((hw_lease -> uid_len ==
++                                 client_identifier.len &&
++                                 !memcmp (hw_lease -> uid,
++                                          client_identifier.data,
++                                          client_identifier.len)) ||
++                                (one_lease_per_mac &&
++                                 (one_lease_per_mac_fx = 2)))
++                             : packet -> packet_type == 0 ||
++                                (one_lease_per_mac &&
++                                 (one_lease_per_mac_fx = 2)))) {			    
+ 				lease_reference (&lease, hw_lease, MDL);
+ 				if (lease -> host)
+ 					host_dereference (&lease -> host, MDL);
+ #if defined (DEBUG_FIND_LEASE)
++                                if (one_lease_per_mac &&
++                                    one_lease_per_mac_fx == 2) {
++                                        log_info ("Skipping \"%s%s.\" due to one-lease-per-mac set.",
++                                                  "not choosing hardware lease: ",
++                                                  "uid mismatch");
++                                }
++#endif					
++#if defined (DEBUG_FIND_LEASE)
+ 				log_info ("choosing hardware lease.");
+ #endif
+ 			} else {
+--- server/stables.c.original	2012-09-28 10:12:58.000000000 +0300
++++ server/stables.c	2012-09-28 10:27:43.000000000 +0300
+@@ -234,6 +234,7 @@
+ 	{ "adaptive-lease-time-threshold", "B",	&server_universe,  50, 1 },
+ 	{ "do-reverse-updates", "f",		&server_universe,  51, 1 },
+ 	{ "fqdn-reply", "f",			&server_universe,  52, 1 },
++        { "one-lease-per-mac", "f",                &server_universe, 100, 1 },	
+ 	{ "preferred-lifetime", "T",		&server_universe,  53, 1 },
+ 	{ "dhcpv6-lease-file-name", "t",	&server_universe,  54, 1 },
+ 	{ "dhcpv6-pid-file-name", "t",		&server_universe,  55, 1 },
