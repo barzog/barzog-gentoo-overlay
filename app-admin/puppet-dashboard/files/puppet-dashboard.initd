@@ -1,0 +1,35 @@
+#!/sbin/runscript
+# Copyright 1999-2011 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+RAILS_ENV=${RAILS_ENV:-production}
+DASHBOARD_DIR=${DASHBOARD_DIR:-/var/lib/puppet-dashboard}
+DASHBOARD_ADDRESS=${DASHBOARD_ADDRESS:-localhost}
+DASHBOARD_PORT=${DASHBOARD_PORT:-3140}
+DASHBOARD_USER=${DASHBOARD_USER:-puppet-dashboard}
+DASHBOARD_GROUP=${DASHBOARD_GROUP:-puppet-dashboard}
+DASHBOARD_PIDFILE="/var/run/puppet-dashboard.pid"
+
+depend() {
+	use apache2 git-daemon mysql net postgresql svnserve
+}
+
+start() {
+	ebegin "Starting puppet-dashboard"
+	cd "${DASHBOARD_DIR}"
+	start-stop-daemon --start --quiet --user ${DASHBOARD_USER}:${DASHBOARD_GROUP} \
+		--pidfile "${DASHBOARD_PIDFILE}" \
+		--exec /usr/bin/ruby "${DASHBOARD_DIR}"/script/server -- \
+		--daemon --environment=${RAILS_ENV} \
+		--binding=${DASHBOARD_ADDRESS} --port=${DASHBOARD_PORT} \
+		${DASHBOARD_OPTS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping puppet-dashboard"
+	cd "${DASHBOARD_DIR}"
+	start-stop-daemon --signal INT --quiet --pidfile "${DASHBOARD_PIDFILE}"
+	eend $?
+}

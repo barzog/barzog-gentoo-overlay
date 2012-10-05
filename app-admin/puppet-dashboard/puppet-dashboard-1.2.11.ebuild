@@ -1,9 +1,10 @@
 # Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
+# Get from http://git.csc.ncsu.edu/gitweb/?p=gentoo-vnkuznet-overlay.git;a=tree;f=app-admin/puppet-dashboard;hb=HEAD
 
-EAPI="3"
-USE_RUBY="ruby18"
+EAPI="4"
+USE_RUBY="ruby18 ruby19"
 inherit eutils confutils depend.apache ruby-ng
 
 DESCRIPTION="The Puppet Dashboard is a web interface and reporting tool for your
@@ -12,16 +13,17 @@ HOMEPAGE="https://github.com/puppetlabs/puppet-dashboard/"
 SRC_URI="http://www.puppetlabs.com/downloads/dashboard/${P}.tar.gz"
 
 KEYWORDS="~amd64"
-LICENSE="GPL-2"
+LICENSE="Apache-2.0"
 SLOT="0"
 IUSE="fastcgi imagemagick mysql openid passenger postgres sqlite3"
+REQUIRED_USE="|| ( mysql postgres sqlite3 )"
 
 RDEPEND="$(ruby_implementation_depend ruby18 '>=' -1.8.6)[ssl]"
 
 ruby_add_rdepend "
 	dev-ruby/rails:2.3
 	>=dev-ruby/rubygems-1.3.7
-	>=dev-ruby/rack-1.1.0
+	dev-ruby/rack
 	dev-ruby/rake
 	dev-ruby/haml
 	dev-ruby/sass
@@ -36,71 +38,81 @@ ruby_add_rdepend "dev-ruby/activerecord:2.3[mysql?,postgres?,sqlite3?]"
 ruby_add_rdepend passenger www-apache/passenger
 
 DASHBOARD_DIR="/var/lib/${PN}"
+DASHBOARD_USER="${PN}"
+DASHBOARD_GROUP="${PN}"
 
 pkg_setup() {
-	confutils_require_any mysql postgres sqlite3
-	enewgroup dashboard
+	enewgroup "${DASHBOARD_GROUP}"
 	# home directory is required for SCM.
-	enewuser dashboard -1 -1 "${DASHBOARD_DIR}" dashboard
+	enewuser "${DASHBOARD_USER}" -1 -1 "${DASHBOARD_DIR}" "${DASHBOARD_USER}"
 }
 
 all_ruby_prepare() {
-	rm -rf vendor/rails || die
-	#rm -rf vendor/gems || die
-	rm -rf ext || die
-	rm -rf log || die
+	rm -rf vendor/rails
+	#rm -rf vendor/gems
+	rm -rf ext
+	rm -rf log
 	echo "CONFIG_PROTECT=\"${DASHBOARD_DIR}/config\"" > "${T}/50${PN}"
 	echo "CONFIG_PROTECT_MASK=\"${DASHBOARD_DIR}/config/locales ${DASHBOARD_DIR}/config/settings.yml\"" >> "${T}/50${PN}"
 }
 
 all_ruby_install() {
-	dodoc {CHANGELOG,COPYING,LICENSE,VERSION} || die
-	rm .autotest .gems .gitignore CHANGELOG COPYING LICENSE README.markdown README_PACKAGES.markdown RELEASE_NOTES.md || die
+	dodoc {CHANGELOG,LICENSE,VERSION,README.markdown,README_PACKAGES.markdown,CONTRIBUTING.md,PLUGINS.md,SELENIUM.md}
+	rm .autotest .gems .gitignore CHANGELOG LICENSE README.markdown \
+	README_PACKAGES.markdown CONTRIBUTING.md  PLUGINS.md  SELENIUM.md
 
 	insinto "${DASHBOARD_DIR}"
-	doins -r . || die
+	doins -r .
 
-	keepdir /var/log/${PN} || die
-	dosym /var/log/${PN}/ "${DASHBOARD_DIR}/log" || die
+	keepdir /var/log/"${PN}"
+	dosym /var/log/"${PN}"/ "${DASHBOARD_DIR}/log"
 
-	fowners -R dashboard:dashboard \
-		"${DASHBOARD_DIR}/config/environment.rb" \
-		/var/log/${PN} || die
-	# for SCM
-	fowners dashboard:dashboard "${DASHBOARD_DIR}" || die
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}/${PN}".logrotate "${PN}"
+
+	fowners "${DASHBOARD_USER}":"${DASHBOARD_GROUP}" "${DASHBOARD_DIR}"
+	fowners -R "${DASHBOARD_USER}":"${DASHBOARD_GROUP}" \
+		"${DASHBOARD_DIR}"/config/environment.rb \
+		/var/log/"${PN}"
 
 	if use passenger ; then
 		has_apache
 		insinto "${APACHE_VHOSTS_CONFDIR}"
-		doins "${FILESDIR}/10_dashboard_vhost.conf" || die
+		doins "${FILESDIR}/10_${PN}_vhost.conf"
 	else
-		newconfd "${FILESDIR}/${PN}.confd" ${PN} || die
-		newinitd "${FILESDIR}/${PN}.initd" ${PN} || die
-		keepdir /var/run/${PN} || die
-		fowners -R dashboard:dashboard /var/run/${PN} || die
-		#dosym /var/run/${PN}/ "${DASHBOARD_DIR}/tmp/pids" || die
+		newconfd "${FILESDIR}/${PN}.confd" "${PN}"
+		newinitd "${FILESDIR}/${PN}.initd" "${PN}"
+		keepdir /var/run/"${PN}"
+		fowners -R "${DASHBOARD_USER}":"${DASHBOARD_GROUP}" /var/run/"${PN}"
+		#dosym /var/run/"${PN}"/ "${DASHBOARD_DIR}/tmp/pids"
 	fi
-	doenvd "${T}/50${PN}" || die
+
+	doenvd "${T}/50${PN}"
+
 }
 
 pkg_postinst() {
 	einfo
 	if [ -e "${ROOT}${DASHBOARD_DIR}/config/initializers/session_store.rb" ] ; then
 		elog "Execute the following command to upgrade environment:"
-		elog
-		elog "# emerge --config \"=${CATEGORY}/${PF}\""
+		elog "		# emerge --config \"=${CATEGORY}/${PF}\""
 		elog
 		elog "For upgrade instructions take a look at:"
 		elog "http://docs.puppetlabs.com/dashboard/index.html"
 	else
 		elog "Execute the following command to initlize environment:"
-		elog
-		elog "# cd ${DASHBOARD_DIR}"
-		elog "# cp config/database.yml.example config/database.yml"
-		elog "# cp config/settings.yml.example config/settings.yml"
-		elog "# \${EDITOR} config/database.yml"
-		elog "# \${EDITOR} config/settings.yml"
-		elog "# emerge --config \"=${CATEGORY}/${PF}\""
+		elog "	1. Install a MySQL server if you don't already have one"
+		elog "		# cd ${DASHBOARD_DIR}"
+		elog "	2. Create an `/etc/puppet-dashboard/database.yml` file."
+		elog "		# cp config/database.yml.example config/database.yml"
+		elog "		# cp config/settings.yml.example config/settings.yml"
+		elog "		# \${EDITOR} config/database.yml"
+		elog "		# \${EDITOR} config/settings.yml"
+		elog "	3. Apply the database migrations by running the following"
+		elog "	   command:"
+		elog "		# emerge --config \"=${CATEGORY}/${PF}\""
+		elog "	4. Start the Puppet Dashboard server:"
+		elog "		# rc-service ${PN} start"
 		elog
 		elog "Installation notes are at official site:"
 		elog "http://docs.puppetlabs.com/dashboard/index.html"
@@ -119,29 +131,23 @@ pkg_config() {
 
 	cd "${DASHBOARD_DIR}"
 	if [ -e "${DASHBOARD_DIR}/config/initializers/session_store.rb" ] ; then
-		einfo
-		einfo "Upgrade database."
-		einfo
-
 		einfo "Migrate database."
-		RAILS_ENV="${RAILS_ENV}" ${RUBY} -S rake db:migrate || die
-		#einfo "Upgrade the plugin migrations."
-		#RAILS_ENV="${RAILS_ENV}" ${RUBY} -S rake db:migrate:upgrade_plugin_migrations # || die
-		#RAILS_ENV="${RAILS_ENV}" ${RUBY} -S rake db:migrate_plugins || die
+		rake RAILS_ENV="${RAILS_ENV}" db:migrate || die
 		einfo "Clear the cache and the existing sessions."
-		${RUBY} -S rake tmp:cache:clear || die
-		${RUBY} -S rake tmp:sessions:clear || die
+		rake tmp:cache:clear || die
+		rake tmp:sessions:clear || die
 	else
 		einfo
 		einfo "Initialize database."
 		einfo
+		rake RAILS_ENV="${RAILS_ENV}" db:create
 
 		einfo "Generate a session store secret."
-		${RUBY} -S rake generate_session_store || die
+		rake generate_session_store || die
 		einfo "Create the database structure."
-		RAILS_ENV="${RAILS_ENV}" ${RUBY} -S rake db:migrate || die
+		rake RAILS_ENV="${RAILS_ENV}" db:migrate || die
 		einfo "Insert default configuration data in database."
-		RAILS_ENV="${RAILS_ENV}" ${RUBY} -S rake dashboard:load_default_data || die
+		rake RAILS_ENV="${RAILS_ENV}" dashboard:load_default_data || die
 	fi
 
 	if [ ! -e "${DASHBOARD_DIR}/config/email.yml" ] ; then

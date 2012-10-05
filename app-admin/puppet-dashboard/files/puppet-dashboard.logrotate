@@ -1,0 +1,10 @@
+# Rotate puppet-dashboard logs
+/var/log/puppet-dashboard/*.log {
+  daily
+  missingok
+  rotate 7
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
