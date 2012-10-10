@@ -33,7 +33,8 @@ HPACUCLI_LOCKDIR="/var/lock/hpacucli"
 
 QA_PRESTRIPPED="/opt/hp/hpacucli/hpacucli.bin"
 QA_EXECSTACK="opt/hp/hpacucli/libcpqimgr.so
-	opt/hp/hpacucli/hpacucli.bin"
+	opt/hp/hpacucli/hpacucli.bin
+	opt/hp/hpacucli/libcpqimgr-x86_64.so"
 
 src_install() {
 	local MY_S="${S}/opt/compaq/${PN}/bld"
