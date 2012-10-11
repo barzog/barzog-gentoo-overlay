@@ -4,14 +4,13 @@
 
 EAPI="4"
 
-inherit git-2 linux-info linux-mod multilib toolchain-funcs
+inherit linux-info linux-mod multilib toolchain-funcs
 
 MY_PN="ipt-netflow"
 
 DESCRIPTION="Netflow iptables module"
 HOMEPAGE="http://sourceforge.net/projects/ipt-netflow"
-EGIT_PROJECT="ipt_netflow"
-EGIT_REPO_URI="git://ipt-netflow.git.sourceforge.net/gitroot/ipt-netflow/ipt-netflow"
+SRC_URI="mirror://sourceforge/${MY_PN}/${P}.tgz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
