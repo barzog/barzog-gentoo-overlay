@@ -4,8 +4,8 @@
 
 inherit eutils linux-mod toolchain-funcs
 
-DAHDI_RELEASE=2.5.0.2
-DAHDI_PV="-r4"
+DAHDI_RELEASE=2.6.1
+DAHDI_PV=""
 
 DESCRIPTION="Linux Voice TDM/WAN Router Package"
 HOMEPAGE="http://www.sangoma.com/"
