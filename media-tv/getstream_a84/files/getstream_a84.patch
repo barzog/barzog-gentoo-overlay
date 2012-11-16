@@ -1,0 +1,91 @@
+--- config.c.orig	2012-05-30 17:26:11.000000000 +0300
++++ config.c	2012-05-30 17:27:08.000000000 +0300
+@@ -671,11 +671,17 @@
+ 	{ adapter->fe.dvbs.lnb_lof2=val->num; return 1; }
+ static int cf_dvbs_lnb_slof(struct lc_centry *ce, struct lc_value *val)
+ 	{ adapter->fe.dvbs.lnb_slof=val->num; return 1; }
+-
++static int cf_dvbs_fec(struct lc_centry *ce, struct lc_value *val)
++        { adapter->fe.dvbs.fec=val->num; return 1; }
++static int cf_dvbs_modulation(struct lc_centry *ce, struct lc_value *val)
++        { adapter->fe.dvbs.modulation=val->num; return 1; }
++        
+ static struct lc_ventry conf_dvbs_lnb[] = {
+ 	{ (char *)"lof1", 1, 1, LCV_NUM, 0, NULL, cf_dvbs_lnb_lof1 },
+ 	{ (char *)"lof2", 0, 1, LCV_NUM, 0, NULL, cf_dvbs_lnb_lof2 },
+ 	{ (char *)"slof", 0, 1, LCV_NUM, 0, NULL, cf_dvbs_lnb_slof },
++        { (char *)"fec", 0, 1, LCV_NUM, 0, NULL, cf_dvbs_fec },
++        { (char *)"modulation", 0, 1, LCV_NUM, 0, NULL, cf_dvbs_modulation },	
+ 	{ NULL, 0, 0, 0, 0, NULL },
+ };
+ 
+--- fe.c.orig	2012-05-30 17:27:35.000000000 +0300
++++ fe.c	2012-05-30 17:29:27.000000000 +0300
+@@ -358,10 +358,23 @@
+ 		sleep(1);
+ 	}
+ 
++	cmds.num=10;
++	
+ 	p[0].cmd = DTV_CLEAR;
+ 	p[1].cmd = DTV_DELIVERY_SYSTEM; p[1].u.data = SYS_DVBS2;
+ 	p[2].cmd = DTV_SYMBOL_RATE;	p[2].u.data = adapter->fe.dvbs.t_srate;
+-	p[3].cmd = DTV_INNER_FEC;	p[3].u.data = FEC_AUTO;
++	p[3].cmd = DTV_INNER_FEC;
++        switch(adapter->fe.dvbs.fec) {
++                case 1: p[3].u.data = FEC_1_2; break;
++                case 2: p[3].u.data = FEC_2_3; break;
++                case 3: p[3].u.data = FEC_3_4; break;
++                case 4: p[3].u.data = FEC_4_5; break;
++                case 5: p[3].u.data = FEC_5_6; break;
++                case 6: p[3].u.data = FEC_6_7; break;
++                case 7: p[3].u.data = FEC_7_8; break;
++                case 8: p[3].u.data = FEC_8_9; break;
++                default: p[3].u.data = FEC_AUTO; break;
++        }
+ 	p[4].cmd = DTV_INVERSION;	p[4].u.data = INVERSION_AUTO;
+ 	p[5].cmd = DTV_FREQUENCY;	p[5].u.data = fe_get_freqoffset(adapter);
+ 	if(adapter->fe.dvbs.lnbsharing) {
+@@ -373,9 +386,13 @@
+ 		p[7].cmd = DTV_TONE;		p[7].u.data = tone;
+ 	}
+ 	p[8].cmd = DTV_TUNE;		p[8].u.data = 0;
+-//	p[9].cmd = DTV_MODULATION;	p[9].u.data = QAM_AUTO;
++	p[9].cmd = DTV_MODULATION;
++        switch(adapter->fe.dvbs.modulation) {
++               case 1: p[9].u.data = QPSK; break;
++               case 2: p[9].u.data = PSK_8; break;
++               default: cmds.num=9; break;
++       }
+ 
+-	cmds.num=9;
+ 	cmds.props=p;
+ 
+ 	if (ioctl(adapter->fe.fd, FE_SET_PROPERTY, &cmds) < 0) {
+--- getstream.h.orig	2012-05-30 17:29:50.000000000 +0300
++++ getstream.h	2012-05-30 17:30:13.000000000 +0300
+@@ -377,6 +377,8 @@
+ 				int		t_pol;			/* POL_H || POL_V */
+ 				unsigned long	t_srate;
+ 				int		t_diseqc;
++                                int             modulation;
++                                int             fec;				
+ 			} dvbs;
+ 
+ 			struct {					/* Tuning information DVB-T */
+--- Makefile.orig	2012-05-30 17:30:33.000000000 +0300
++++ Makefile	2012-05-30 17:31:16.000000000 +0300
+@@ -1,11 +1,11 @@
+ #USEFFMPEG	= 1
+ 
+ CXX		= g++
+-CXXFLAGS	= -Wall -I. -I/usr/src/linux-tevii-ds3000/linux/include \
++CXXFLAGS	= -Wall -I. \
+ 			  $(shell pkg-config --cflags glib-2.0)
+ 
+ ifeq ($(DEBUG),yes)
+-	CXXFLAGS += -DDEBUG -O0 -g
++	CXXFLAGS += -DDEBUG -O2 -g
+ else
+ 	CXXFLAGS += -O2
+ endif
