@@ -7,7 +7,7 @@ RESTRICT="fetch"
 SLOT="0"
 DEPEND="sys-libs/zlib
 	virtual/mysql
-	media-tv/libmucast"
+	media-tv/oft_libmucast"
 RDEPEND="${DEPEND}"
 SRC_URI="collector_1.1.0-r6486-1_all.tgz"
 
