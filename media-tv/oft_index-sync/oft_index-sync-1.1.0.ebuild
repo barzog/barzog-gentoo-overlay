@@ -6,7 +6,7 @@ LICENSE="proprietary"
 RESTRICT="fetch"
 SLOT="0"
 DEPEND="dev-libs/libmemcached
-	dev-libs/libconfig"
+	<dev-libs/libconfig-1.4"
 RDEPEND="${DEPEND}"
 SRC_URI="index-sync_1.1.0-r6461-1_all.tgz"
 
