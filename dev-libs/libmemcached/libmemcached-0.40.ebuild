@@ -1,10 +1,10 @@
 # Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-libs/libmemcached/libmemcached-0.39.ebuild,v 1.11 2011/07/31 20:03:00 mattst88 Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-libs/libmemcached/libmemcached-0.50.ebuild,v 1.1 2011/09/04 04:00:39 robbat2 Exp $
 
-EAPI=2
+EAPI="3"
 
-inherit eutils
+inherit eutils multilib
 
 DESCRIPTION="a C client library to the memcached server"
 HOMEPAGE="http://tangent.org/552/libmemcached.html"
@@ -12,34 +12,56 @@ SRC_URI="http://launchpad.net/${PN}/1.0/${PV}/+download/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="alpha amd64 arm hppa ia64 ppc ppc64 sh sparc x86 ~sparc-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x86-macos"
-IUSE="debug hsieh"
+KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~ppc ~ppc64 ~sh ~sparc ~x86 ~sparc-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x86-macos"
+IUSE="debug doc hsieh +libevent sasl static-libs tcmalloc"
 
 DEPEND="net-misc/memcached
-		virtual/perl-PodParser"
+		virtual/perl-PodParser
+		doc? ( dev-python/sphinx )
+		libevent? ( dev-libs/libevent )
+		tcmalloc? ( dev-util/google-perftools )
+		sasl? ( virtual/gsasl )"
 RDEPEND="${DEPEND}"
 
 src_prepare() {
-	EPATCH_OPTS="-F 40" epatch "${FILESDIR}/${PN}-0.39-runtestsasuser.patch"
-	sed -r -i \
-		-e 's,(context)(__attribute__),\1 \2,g' \
-		libhashkit/hsieh.c || die "Failed to fix upstream typo"
+        EPATCH_OPTS="-F 40" epatch "${FILESDIR}/${PN}-0.39-runtestsasuser.patch"
+        sed -r -i \
+                -e 's,(context)(__attribute__),\1 \2,g' \
+                libhashkit/hsieh.c || die "Failed to fix upstream typo"
 }
 
 src_configure() {
 	econf \
+		--disable-dtrace \
+		--disable-libinnodb \
+		$(use_enable debug assert) \
 		$(use_with debug debug) \
-		$(use_enable hsieh hsieh_hash)
+		$(use_enable hsieh hsieh_hash) \
+		$(use_enable libevent libevent) \
+		$(use_enable tcmalloc tcmalloc) \
+		$(use_with sasl libsasl-prefix) \
+		$(use_with sasl libsasl2-prefix) \
+		$(use_enable static-libs static)
+}
+
+src_compile() {
+	emake || die
+
+	if use doc; then
+		emake html-local || die
+	fi
 }
 
 src_install() {
 	emake DESTDIR="${D}" install || die "Install failed"
-	dodoc AUTHORS ChangeLog NEWS README THANKS TODO
+
+	use static-libs || rm -f "${D}"/usr/$(get_libdir)/lib*.la
+
+	dodoc AUTHORS ChangeLog README THANKS TODO
 	# remove manpage to avoid collision, see bug #299330
 	rm -f "${D}"/usr/share/man/man1/memdump.* || die "Install failed"
-	newman docs/memdump.1 memcached_memdump.1
-}
-
-src_test() {
-	emake -j1 test-docs test-mem test-hash test-plus || die "Tests failed"
+	newman docs/man/memdump.1 memcached_memdump.1
+	if use doc; then
+		dohtml -r docs/html/* || die
+	fi
 }
