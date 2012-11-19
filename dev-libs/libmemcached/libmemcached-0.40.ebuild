@@ -60,7 +60,7 @@ src_install() {
 	dodoc AUTHORS ChangeLog README THANKS TODO
 	# remove manpage to avoid collision, see bug #299330
 	rm -f "${D}"/usr/share/man/man1/memdump.* || die "Install failed"
-	newman docs/man/memdump.1 memcached_memdump.1
+	#newman docs/man/memdump.1 memcached_memdump.1
 	if use doc; then
 		dohtml -r docs/html/* || die
 	fi
