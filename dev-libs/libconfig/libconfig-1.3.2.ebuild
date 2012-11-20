@@ -39,4 +39,9 @@ src_install() {
 			doins ${dir}/*
 		done
 	fi
+	rm -f "${D}"/usr/include/*
+	rm -f "${D}"/usr/share/info/*
+	rm -f "${D}"/usr/lib64/pkgconfig/*
+	rm -f "${D}"/usr/lib64/libconfig++.so
+	rm -f "${D}"/usr/lib64/libconfig.so
 }
