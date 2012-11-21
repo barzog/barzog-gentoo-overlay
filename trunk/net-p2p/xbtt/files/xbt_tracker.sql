@@ -51,6 +51,30 @@ CREATE TABLE IF NOT EXISTS `xbt_users` (
   PRIMARY KEY (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `xbt_announce_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ipa` int(10) unsigned NOT NULL DEFAULT '0',
+  `port` int(11) NOT NULL DEFAULT '0',
+  `event` int(11) NOT NULL DEFAULT '0',
+  `info_hash` blob NOT NULL,
+  `peer_id` blob NOT NULL,
+  `downloaded` bigint(20) NOT NULL DEFAULT '0',
+  `left0` bigint(20) NOT NULL DEFAULT '0',
+  `uploaded` bigint(20) NOT NULL DEFAULT '0',
+  `uid` int(11) NOT NULL DEFAULT '0',
+  `mtime` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=cp1251 AUTO_INCREMENT=1 ;
+
+CREATE TABLE IF NOT EXISTS `xbt_scrape_log` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `ipa` int(11) NOT NULL DEFAULT '0',
+  `info_hash` blob,
+  `uid` int(11) NOT NULL DEFAULT '0',
+  `mtime` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=cp1251 AUTO_INCREMENT=1 ;
+
 CREATE USER 'xbtt'@'localhost' IDENTIFIED BY 'defaultpasswd';
 GRANT SELECT,UPDATE,INSERT,DELETE ON xbt_tracker.* TO 'xbtt'@'localhost';
 FLUSH PRIVILEGES;
