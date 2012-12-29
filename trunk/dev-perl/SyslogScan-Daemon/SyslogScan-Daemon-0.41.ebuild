@@ -16,5 +16,6 @@ SRC_TEST="do"
 
 DEPEND="dev-perl/Daemon-Generic
 	dev-perl/Mail-SendVarious
-	dev-perl/Plugins"
+	dev-perl/Plugins
+	dev-perl/Event"
 RDEPEND="${DEPEND}"
