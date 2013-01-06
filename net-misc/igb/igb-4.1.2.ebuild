@@ -6,24 +6,24 @@ EAPI=4
 
 inherit linux-mod multilib toolchain-funcs
 
-DESCRIPTION="IXGBE kernel module driver"
+DESCRIPTION="IGB kernel module driver"
 HOMEPAGE="http://www.intel.com/support/network/adapter/pro100/sb/CS-032498.htm"
-SRC_URI="mirror://sourceforge/project/e1000/ixgbe%20stable/${PV}/${P}.tar.gz"
-#http://freefr.dl.sourceforge.net/project/e1000/ixgbe%20stable/3.10.16/ixgbe-3.10.16.tar.gz
+SRC_URI="mirror://sourceforge/project/e1000/igb%20stable/${PV}/${P}.tar.gz"
+
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 BUILD_TARGETS="clean install"
 
-MODULE_NAMES="ixgbe(drivers/net:${S}/src)"
+MODULE_NAMES="igb(drivers/net:${S}/src)"
 
 src_compile() {
-	CONFIG_CHECK="!CONFIG_IXGBE"
+	CONFIG_CHECK="!CONFIG_IGB"
 	cd "${S}/src"
 	emake
 }
 
 src_install() {
 	linux-mod_src_install
-	doman ixgbe.7
+	doman igb.7
 }
