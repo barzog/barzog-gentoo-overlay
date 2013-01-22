@@ -15,3 +15,5 @@ SRC_TEST="do"
 
 DEPEND="dev-perl/Class-Accessor"
 RDEPEND="${DEPEND}"
+
+PATCHES=("${FILESDIR}/stalepatch.patch")
