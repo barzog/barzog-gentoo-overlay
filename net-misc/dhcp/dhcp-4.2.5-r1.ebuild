@@ -213,7 +213,7 @@ src_install() {
 	fi
 
 	# the default config files aren't terribly useful #384087
-	sed -i '/^[^#]/s:^:#:' "${D}"/etc/dhcp/*.conf || die
+	sed -i '/^[^#]/s:^:#:' "${D}"/etc/dhcp/*.conf.example || die
 }
 
 pkg_preinst() {
