@@ -19,7 +19,7 @@ SRC_URI="ftp://ftp.isc.org/isc/dhcp/${MY_P}.tar.gz
 LICENSE="as-is BSD"
 SLOT="0"
 KEYWORDS="~alpha amd64 ~arm hppa ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd"
-IUSE="+client ipv6 kernel_linux ldap selinux server ssl vim-syntax subclasses"
+IUSE="+client ipv6 kernel_linux ldap selinux server ssl vim-syntax subclasses one-lease-per-mac"
 
 DEPEND="selinux? ( sec-policy/selinux-dhcp )
 	client? ( kernel_linux? ( sys-apps/net-tools ) )
@@ -80,7 +80,7 @@ src_prepare() {
 	# Remove these options from the sample config
 	sed -i \
 		-e "/\(script\|host-name\|domain-name\) / d" \
-		client/dhclient.conf || die
+		client/dhclient.conf.example || die
 
 	if use client && ! use server ; then
 		sed -i -r \
@@ -120,6 +120,10 @@ src_prepare() {
                epatch "${FILESDIR}"/01-subclass
                epatch "${FILESDIR}"/02-log-agent-options
         fi
+	if use one-lease-per-mac ; then
+		cd ${S}
+		epatch "${FILESDIR}"/dhcp-4.2.2-one-lease-per-mac.patch
+	fi
 }
 
 src_configure() {
