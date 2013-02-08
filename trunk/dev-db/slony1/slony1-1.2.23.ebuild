@@ -21,7 +21,6 @@ SLOT="0"
 KEYWORDS="amd64 ppc x86"
 
 DEPEND="|| (
-			dev-db/postgresql-server:9.2
 			dev-db/postgresql-server:9.1
 			dev-db/postgresql-server:9.0
 			dev-db/postgresql-server:8.4
@@ -39,11 +38,11 @@ pkg_setup() {
 		die "postgresql-config not set to 8.3 or higher."
 	fi
 
-#	if [[ ${PGSLOT//.} > 90 ]] ; then
-#		ewarn "You are building ${CATEGORY}/${PN} against a version of PostgreSQL greater than 9.0."
-#		ewarn "This is neither supported here nor upstream."
-#		ewarn "Any bugs you encounter should be reported upstream."
-#	fi
+	if [[ ${PGSLOT//.} > 91 ]] ; then
+		ewarn "You are building ${CATEGORY}/${PN} against a version of PostgreSQL greater than 9.1."
+		ewarn "This is neither supported here nor upstream."
+		ewarn "Any bugs you encounter should be reported upstream."
+	fi
 }
 
 src_prepare() {
