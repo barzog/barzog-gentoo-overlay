@@ -73,7 +73,7 @@ src_install() {
 	newinitd "${FILESDIR}"/cf-execd.rc6 cf-execd || die
 
 #Fix path to /usr/local
-	sed -i -e 's/\/usr\/local\/sbin/\/usr\/sbin/' masterfiles/update.cf || die	
+	sed -i -e 's/\/usr\/local\/sbin/\/var\/cfengine\/bin/' masterfiles/update.cf || die	
 
         emake DESTDIR="${D}" install || die
 
