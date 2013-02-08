@@ -4,6 +4,8 @@
 
 EAPI="4"
 
+inherit eutils 
+
 MY_PV="${PV//_beta/b}"
 MY_PV="${MY_PV/_p/p}"
 MY_P="${PN}-${MY_PV}"
@@ -36,6 +38,10 @@ REQUIRED_USE="qdbm? ( !tokyocabinet )
 	!qdbm? ( tokyocabinet )"
 
 S="${WORKDIR}/${MY_P}"
+
+src_prepare() {
+	epatch ${FILESDIR}/cfengine-ifconfig.patch
+}
 
 src_configure() {
 	# Enforce /var/cfengine for historical compatibility
