@@ -4,7 +4,7 @@
 
 EAPI="4"
 
-inherit eutils
+inherit eutils autotools
 
 MY_PV="${PV//_beta/b}"
 MY_PV="${MY_PV/_p/p}"
@@ -41,8 +41,11 @@ S="${WORKDIR}/${MY_P}"
 
 src_prepare() {
 	epatch ${FILESDIR}/cfengine-ifconfig.patch
+	epatch ${FILESDIR}/update.cf.patch
 	#cf-know is no longer exist
+	rm Makefile.in configure
 	sed -i -e '/\"cf\-know\",/d' masterfiles/update.cf || die	
+	eautoreconf
 }
 
 src_configure() {
@@ -52,7 +55,6 @@ src_configure() {
 		--docdir=/usr/share/doc/${PF} \
 		--with-workdir=/var/cfengine \
 		--with-pcre \
-		--exec-prefix=/usr \
 		$(use_with qdbm) \
 		$(use_with tokyocabinet) \
 		$(use_with postgres postgresql) \
@@ -71,9 +73,6 @@ src_install() {
 	newinitd "${FILESDIR}"/cf-serverd.rc6 cf-serverd || die
 	newinitd "${FILESDIR}"/cf-monitord.rc6 cf-monitord || die
 	newinitd "${FILESDIR}"/cf-execd.rc6 cf-execd || die
-
-#Fix path to /usr/local
-	sed -i -e 's/\/usr\/local\/sbin/\/var\/cfengine\/bin/' masterfiles/update.cf || die	
 
         emake DESTDIR="${D}" install || die
 
