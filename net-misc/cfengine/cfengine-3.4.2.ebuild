@@ -4,7 +4,7 @@
 
 EAPI="4"
 
-inherit eutils 
+inherit eutils
 
 MY_PV="${PV//_beta/b}"
 MY_PV="${MY_PV/_p/p}"
@@ -41,6 +41,8 @@ S="${WORKDIR}/${MY_P}"
 
 src_prepare() {
 	epatch ${FILESDIR}/cfengine-ifconfig.patch
+	#cf-know is no longer exist
+	sed -i -e '/\"cf\-know\",/d' masterfiles/update.cf || die	
 }
 
 src_configure() {
@@ -50,6 +52,7 @@ src_configure() {
 		--docdir=/usr/share/doc/${PF} \
 		--with-workdir=/var/cfengine \
 		--with-pcre \
+		--exec-prefix=/usr \
 		$(use_with qdbm) \
 		$(use_with tokyocabinet) \
 		$(use_with postgres postgresql) \
@@ -69,7 +72,10 @@ src_install() {
 	newinitd "${FILESDIR}"/cf-monitord.rc6 cf-monitord || die
 	newinitd "${FILESDIR}"/cf-execd.rc6 cf-execd || die
 
-	emake DESTDIR="${D}" install || die
+#Fix path to /usr/local
+	sed -i -e 's/\/usr\/local\/sbin/\/usr\/sbin/' masterfiles/update.cf || die	
+
+        emake DESTDIR="${D}" install || die
 
 	# Evil workaround for now..
 	mv "${D}"/usr/share/doc/${PN}/ "${D}"/usr/share/doc/${PF}
@@ -88,10 +94,10 @@ src_install() {
 	# find it. Most hosts cache their copy of the cfengine
 	# binaries here. This is the default search location for the
 	# binaries.
-	for bin in know promises agent monitord serverd execd runagent key report; do
+	for bin in promises agent monitord serverd execd runagent key report; do
 		dosym /usr/sbin/cf-$bin /var/cfengine/bin/cf-$bin || die
 	done
-
+	
 	if use html; then
 		docinto html
 		dohtml -r docs/ || die
