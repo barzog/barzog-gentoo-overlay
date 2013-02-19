@@ -1,0 +1,20 @@
+#!/sbin/runscript
+
+depend() {
+        need net
+}
+
+ASTRA_CONF=${ASTRA_CONF:-/etc/astra/astra.lua}
+ASTRA_PID=${ASTRA_PID:-/var/run/astra.pid}
+
+start() {
+        ebegin "Starting Astra Multicast Software"
+        start-stop-daemon --start --quiet -u astra:astra --make-pidfile --pidfile ${ASTRA_PID} --background --exec /usr/bin/astra -- ${ASTRA_CONF}
+        eend $?
+}
+
+stop() {
+        ebegin "Stopping Astra Multicast Software"
+        start-stop-daemon --stop --quiet --pidfile ${ASTRA_PID} --name ${SVCNAME}
+        eend $?
+}

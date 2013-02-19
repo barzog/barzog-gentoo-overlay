@@ -29,5 +29,11 @@ src_install() {
 	keepdir /etc/astra/helpers
 	insinto /etc/astra/helpers
 	doins helpers/*.lua
-	
+	newinitd "${FILESDIR}/astra.initd" astra
+	newconfd "${FILESDIR}/astra.confd" astra
+}
+
+pkg_setup() {
+	enewgroup astra
+	enewuser astra -1 -1 /dev/null astra
 }

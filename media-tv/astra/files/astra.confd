@@ -1,0 +1,2 @@
+ASTRA_CONF=/etc/astra/astra.lua
+ASTRA_PID=/var/run/astra.pid
