@@ -7,7 +7,7 @@ EAPI=4
 inherit linux-mod multilib toolchain-funcs
 
 DESCRIPTION="IXGBE kernel module driver"
-HOMEPAGE="http://www.intel.com/support/network/adapter/pro100/sb/CS-032498.htm"
+HOMEPAGE="http://downloadcenter.intel.com/Detail_Desc.aspx?agr=Y&DwnldID=14687&lang=eng&wapkw=ixgbe"
 SRC_URI="mirror://sourceforge/project/e1000/ixgbe%20stable/${PV}/${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
