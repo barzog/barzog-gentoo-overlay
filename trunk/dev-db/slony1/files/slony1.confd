@@ -1,0 +1,2 @@
+CLUSTERNAME=cluster1
+LOGFILE=/var/log/slony1.log

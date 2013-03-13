@@ -67,6 +67,6 @@ src_install() {
 		dohtml -r *
 	fi
 
-	newinitd "${FILESDIR}"/slony1.init slony1
-	newconfd "${FILESDIR}"/slony1.conf slony1
+	newinitd "${FILESDIR}"/slony1.initd slony1
+	newconfd "${FILESDIR}"/slony1.confd slony1
 }
