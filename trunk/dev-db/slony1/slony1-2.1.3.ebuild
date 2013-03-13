@@ -64,7 +64,6 @@ src_install() {
 	fi
 
 	newinitd "${FILESDIR}"/slony1.initd slony1
-	newconfd "${FILESDIR}"/slony1.confd slony1
 	insinto /etc/slony1
 	doins ${FILESDIR}/slony1.conf
 	fperms 660 /etc/slony1/slony1.conf
