@@ -64,8 +64,10 @@ src_install() {
 	fi
 
         newinitd "${FILESDIR}"/slony1.initd slony1
+	keepdir /var/log/slony1
         insinto /etc/slony1
         doins ${FILESDIR}/slony1.conf
         fperms 660 /etc/slony1/slony1.conf
-        fowners slony1:postgres /etc/slony1/slony1.conf
+	fperms 770 /var/log/slony1
+        fowners slony1:postgres /etc/slony1/slony1.conf /var/log/slony1
 }

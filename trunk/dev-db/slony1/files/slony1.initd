@@ -1,4 +1,4 @@
-!/sbin/runscript
+#!/sbin/runscript
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-db/slony1/files/slony1.init,v 1.2 2007/03/07 23:18:21 nakano Exp $
@@ -10,8 +10,8 @@ depend() {
 start() {
         ebegin "Starting slony1 (${SVCNAME})"
         if [[ -f /etc/slony1/${SVCNAME}.conf ]]; then
-		start-stop-daemon --start --exec /usr/bin/slon --pidfile /var/run/${SVCNAME}.pid -u slony1:postgres -b \
-			-- -p /var/run/${SVCNAME}.pid -f /etc/slony1/${SVCNAME}.conf >> /var/log/slony1.log 2>&1
+                start-stop-daemon --start --quiet --pidfile /var/run/${SVCNAME}.pid -u slony1:postgres -m -b \
+                         --exec /bin/bash -- -c "exec /usr/bin/slon -f /etc/slony1/${SVCNAME}.conf >> /var/log/slony1/slony1.log 2>&1"
 		eend $?
         else
           eend 1 "Config file /etc/slony1/${SVCNAME}.conf does not exist"
