@@ -43,6 +43,7 @@ pkg_setup() {
 		ewarn "This is neither supported here nor upstream."
 		ewarn "Any bugs you encounter should be reported upstream."
 	fi
+        enewuser slony1 -1 -1 -1 "postgres"
 }
 
 src_prepare() {
@@ -68,5 +69,9 @@ src_install() {
 	fi
 
 	newinitd "${FILESDIR}"/slony1.initd slony1
-	newconfd "${FILESDIR}"/slony1.confd slony1
+        insinto /etc/slony1
+        doins ${FILESDIR}/slony1.conf
+        fperms 660 /etc/slony1/slony1.conf
+        fowners slony1:postgres /etc/slony1/slony1.conf
+        newins "${FILESDIR}/slony1.conf"
 }
