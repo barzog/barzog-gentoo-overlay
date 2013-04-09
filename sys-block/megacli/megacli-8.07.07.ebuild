@@ -24,7 +24,8 @@ S="${WORKDIR}"
 
 RESTRICT="mirror fetch"
 
-QA_PRESTRIPPED="/opt/megacli/megacli"
+QA_PRESTRIPPED="/opt/megacli/megacli
+		/opt/megacli/lib/libstorelibir-2.so.13.05-0"
 
 pkg_nofetch() {
 	einfo "Upstream has implement a mandatory clickthrough EULA for distfile download"
@@ -35,22 +36,21 @@ pkg_nofetch() {
 src_unpack() {
 	unpack ${A}
 	cd "${S}"
-	rpm_unpack ./MegaCli_Linux/MegaCli-${PV}-1.noarch.rpm
-	rpm_unpack ./MegaCliKL_Linux/Lib_Utils-1.00-09.noarch.rpm
+	rpm_unpack ./linux/MegaCli-${PV}-1.noarch.rpm
 }
 
 src_install() {
 	exeinto /opt/megacli
-	libsysfs=libsysfs.so.2.0.2
+	libsysfs=libstorelibir-2.so.13.05-0
 	case ${ARCH} in
-		amd64) MegaCli=MegaCli64 libsysfs=x86_64/${libsysfs};;
+		amd64) MegaCli=MegaCli64;;
 		x86) MegaCli=MegaCli;;
 		*) die "invalid ARCH";;
 	esac
 	newexe opt/MegaRAID/MegaCli/${MegaCli} megacli
 
-	exeinto /opt/megacli/lib
-	doexe opt/lsi/3rdpartylibs/${libsysfs}
+        exeinto /opt/megacli/lib
+	doexe opt/MegaRAID/MegaCli/${libsysfs}
 
 	into /opt
 	newbin "${FILESDIR}"/${PN}-wrapper ${PN}
