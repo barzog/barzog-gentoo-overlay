@@ -15,14 +15,13 @@ SRC_URI="http://www.cacti.net/downloads/spine/${MY_P}.tar.gz"
 
 LICENSE="LGPL-2.1"
 SLOT="0"
-KEYWORDS="amd64 ~ppc ~ppc64 x86"
+KEYWORDS="~amd64 ~ppc ~ppc64 ~x86"
 IUSE=""
 
 DEPEND="net-analyzer/net-snmp
 	dev-libs/openssl
 	virtual/mysql"
-RDEPEND="${DEPEND}
-	>net-analyzer/cacti-0.8.7"
+RDEPEND="${DEPEND}"
 
 if [[ -n ${UPSTREAM_PATCHES} ]]; then
 	for i in ${UPSTREAM_PATCHES}; do
