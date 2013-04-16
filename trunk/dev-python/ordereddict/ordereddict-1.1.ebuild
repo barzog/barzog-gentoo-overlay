@@ -11,7 +11,7 @@ inherit distutils eutils
 
 DESCRIPTION="A drop-in substitute for Py2.7's new collections.OrderedDict that works in Python 2.4-2.6."
 HOMEPAGE="https://pypi.python.org/pypi/ordereddict"
-SRC_URI="http://pypi.python.org/packages/source/o/ordereddict/${P}.tar.gz"
+SRC_URI="mirror://pypi/${PN:0:1}/${PN}/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
