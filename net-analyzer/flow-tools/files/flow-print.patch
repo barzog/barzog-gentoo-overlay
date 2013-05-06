@@ -1,5 +1,5 @@
---- src/flow-print.c.orig	2013-03-13 18:13:30.000000000 +0300
-+++ src/flow-print.c	2013-03-13 19:12:16.000000000 +0300
+--- src/flow-print.c.orig	2013-05-03 15:57:54.000000000 +0300
++++ src/flow-print.c	2013-05-03 16:05:43.000000000 +0300
 @@ -77,15 +77,17 @@
  int format22(struct ftio *ftio, int options);
  int format23(struct ftio *ftio, int options);
@@ -20,7 +20,7 @@
  
  void usage(void);
  
-@@ -2282,6 +2284,186 @@
+@@ -2282,6 +2284,188 @@
  } /* format24 */
  
  
@@ -131,7 +131,7 @@
 +
 +/*
 + * function: format26
-+ * Output in csv format: datetime_begin as timestamp,datetime_end as timestamp,proto,sIf,src_ip,src_port,dIf,dst_ip,dst_port,bytes,src_as,dst_as
++ * Output in csv format: datetime_begin as timestamp,datetime_end as timestamp,proto,sIf,src_ip,src_port,dIf,dst_ip,dst_port,bytes,src_as,dst_as,src_tag,dst_tag
 + */
 +int format26(struct ftio *ftio, int options)
 +{
@@ -147,7 +147,7 @@
 +    FT_XFIELD_OUTPUT | FT_XFIELD_SRCADDR | FT_XFIELD_DSTADDR |
 +    FT_XFIELD_SRCPORT | FT_XFIELD_DSTPORT | FT_XFIELD_UNIX_SECS |
 +    FT_XFIELD_UNIX_NSECS | FT_XFIELD_SYSUPTIME |
-+    FT_XFIELD_PROT)) {
++    FT_XFIELD_PROT | FT_XFIELD_SRC_TAG | FT_XFIELD_DST_TAG)) {
 +    fterr_warnx("Flow record missing required field for format.");
 +    return -1;
 +  }
@@ -177,6 +177,8 @@
 +    cur.prot = ((uint8_t*)(rec+fo.prot));
 +    cur.src_as = ((uint16_t*)(rec+fo.src_as));
 +    cur.dst_as = ((uint16_t*)(rec+fo.dst_as));
++    cur.src_tag = ((uint32_t*)(rec+fo.src_tag));
++    cur.dst_tag = ((uint32_t*)(rec+fo.dst_tag));
 +    ftt = ftltime(*cur.sysUpTime, *cur.unix_secs, *cur.unix_nsecs, *cur.First);
 +
 +    printf("%u,",ftt.secs);
@@ -188,11 +190,11 @@
 +    fmt_uint16s(sym_asn, 18, fmt_buf3, (uint16_t)*cur.src_as, FMT_JUST_LEFT);
 +    fmt_uint16s(sym_asn, 18, fmt_buf4, (uint16_t)*cur.dst_as, FMT_JUST_LEFT);
 +
-+    printf("%u,%u,%u,%u,%u,%u,%u,%lu,%s,%s\n",
++    printf("%u,%u,%u,%u,%u,%u,%u,%lu,%s,%s,%u,%u\n",
 +           (unsigned int)*cur.prot,
 +           (unsigned int)*cur.input,(unsigned int)*cur.srcaddr, (unsigned int)*cur.srcport, 
 +           (unsigned int)*cur.output,(unsigned int)*cur.dstaddr, (unsigned int)*cur.dstport,
-+           (u_long)*cur.dOctets, fmt_buf3, fmt_buf4);
++           (u_long)*cur.dOctets, fmt_buf3, fmt_buf4,(u_long)*cur.src_tag,(u_long)*cur.dst_tag);
 +
 +    if (options & FT_OPT_NOBUF)
 +      fflush(stdout);
