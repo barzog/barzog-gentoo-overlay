@@ -103,6 +103,7 @@ SRC_URI="http://nginx.org/download/${P}.tar.gz
 
 LICENSE="BSD-2 BSD SSLeay MIT GPL-2"
 SLOT="0"
+KEYWORDS="amd64 ~ppc x86 ~x86-fbsd"
 
 NGINX_MODULES_STD="access auth_basic autoindex browser charset empty_gif fastcgi
 geo gzip limit_req limit_conn map memcached proxy referer rewrite scgi ssi
