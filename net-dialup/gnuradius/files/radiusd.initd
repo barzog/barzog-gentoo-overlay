@@ -1,0 +1,41 @@
+#!/sbin/runscript
+# Copyright 1999-2004 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+extra_started_commands="reload"
+
+config_dir=${config_dir:-/etc/raddb}
+pidfile_dir=${pidfile_dir:-/var/run}
+
+
+depend() {
+        need net
+}
+
+checkconfig() {
+        if [ ! -e ${config_dir}/config ]; then
+                eerror "You need ${config_dir}/config"
+                return 1
+        fi
+}
+
+start() {
+        checkconfig || return 1
+        ebegin "Starting radiusd"
+        start-stop-daemon --start --pidfile ${pidfile_dir}/radiusd.pid --quiet --exec /usr/sbin/radiusd -- -d ${config_dir} ${RADIUSD_OPTIONS} >/dev/null 2>&1
+        eend $?
+}
+
+stop() {
+        checkconfig || return 1
+        ebegin "Stopping radiusd"
+        start-stop-daemon --stop --pidfile ${pidfile_dir}/radiusd.pid --quiet --exec /usr/sbin/radiusd >/dev/null 2>&1
+        eend $?
+}
+
+reload() {
+        checkconfig || return 1
+        ebegin "Reloading radiusd"
+        killall -HUP `cat ${pidfile_dir}/radiusd.pid` &>/dev/null
+        eend $?
+}
