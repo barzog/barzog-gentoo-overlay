@@ -40,6 +40,7 @@ src_unpack() {
 	# eautoreconf cannot be used because it will screw up the libtool file
 	epatch "${FILESDIR}/${P}-qa-false-positives.patch"
 	epatch "${FILESDIR}/patch-include-radius_radutmp.h"
+	epatch "${FILESDIR}/dictionary.patch"
 }
 
 src_configure() {
@@ -65,4 +66,6 @@ src_configure() {
 
 src_install() {
 	emake DESTDIR="${D}" install || die "installation failed"
+	newinitd "${FILESDIR}/radiusd.initd" radiusd
+	newconfd "${FILESDIR}/radiusd.confd" radiusd
 }
