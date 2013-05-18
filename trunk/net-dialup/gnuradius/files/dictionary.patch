@@ -1,0 +1,140 @@
+--- radius-1.6.1/raddb/dictionary.orig	2013-05-18 13:31:11.000000000 +0300
++++ radius-1.6.1/raddb/dictionary	2011-10-18 17:21:54.000000000 +0300
+@@ -1,5 +1,5 @@
+ #
+-# $Id$
++# $Id: dictionary,v 1.39 2003/12/02 23:59:33 gray Exp $
+ #
+ # For detailed description, run:
+ #       info Radius dictionary
+@@ -11,11 +11,127 @@
+ 
+ $INCLUDE dict/compat		# Compatibility issues
+ $INCLUDE dict/livingston	# Livingston compatibility
+-#$INCLUDE dict/tunnel		# Tunnel attrs. as per RFC 2867
++$INCLUDE dict/tunnel		# Tunnel attrs. as per RFC 2867
+ #$INCLUDE dict/usr		# USR Robotics
+-#$INCLUDE dict/ascend		# MAX Ascend
++$INCLUDE dict/ascend		# MAX Ascend
+ #$INCLUDE dict/ascend.vs	# MAX Ascend -- vendor-specific
+-#$INCLUDE dict/cisco		# Cisco
++$INCLUDE dict/cisco		# Cisco
+ #$INCLUDE dict/voip		# Special attributes to be used
+ 				# with rewriting functions
+ 
++ATTRIBUTE       Cisco-Policy-Up         37      string  Cisco
++ATTRIBUTE       Cisco-Policy-Down       38      string  Cisco
++#ATTRIBUTE       Cisco-SSG-Command-Code  252     string  Cisco
++
++#SSG/ISG Support
++ATTRIBUTE       Cisco-SSG-Subscriber-Password   249     string          Cisco
++ATTRIBUTE       Cisco-SSG-Account-Info         250     string          Cisco
++ATTRIBUTE       Cisco-SSG-Service-Info         251     string          Cisco
++ATTRIBUTE       Cisco-SSG-Control-Info         253     string          Cisco
++ATTRIBUTE       Cisco-SSG-Command-Code  252     string  Cisco
++ATTRIBUTE       Cisco-SSG-Control-Info_QV         2150     string
++ATTRIBUTE       Cisco-SSG-Control-Info_QT         2151     string
++ATTRIBUTE       Cisco-SSG-Control-Info_I         2152    string
++ATTRIBUTE       Cisco-SSG-Control-Info_O	2153     string
++
++#ATTRIBUTE       Simultaneous-Use        1034    integer - [L--R-R]=
++
++#http://www.cisco.com/en/US/products/sw/iosswrel/ps1835/products_configuration_guide_chapter09186a00801fd174.html
++#http://www.radiusreporting.com/reports/Overwritten_Reports/AscendDiscCauses.html
++VALUE		Ascend-Disconnect-Cause No-Reason			0
++VALUE		Ascend-Disconnect-Cause Not-Applicable			1
++VALUE		Ascend-Disconnect-Cause	Unknown				2
++VALUE		Ascend-Disconnect-Cause	Call-Disconnected		3
++VALUE		Ascend-Disconnect-Cause	CLID-Authentication-Failure	4
++VALUE		Ascend-Disconnect-Cause CLID-RADIUS-Timeout		5
++VALUE		Ascend-Disconnect-Cause No-Description			6
++VALUE		Ascend-Disconnect-Cause Disconnect-Timer		7
++VALUE		Ascend-Disconnect-Cause No-Description			8
++VALUE		Ascend-Disconnect-Cause No-Modem-Avail			9
++VALUE		Ascend-Disconnect-Cause	No-Carrier			10
++VALUE		Ascend-Disconnect-Cause	Lost-Carrier			11
++VALUE		Ascend-Disconnect-Cause	No-Detected-Result-Codes	12
++VALUE		Ascend-Disconnect-Cause	User-Ends-Session		20
++VALUE		Ascend-Disconnect-Cause	Idle-Timeout			21
++VALUE		Ascend-Disconnect-Cause	Exit-Telnet-Session		22
++VALUE		Ascend-Disconnect-Cause	No-Remote-IP-Addr		23
++VALUE		Ascend-Disconnect-Cause	Exit-Raw-TCP 			24
++VALUE		Ascend-Disconnect-Cause	Password-Fail			25
++VALUE		Ascend-Disconnect-Cause	Raw-TCP-Disabled		26
++VALUE		Ascend-Disconnect-Cause	Control-C-Detected		27
++VALUE		Ascend-Disconnect-Cause	EXEC-Process-Destroyed		28
++VALUE		Ascend-Disconnect-Cause TermSrv-User-Closed-Vcon	29
++VALUE		Ascend-Disconnect-Cause TermSrv-VCon-Destroyed		30
++VALUE		Ascend-Disconnect-Cause TermSrv-Exit-Rlogin		31
++VALUE		Ascend-Disconnect-Cause TermSrv-Bad-Rlogin-Option	32
++VALUE		Ascend-Disconnect-Cause TermSrv-Not-Enough-Resources	33
++VALUE		Ascend-Disconnect-Cause	MPP-No-NULL-Msg-Timeout		35
++VALUE		Ascend-Disconnect-Cause	Timeout-PPP-LCP 		40
++VALUE		Ascend-Disconnect-Cause	Failed-PPP-LCP-Negotiation	41
++VALUE		Ascend-Disconnect-Cause	Failed-PPP-PAP-Auth-Fail 	42
++VALUE		Ascend-Disconnect-Cause	Failed-PPP-CHAP-Auth		43
++VALUE		Ascend-Disconnect-Cause	Failed-PPP-Remote-Auth		44
++VALUE		Ascend-Disconnect-Cause	PPP-Remote-Terminate		45
++VALUE		Ascend-Disconnect-Cause	PPP-Closed-Event 		46
++VALUE		Ascend-Disconnect-Cause PPP-No-NCPs-Open		47
++VALUE		Ascend-Disconnect-Cause PPP-MP-Bundle-Unknown		48
++VALUE		Ascend-Disconnect-Cause PPP-LCP-Close-MP-Add-Fail	49
++VALUE		Ascend-Disconnect-Cause Session-Table-Full		50
++VALUE		Ascend-Disconnect-Cause Out-Of-Resources		51
++VALUE		Ascend-Disconnect-Cause Invalid-IP-Address		52
++VALUE		Ascend-Disconnect-Cause Hostname-Resolution-Failed	53
++VALUE		Ascend-Disconnect-Cause Bad-Or-Missing-Port-Number	54
++VALUE		Ascend-Disconnect-Cause Host-Reset			60
++VALUE		Ascend-Disconnect-Cause Connection-Refused		61
++VALUE		Ascend-Disconnect-Cause Connection-Timeout		62
++VALUE		Ascend-Disconnect-Cause	PPP-Echo-Replies 		63
++VALUE		Ascend-Disconnect-Cause Network-Unreachable		64
++VALUE		Ascend-Disconnect-Cause Host-Unreachable		65
++VALUE		Ascend-Disconnect-Cause Network-Unreachable-Admin	66
++VALUE		Ascend-Disconnect-Cause Host-Unreachable-Admin		67
++VALUE		Ascend-Disconnect-Cause Port-Unreachable		68
++VALUE		Ascend-Disconnect-Cause	Session-Timeout 		100
++VALUE		Ascend-Disconnect-Cause	Session-Failed-Security 	101
++VALUE		Ascend-Disconnect-Cause	Session-End-Callback 		102
++VALUE		Ascend-Disconnect-Cause Callback-Validation-Failure	103
++VALUE		Ascend-Disconnect-Cause Sess-Timeout-Enaps-Neg		105
++VALUE		Ascend-Disconnect-Cause MP-Session-Timeout		106
++VALUE		Ascend-Disconnect-Cause	Invalid-Protocol 		120
++VALUE		Ascend-Disconnect-Cause Disconnect-Req-By-RADIUS	150
++VALUE		Ascend-Disconnect-Cause Disconnect-Req-By-Local-Admin	151
++VALUE		Ascend-Disconnect-Cause Call-Disconnected-SNMP		152
++VALUE		Ascend-Disconnect-Cause V110-Timeout-Sync-Retry-Exceed	160
++VALUE		Ascend-Disconnect-Cause PPP-Auth-Timeout-Exceeded	170
++VALUE		Ascend-Disconnect-Cause TAOS-Disc-PPP-Release		171
++VALUE		Ascend-Disconnect-Cause User-Executed-Do-Hangup		180
++VALUE		Ascend-Disconnect-Cause Call-Cleared-By-TAOS		181
++VALUE		Ascend-Disconnect-Cause Remote-End-Hung-Up		185
++VALUE		Ascend-Disconnect-Cause Resource-Has-Been-Quiesced	190
++VALUE		Ascend-Disconnect-Cause	Max-Call-Duration-Reached	195
++VALUE		Ascend-Disconnect-Cause TAOS-Modem-Card-Bad		210
++VALUE		Ascend-Disconnect-Cause	VPN-User-Disconnect 		600
++VALUE		Ascend-Disconnect-Cause	VPN-No-Resources 		602
++VALUE		Ascend-Disconnect-Cause	VPN-Bad-Control-Packet 		603
++VALUE		Ascend-Disconnect-Cause	VPN-Admin-Disconnect 		604
++VALUE		Ascend-Disconnect-Cause	VPN-Tunnel-Shut 		605
++VALUE		Ascend-Disconnect-Cause	VPN-Local-Disconnect 		606
++VALUE		Ascend-Disconnect-Cause	VPN-Session-Limit 		607
++VALUE		Ascend-Disconnect-Cause Logical-Termination		999
++#http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a00800b5da0.html
++VALUE		Ascend-Connect-Progress	Call-Up				10
++VALUE		Ascend-Connect-Progress	Modem-Up			30
++VALUE		Ascend-Connect-Progress	Modem-Waiting-Result		33
++VALUE		Ascend-Connect-Progress	Setting-TCP-Clear		41
++VALUE		Ascend-Connect-Progress	LAN-Up				60
++VALUE		Ascend-Connect-Progress	LCP-Open			65
++VALUE		Ascend-Connect-Progress	IPCP-Begin			67
++
++#http://www.cisco.com/en/US/products/sw/iosswrel/ps1835/products_configuration_guide_chapter09186a00800ca7b3.html
++#http://www.cisco.com/en/US/products/sw/iosswrel/ps1834/products_feature_guide09186a0080080545.html
++VALUE		NAS-Port-Type		Virtual				5
++VALUE           NAS-Port-Type           Ethernet                        15
++VALUE           NAS-Port-Type           PPPoA                           30
++VALUE           NAS-Port-Type           PPPoEoA                         31
++VALUE           NAS-Port-Type           PPPoEoE                         32
++VALUE           NAS-Port-Type           PPPoEoVLAN                      33
++VALUE           NAS-Port-Type           PPPoEoQinQ                      34

@@ -1,0 +1,3 @@
+RADIUSD_OPTIONS="-y"
+#config_dir=/etc/raddb
+#pidfile_dir=/var/run
