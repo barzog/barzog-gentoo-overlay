@@ -7,10 +7,11 @@ EAPI="4"
 PHP_EXT_NAME="ioncube_loader"
 PHP_EXT_ZENDEXT="yes"
 PHP_EXT_INI="yes"
+DOCS="README.txt LICENSE.txt"
 
 USE_PHP="php5-3 php5-4 php5-5"
 
-inherit php-ext-source-r2 depend.php
+inherit php-ext-source-r2
 
 KEYWORDS="~amd64 ~x86"
 
@@ -39,7 +40,6 @@ pkg_setup() {
     PHP_VER=$(echo ${PHP_VER} | sed -e's#dev-lang/php-\([0-9]*\.[0-9]*\)\..*#\1#')
     QA_TEXTRELS="${EXT_DIR/\//}/${PHP_EXT_NAME}.so"
     QA_EXECSTACK="${EXT_DIR/\//}/${PHP_EXT_NAME}.so"
-    php_binary_extension
 }
 
 src_unpack() {
@@ -72,8 +72,6 @@ src_install() {
 		done
 	done
 	php-ext-source-r2_createinifiles
-	dodoc-php README.txt
-	dodoc-php LICENSE.txt
 }
 
 pkg_config () {
