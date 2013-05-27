@@ -12,8 +12,8 @@ SRC_URI_BASE="ftp://ftp.hp.com/pub/softlib2/software1/pubsw-linux"
 
 DESCRIPTION="HP Array Configuration Utility Command Line Interface (HPACUCLI, formerly CPQACUXE)"
 HOMEPAGE="http://h18000.www1.hp.com/products/servers/linux/documentation.html"
-SRC_URI="x86? ( ${SRC_URI_BASE}/p414707558/v71530/${PN}-${MY_PV}.i386.rpm )
-         amd64? ( ${SRC_URI_BASE}/p1257348637/v71527/${PN}-${MY_PV}.x86_64.rpm )"
+SRC_URI="x86? ( ${SRC_URI_BASE}/p414707558/v80071/${PN}-${MY_PV}.i386.rpm )
+         amd64? ( ${SRC_URI_BASE}/p1257348637/v80070/${PN}-${MY_PV}.x86_64.rpm )"
 
 LICENSE="hp-proliant-essentials"
 SLOT="0"
