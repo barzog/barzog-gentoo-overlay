@@ -8,7 +8,7 @@ SRC_URI="mirror://gentoo/${P}.tar.bz2"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="alpha x86"
+KEYWORDS="alpha x86 amd64"
 IUSE=""
 QA_PRESTRIPPED="/usr/lib64/libstdc++.so.2.9
 	/usr/lib64/libstdc++.so.2.8
