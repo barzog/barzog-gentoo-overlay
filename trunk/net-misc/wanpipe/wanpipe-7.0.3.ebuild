@@ -4,8 +4,8 @@
 
 inherit eutils linux-mod toolchain-funcs
 
-DAHDI_RELEASE=2.5.0.2
-DAHDI_PV="-r4"
+DAHDI_RELEASE=2.6.2
+DAHDI_PV=""
 
 DESCRIPTION="Linux Voice TDM/WAN Router Package"
 HOMEPAGE="http://www.sangoma.com/"
@@ -55,7 +55,7 @@ src_unpack() {
 	cd ${S}
 	epatch ${FILESDIR}/${PN}-3.4.1-zaptel.diff
 	epatch ${FILESDIR}/${PN}-3.4.1-wancfg.diff
-	epatch ${FILESDIR}/${PN}-3.5.26-setup.diff
+	epatch ${FILESDIR}/${PN}-3.5.27-setup.diff
 }
 
 src_compile() {
