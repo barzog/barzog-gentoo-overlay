@@ -4,10 +4,9 @@
 
 EAPI="1"
 
-ESVN_REPO_URI="svn://lost.telecom.by/torrents.telecom.by/branches/minsk/release-1.10/scripts"
-ESVN_USER="anon"
-ESVN_PASSWORD="anon"
-inherit subversion
+SRC_URI=""
+EGIT_REPO_URI="ssh://git@git.telecom.by/xbtt-telecom"
+inherit git-2 toolchain-funcs user
 
 DESCRIPTION="XBT BitTorrent tracker Atlant-Telecom release"
 HOMEPAGE="http://xbtt.sourceforge.net/tracker/"
@@ -43,7 +42,12 @@ src_compile() {
         udp_listen_socket.cpp \
         md5.cpp \
         "XBT Tracker.cpp" \
-        `mysql_config --libs` && strip xbt_tracker
+        `mysql_config --libs`
+}
+
+pkg_setup() {
+	enewgroup xbtt
+	enewuser xbtt -1 -1 /dev/null xbtt
 }
 
 src_install() {
