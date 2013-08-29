@@ -6,9 +6,10 @@ EAPI="2"
 SLOT="0"
 
 DESCRIPTION="Astra DVB media streamer"
-HOMEPAGE="http://cesbo.com/wiki/ru:astra:stream:installing"
+HOMEPAGE="https://cesbo.com/wiki/display/astra/Astra.+Quick+Start"
 EGIT_PROJECT="astra"
 EGIT_REPO_URI="https://bitbucket.org/cesbo/astra"
+EGIT_MASTER="astra-4"
 
 QA_PRESTRIPPED="/usr/bin/astra"
 
