@@ -7,14 +7,13 @@ SLOT="0"
 
 DESCRIPTION="Astra DVB media streamer"
 HOMEPAGE="https://cesbo.com/wiki/display/astra/Astra.+Quick+Start"
-EGIT_PROJECT="astra"
-EGIT_REPO_URI="https://bitbucket.org/cesbo/astra"
-EGIT_MASTER="astra-4"
+SRC_URI="https://bitbucket.org/cesbo/astra/get/v.${PV}.tar.bz2"
+S="${WORKDIR}/cesbo-astra-64c4a168c471"
 
 QA_PRESTRIPPED="/usr/bin/astra"
-KEYWORDS="~x86 ~amd64 ~ppc ~ia64"
 
-inherit git-2 eutils
+inherit eutils
+
 
 src_configure() {
 	cd ${S}
@@ -28,9 +27,9 @@ src_compile() {
 
 src_install() {
 	dobin astra
-	keepdir /etc/astra/scripts-4.0
-	insinto /etc/astra/scripts-4.0
-	doins scripts/*.lua
+	keepdir /etc/astra/helpers
+	insinto /etc/astra/helpers
+	doins helpers/*.lua
 	newinitd "${FILESDIR}/astra.initd" astra
 	newconfd "${FILESDIR}/astra.confd" astra
 }
