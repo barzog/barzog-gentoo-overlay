@@ -27,9 +27,9 @@ src_compile() {
 
 src_install() {
 	dobin astra
-	keepdir /etc/astra/helpers
-	insinto /etc/astra/helpers
-	doins helpers/*.lua
+	keepdir /etc/astra/scripts-4.0
+	insinto /etc/astra/scripts-4.0
+	doins scripts/*.lua
 	newinitd "${FILESDIR}/astra.initd" astra
 	newconfd "${FILESDIR}/astra.confd" astra
 }
