@@ -5,7 +5,7 @@
 EAPI="1"
 
 SRC_URI=""
-EGIT_REPO_URI="ssh://git@git.telecom.by/xbtt-telecom"
+EGIT_REPO_URI="git://git.telecom.by/xbtt-telecom"
 inherit git-2 toolchain-funcs user
 
 DESCRIPTION="XBT BitTorrent tracker Atlant-Telecom release"
