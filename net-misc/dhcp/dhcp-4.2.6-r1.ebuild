@@ -45,12 +45,9 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-3.0-fix-perms.patch
 	# Enable dhclient to equery NTP servers
 	epatch "${FILESDIR}"/${PN}-4.0-dhclient-ntp.patch
-	# resolvconf support in dhclient-script
-	epatch "${FILESDIR}"/${PN}-4.2.2-dhclient-resolvconf.patch
 	# Stop downing the interface on Linux as that breaks link daemons
 	# such as wpa_supplicant and netplug
 	epatch "${FILESDIR}"/${PN}-3.0.3-dhclient-no-down.patch
-	epatch "${FILESDIR}"/${PN}-4.2.0-errwarn-message.patch
 	# Enable dhclient to get extra configuration from stdin
 	epatch "${FILESDIR}"/${PN}-4.2.2-dhclient-stdin-conf.patch
 	epatch "${FILESDIR}"/${PN}-4.2.2-nogateway.patch #265531
@@ -80,7 +77,7 @@ src_prepare() {
 	# Remove these options from the sample config
 	sed -i \
 		-e "/\(script\|host-name\|domain-name\) / d" \
-		client/dhclient.conf || die
+		client/dhclient.conf.example || die
 
 	if use client && ! use server ; then
 		sed -i -r \
@@ -213,7 +210,7 @@ src_install() {
 	fi
 
 	# the default config files aren't terribly useful #384087
-	sed -i '/^[^#]/s:^:#:' "${D}"/etc/dhcp/*.conf || die
+	sed -i '/^[^#]/s:^:#:' "${D}"/etc/dhcp/*.conf.example || die
 }
 
 pkg_preinst() {
