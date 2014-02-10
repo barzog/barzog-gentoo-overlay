@@ -25,7 +25,6 @@ pkg_setup() {
 
 src_install() {
 	emake DESTDIR="${D}" install
-	keepdir /var/run/ladvd
 	newinitd "${FILESDIR}/ladvd.initd" ladvd
 	newconfd "${FILESDIR}/ladvd.confd" ladvd
 }
