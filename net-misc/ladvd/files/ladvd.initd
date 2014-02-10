@@ -1,0 +1,20 @@
+#!/sbin/runscript
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Starting ladvd"
+	start-stop-daemon --start -c ${USER} --exec /usr/sbin/ladvd \
+		-u ${USER} ${MODE} -- ${INTERFACE}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping ladvd"
+	start-stop-daemon --stop --quiet --exec /usr/sbin/ladvd
+	eend $?
+}
