@@ -14,7 +14,7 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~ia64 ~ppc ~x86"
 
-RDEPEND=""
+RDEPEND="dev-libs/libevent"
 
 DEPEND="${RDEPEND}"
 
