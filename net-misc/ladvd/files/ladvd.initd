@@ -8,6 +8,7 @@ depend() {
 
 start() {
 	ebegin "Starting ladvd"
+	mkdir /var/run/ladvd
 	start-stop-daemon --start --exec /usr/sbin/ladvd \
 		-- -u ${USER} ${MODE} ${INTERFACE}
 	eend $?
