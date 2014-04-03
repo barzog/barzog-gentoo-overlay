@@ -15,8 +15,8 @@ Subject: [PATCH] Make it compile against Asterisk 11 (not clean)
 
 diff --git a/Makefile.in b/Makefile.in
 index 92674a8..2c0b8c5 100644
---- a/Makefile.in
-+++ b/Makefile.in
+--- ./Makefile.in
++++ ./Makefile.in
 @@ -37,8 +37,8 @@ RM = @RM@ -fr
  INSTALL = @INSTALL@
  CHMOD = chmod
@@ -30,8 +30,8 @@ index 92674a8..2c0b8c5 100644
  LIBS    = @LIBS@
 diff --git a/app.c b/app.c
 index c0965ff..2d5d17c 100644
---- a/app.c
-+++ b/app.c
+--- ./app.c
++++ ./app.c
 @@ -18,7 +18,7 @@
  #include <asterisk/app.h>	/* AST_DECLARE_APP_ARGS() ... */
  #include <asterisk/pbx.h>	/* pbx_builtin_setvar_helper() */
@@ -43,8 +43,8 @@ index c0965ff..2d5d17c 100644
  #include "chan_dongle.h"	/* struct pvt */
 diff --git a/at_response.c b/at_response.c
 index d9ae3a0..9971678 100644
---- a/at_response.c
-+++ b/at_response.c
+--- ./at_response.c
++++ ./at_response.c
 @@ -851,14 +851,15 @@ static int start_pbx(struct pvt* pvt, const char * number, int call_idx, call_st
  
  		return -1;
@@ -76,8 +76,8 @@ index d9ae3a0..9971678 100644
  							}
 diff --git a/chan_dongle.c b/chan_dongle.c
 index 3cb660b..e9f8fea 100644
---- a/chan_dongle.c
-+++ b/chan_dongle.c
+--- ./chan_dongle.c
++++ ./chan_dongle.c
 @@ -43,7 +43,7 @@
  #include <asterisk.h>
  ASTERISK_FILE_VERSION(__FILE__, "$Rev: " PACKAGE_REVISION " $")
@@ -89,8 +89,8 @@ index 3cb660b..e9f8fea 100644
  #include <asterisk/dsp.h>
 diff --git a/channel.c b/channel.c
 index bd73bb9..ffcb0f1 100644
---- a/channel.c
-+++ b/channel.c
+--- ./channel.c
++++ ./channel.c
 @@ -20,7 +20,7 @@
  #include <asterisk/musiconhold.h>		/* ast_moh_start() ast_moh_stop() */
  #include <asterisk/lock.h>			/* AST_MUTEX_DEFINE_STATIC */
@@ -397,8 +397,8 @@ index bd73bb9..ffcb0f1 100644
  
 diff --git a/cli.c b/cli.c
 index d0b1918..0e94b3a 100644
---- a/cli.c
-+++ b/cli.c
+--- ./cli.c
++++ ./cli.c
 @@ -15,7 +15,7 @@
  #include <asterisk.h>
  #include <asterisk/cli.h>			/* struct ast_cli_entry; struct ast_cli_args */
@@ -410,8 +410,8 @@ index d0b1918..0e94b3a 100644
  #include "chan_dongle.h"			/* devices */
 diff --git a/manager.c b/manager.c
 index ceda3a2..9a59efa 100644
---- a/manager.c
-+++ b/manager.c
+--- ./manager.c
++++ ./manager.c
 @@ -731,9 +731,12 @@ static int manager_reload(struct mansession * s, const struct message * m)
  EXPORT_DEF void manager_register()
  {
