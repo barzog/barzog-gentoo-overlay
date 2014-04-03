@@ -21,7 +21,6 @@ AT_NOEAUTOMAKE=yes
 
 src_prepare() {
 	cd ${S}
-	epatch "${FILESDIR}"/asterisk-11.patch
 	eaclocal
 	eautoconf
 	automake -a
