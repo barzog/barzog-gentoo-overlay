@@ -13,10 +13,10 @@ Subject: [PATCH] Make it compile against Asterisk 11 (not clean)
  manager.c     |  5 +++-
  7 files changed, 60 insertions(+), 54 deletions(-)
 
-diff --git a/Makefile.in b/Makefile.in
+diff --git a/Makefile.in Makefile.in
 index 92674a8..2c0b8c5 100644
---- ./Makefile.in
-+++ ./Makefile.in
+--- a/Makefile.in
++++ Makefile.in
 @@ -37,8 +37,8 @@ RM = @RM@ -fr
  INSTALL = @INSTALL@
  CHMOD = chmod
@@ -28,10 +28,10 @@ index 92674a8..2c0b8c5 100644
  LDFLAGS = @LDFLAGS@ 
  SOLINK  = @SOLINK@
  LIBS    = @LIBS@
-diff --git a/app.c b/app.c
+diff --git a/app.c app.c
 index c0965ff..2d5d17c 100644
---- ./app.c
-+++ ./app.c
+--- a/app.c
++++ app.c
 @@ -18,7 +18,7 @@
  #include <asterisk/app.h>	/* AST_DECLARE_APP_ARGS() ... */
  #include <asterisk/pbx.h>	/* pbx_builtin_setvar_helper() */
@@ -41,10 +41,10 @@ index c0965ff..2d5d17c 100644
  
  #include "app.h"		/* app_register() app_unregister() */
  #include "chan_dongle.h"	/* struct pvt */
-diff --git a/at_response.c b/at_response.c
+diff --git a/at_response.c at_response.c
 index d9ae3a0..9971678 100644
---- ./at_response.c
-+++ ./at_response.c
+--- a/at_response.c
++++ at_response.c
 @@ -851,14 +851,15 @@ static int start_pbx(struct pvt* pvt, const char * number, int call_idx, call_st
  
  		return -1;
@@ -74,10 +74,10 @@ index d9ae3a0..9971678 100644
  									pvt->rings = 0;
  								}
  							}
-diff --git a/chan_dongle.c b/chan_dongle.c
+diff --git a/chan_dongle.c chan_dongle.c
 index 3cb660b..e9f8fea 100644
---- ./chan_dongle.c
-+++ ./chan_dongle.c
+--- a/chan_dongle.c
++++ chan_dongle.c
 @@ -43,7 +43,7 @@
  #include <asterisk.h>
  ASTERISK_FILE_VERSION(__FILE__, "$Rev: " PACKAGE_REVISION " $")
@@ -87,10 +87,10 @@ index 3cb660b..e9f8fea 100644
  #include <asterisk/stringfields.h>	/* AST_DECLARE_STRING_FIELDS for asterisk/manager.h */
  #include <asterisk/manager.h>
  #include <asterisk/dsp.h>
-diff --git a/channel.c b/channel.c
+diff --git a/channel.c channel.c
 index bd73bb9..ffcb0f1 100644
---- ./channel.c
-+++ ./channel.c
+--- a/channel.c
++++ channel.c
 @@ -20,7 +20,7 @@
  #include <asterisk/musiconhold.h>		/* ast_moh_start() ast_moh_stop() */
  #include <asterisk/lock.h>			/* AST_MUTEX_DEFINE_STATIC */
@@ -395,10 +395,10 @@ index bd73bb9..ffcb0f1 100644
  		return -1;
  	}
  
-diff --git a/cli.c b/cli.c
+diff --git a/cli.c cli.c
 index d0b1918..0e94b3a 100644
---- ./cli.c
-+++ ./cli.c
+--- a/cli.c
++++ cli.c
 @@ -15,7 +15,7 @@
  #include <asterisk.h>
  #include <asterisk/cli.h>			/* struct ast_cli_entry; struct ast_cli_args */
@@ -408,10 +408,10 @@ index d0b1918..0e94b3a 100644
  
  #include "cli.h"
  #include "chan_dongle.h"			/* devices */
-diff --git a/manager.c b/manager.c
+diff --git a/manager.c manager.c
 index ceda3a2..9a59efa 100644
---- ./manager.c
-+++ ./manager.c
+--- a/manager.c
++++ manager.c
 @@ -731,9 +731,12 @@ static int manager_reload(struct mansession * s, const struct message * m)
  EXPORT_DEF void manager_register()
  {
