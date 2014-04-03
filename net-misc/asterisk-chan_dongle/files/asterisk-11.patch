@@ -314,24 +314,6 @@ index bd73bb9..ffcb0f1 100644
  #else
  		channel = ast_channel_alloc (1, ast_state, cid_num, PVT_ID(pvt), NULL, dnid, CONF_SHARED(pvt, context), 0, "%s/%s-%02u%08lx", channel_tech.type, PVT_ID(pvt), call_idx, pvt->channel_instanse);
  #endif
-@@ -1165,12 +1165,12 @@ EXPORT_DEF struct ast_channel* new_channel (struct pvt* pvt, int ast_state, cons
- 			cpvt->channel = channel;
- 			pvt->channel_instanse++;
- 
--			channel->tech_pvt	= cpvt;
--			channel->tech		= &channel_tech;
-+			ast_channel_tech_pvt_set(channel, cpvt);
-+			ast_channel_tech_set(channel, &channel_tech);
- #if ASTERISK_VERSION_NUM >= 100000 /* 10+ */
--			ast_format_cap_add(channel->nativeformats, &chan_dongle_format);
--			ast_format_copy(&channel->writeformat, &chan_dongle_format);
--			ast_format_copy(&channel->readformat, &chan_dongle_format);
-+			ast_format_cap_add(ast_channel_nativeformats(channel), &chan_dongle_format);
-+			ast_format_copy(ast_channel_writeformat(channel), &chan_dongle_format);
-+			ast_format_copy(ast_channel_readformat(channel), &chan_dongle_format);
- #else /* 10- */
- 			channel->nativeformats	= AST_FORMAT_SLINEAR;
- 			channel->writeformat	= AST_FORMAT_SLINEAR;
 @@ -1179,7 +1179,7 @@ EXPORT_DEF struct ast_channel* new_channel (struct pvt* pvt, int ast_state, cons
  
  			if (ast_state == AST_STATE_RING)
@@ -366,22 +348,6 @@ index bd73bb9..ffcb0f1 100644
  		return -1;
  	}
  	pvt = cpvt->pvt;
-@@ -1340,13 +1340,13 @@ static int channel_func_read(struct ast_channel* channel, attribute_unused const
- #/* */
- static int channel_func_write(struct ast_channel* channel, const char* function, char* data, const char* value)
- {
--	struct cpvt* cpvt = channel->tech_pvt;
-+	struct cpvt* cpvt = ast_channel_tech_pvt(channel);
- 	call_state_t newstate, oldstate;
- 	int ret = 0;
- 
- 	if(!cpvt || !cpvt->pvt)
- 	{
--		ast_log (LOG_WARNING, "call on unreferenced %s\n", channel->name);
-+		ast_log (LOG_WARNING, "call on unreferenced %s\n", ast_channel_name(channel));
- 		return -1;
- 	}
- 
 diff --git a/cli.c cli.c
 index d0b1918..0e94b3a 100644
 --- a/cli.c
