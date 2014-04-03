@@ -74,19 +74,6 @@ index d9ae3a0..9971678 100644
  									pvt->rings = 0;
  								}
  							}
-diff --git a/chan_dongle.c chan_dongle.c
-index 3cb660b..e9f8fea 100644
---- a/chan_dongle.c
-+++ chan_dongle.c
-@@ -43,7 +43,7 @@
- #include <asterisk.h>
- ASTERISK_FILE_VERSION(__FILE__, "$Rev: " PACKAGE_REVISION " $")
- 
--#include <asterisk/version.h>
-+#include <asterisk/ast_version.h>
- #include <asterisk/stringfields.h>	/* AST_DECLARE_STRING_FIELDS for asterisk/manager.h */
- #include <asterisk/manager.h>
- #include <asterisk/dsp.h>
 diff --git a/channel.c channel.c
 index bd73bb9..ffcb0f1 100644
 --- a/channel.c
