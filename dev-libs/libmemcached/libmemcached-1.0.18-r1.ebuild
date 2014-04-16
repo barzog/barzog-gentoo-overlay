@@ -24,7 +24,6 @@ RDEPEND="${DEPEND}"
 src_prepare() {
 	sed -i '6i CFLAGS = @CFLAGS@' Makefile.am
 	sed -e "/_APPEND_COMPILE_FLAGS_ERROR(\[-fmudflapth\?\])/d" -i m4/ax_harden_compiler_flags.m4
-	epatch "${FILESDIR}/0001-Fix-linking-against-libpthread.patch"
 	eautoreconf
 }
 
@@ -38,9 +37,11 @@ src_configure() {
 		$(use_enable hsieh hsieh_hash) \
 		--libdir=/usr/$(get_libdir) \
 		${myconf}
+		epatch "${FILESDIR}/configure.patch"		
 }
 
 src_install() {
+
 	emake DESTDIR="${D}" install
 
 	use static-libs || rm -f "${D}"/usr/$(get_libdir)/lib*.la
