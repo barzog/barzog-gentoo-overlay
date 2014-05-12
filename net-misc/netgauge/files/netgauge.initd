@@ -1,0 +1,20 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+NetGauge_PID="/run/netgauge/netgauge.pid"
+
+start() {
+	ebegin "Starting NetGauge Daemon"
+	checkpath -m0755 -o "netgauge:netgauge" -d /run/netgauge
+	start-stop-daemon --start --quiet -u netgauge:netgauge --pidfile ${NetGauge_PID} --exec /opt/netgauge/OoklaServer -- --daemon --pidfile=${NetGauge_PID}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping NetGauge Daemon"
+	start-stop-daemon --stop --quiet --pidfile ${NetGauge_PID} --name ${SVCNAME}
+	eend $?
+}
