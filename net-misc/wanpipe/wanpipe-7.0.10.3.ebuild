@@ -10,7 +10,7 @@ DAHDI_PV=""
 DESCRIPTION="Linux Voice TDM/WAN Router Package"
 HOMEPAGE="http://www.sangoma.com/"
 SRC_URI="
-	ftp://ftp.sangoma.com/linux/current_wanpipe/${P//_beta/}.tgz
+	ftp://ftp.sangoma.com/linux/custom/7.0/${P//_beta/}.tgz
 	tdm? ( http://downloads.asterisk.org/pub/telephony/dahdi-linux/releases/dahdi-linux-${DAHDI_RELEASE}.tar.gz )
 "
 
