@@ -4,7 +4,7 @@
 
 inherit eutils linux-mod toolchain-funcs
 
-DAHDI_RELEASE=2.6.1
+DAHDI_RELEASE=2.8.0.1
 DAHDI_PV=""
 
 DESCRIPTION="Linux Voice TDM/WAN Router Package"
