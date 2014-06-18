@@ -12,7 +12,7 @@ S="${WORKDIR}/cesbo-astra-64c4a168c471"
 
 QA_PRESTRIPPED="/usr/bin/astra"
 
-inherit eutils
+inherit eutils user
 
 
 src_configure() {
