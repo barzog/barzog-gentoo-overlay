@@ -7,8 +7,8 @@ SLOT="0"
 
 DESCRIPTION="Astra DVB media streamer"
 HOMEPAGE="https://cesbo.com/wiki/display/astra/Astra.+Quick+Start"
-SRC_URI="https://bitbucket.org/cesbo/astra/get/v.${PV}.tar.bz2"
-S="${WORKDIR}/cesbo-astra-64c4a168c471"
+SRC_URI="https://bitbucket.org/cesbo/astra/get/${PN}-4.tar.gz"
+S="${WORKDIR}/cesbo-astra-735a0cb14b11"
 
 QA_PRESTRIPPED="/usr/bin/astra"
 
@@ -17,7 +17,7 @@ inherit eutils user
 
 src_configure() {
 	cd ${S}
-	./configure.sh LDFLAGS="-lavutil"
+	./configure.sh LDFLAGS="-lavcodec -lavutil"
 	sed -i '/@rm -f \/usr\/bin\/$</d' Makefile
 }
 
