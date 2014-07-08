@@ -1,6 +1,6 @@
---- a/src/modules/rlm_perl/rlm_perl.c	2012-09-10 14:51:34.000000000 +0300
-+++ b/src/modules/rlm_perl/rlm_perl.c	2013-02-04 16:47:54.000000000 +0300
-@@ -531,6 +531,48 @@
+--- a/src/modules/rlm_perl/rlm_perl.c	2014-04-28 22:13:08.000000000 +0300
++++ b/src/modules/rlm_perl/rlm_perl.c	2014-07-08 10:43:25.000000000 +0300
+@@ -533,6 +533,47 @@
  	return 0;
  }
  
@@ -32,7 +32,6 @@
 +static void pairdelete_tag(VALUE_PAIR **first, unsigned int attr, unsigned int vendor, int8_t tag) {
 +	VALUE_PAIR *i, *next;
 +	VALUE_PAIR **last=first;
-+
 +	for (i = *first; i; i = next) {
 +		next = i->next;
 +		if ((i->attribute == attr) && (i->vendor == vendor) &&
@@ -49,20 +48,12 @@
  /*
   *  	get the vps and put them in perl hash
   *  	If one VP have multiple values it is added as array_ref
-@@ -539,50 +581,41 @@
-  */
- static void perl_store_vps(VALUE_PAIR *vp, HV *rad_hv)
- {
--        VALUE_PAIR	*nvp, *vpa, *vpn;
--	AV		*av;
--	char		namebuf[256], *name;
--	char            buffer[1024];
+@@ -545,15 +586,21 @@
+ 	AV		*av;
+ 	char		namebuf[256], *name;
+ 	char	    buffer[1024];
 -	int		attr, len;
-+	VALUE_PAIR *nvp, *vpa, *vpn;
-+	AV *av;
-+	char namebuf[256], *name;
-+	char buffer[1024];
-+	int len;
++	int		len;
  
  	hv_undef(rad_hv);
  	nvp = paircopy(vp);
@@ -71,7 +62,6 @@
 -		name = nvp->name;
 -		attr = nvp->attribute;
 -		vpa = paircopy2(nvp,attr);
-+
 +		if (nvp->flags.has_tag && (nvp->flags.tag != 0)) {
 +			snprintf(namebuf, sizeof(namebuf), "%s:%d",
 +			         nvp->name, nvp->flags.tag);
@@ -84,18 +74,13 @@
  
  		if (vpa->next) {
  			av = newAV();
--			vpn = vpa;
--			while (vpn) {
--				len = vp_prints_value(buffer, sizeof(buffer),
--						vpn, FALSE);
-+			for (vpn = vpa; vpn; vpn = vpn->next) {
-+				len = vp_prints_value(buffer, sizeof(buffer), vpn, FALSE);
+@@ -564,16 +611,9 @@
  				av_push(av, newSVpv(buffer, len));
--				vpn = vpn->next;
+ 				vpn = vpn->next;
  			}
 -			hv_store(rad_hv, nvp->name, strlen(nvp->name),
--					newRV_noinc((SV *) av), 0);
-+			hv_store(rad_hv, name, strlen(name), newRV_noinc((SV *)av), 0);
++			hv_store(rad_hv, name, strlen(name),
+ 					newRV_noinc((SV *) av), 0);
  		} else {
 -			if ((vpa->flags.has_tag) &&
 -			    (vpa->flags.tag != 0)) {
@@ -104,12 +89,10 @@
 -				name = namebuf;
 -			}
 -
--			len = vp_prints_value(buffer, sizeof(buffer),
--					      vpa, FALSE);
--			hv_store(rad_hv, name, strlen(name),
--				 newSVpv(buffer, len), 0);
-+			len = vp_prints_value(buffer, sizeof(buffer), vpa, FALSE);
-+			hv_store(rad_hv, name, strlen(name), newSVpv(buffer, len), 0);
+ 			len = vp_prints_value(buffer, sizeof(buffer),
+ 					      vpa, FALSE);
+ 			hv_store(rad_hv, name, strlen(name),
+@@ -581,10 +621,7 @@
  		}
  
  		pairfree(&vpa);
