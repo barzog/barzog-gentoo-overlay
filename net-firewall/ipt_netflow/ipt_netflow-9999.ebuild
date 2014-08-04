@@ -6,7 +6,7 @@ EAPI="5"
 
 inherit git-2 eutils linux-info linux-mod multilib toolchain-funcs
 
-EGIT_REPO_URI="git://git.code.sf.net/p/ipt-netflow/code"
+EGIT_REPO_URI="git://github.com/aabc/ipt-netflow"
 
 DESCRIPTION="Netflow iptables module"
 HOMEPAGE="https://github.com/aabc/ipt-netflow"
