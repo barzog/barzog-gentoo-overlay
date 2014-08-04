@@ -17,7 +17,7 @@ LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
-IUSE="pax_kernel natevents connmark"
+IUSE="pax_kernel"
 
 RDEPEND="net-firewall/iptables"
 DEPEND="${RDEPEND}
@@ -39,8 +39,7 @@ src_configure() {
 		--ipt-ver="${IPT_VERSION}" \
 		--kdir="${KV_DIR}" \
 		--kver="${KV_FULL}" \
-		$(use_enable natevents) \
-		$(use_enable connmark) \
+		--enable-natevents \
 	|| die 'configure failed'
 }
 
