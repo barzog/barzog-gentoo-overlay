@@ -8,7 +8,7 @@ depend() {
 
 start() {
 	ebegin "Starting flow-capture"
-	start-stop-daemon --start -c ${USER} --exec /usr/bin/flow-capture \
+	start-stop-daemon --start -u ${USER} --exec /usr/bin/flow-capture \
 		--pidfile ${PIDFILE}.${PORT} \
 		-- ${FLOW_OPTS} >/dev/null 2>&1
 	eend $?
