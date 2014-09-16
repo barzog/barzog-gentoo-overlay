@@ -7,15 +7,11 @@ EAPI=3
 MODULE_AUTHOR=ZWON
 inherit perl-module
 
-DESCRIPTION="Perl extension to access REDIS database"
+DESCRIPTION="Redis protocol parser for RedisDB"
 LICENSE="|| ( Artistic GPL-2 )"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
 SRC_TEST="do"
-
-DEPEND="dev-perl/RedisDB-Parser
-dev-perl/IO-Socket-IP"
-RDEPEND="${DEPEND}"
 
 
