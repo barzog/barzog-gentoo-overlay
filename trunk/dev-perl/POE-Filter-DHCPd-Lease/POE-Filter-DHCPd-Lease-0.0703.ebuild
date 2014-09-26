@@ -2,9 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=3
-
-MODULE_AUTHOR=JHTHORSEN
+MODULE_AUTHOR=RDRAKE
 inherit perl-module
 
 DESCRIPTION="parses leases from isc dhcpd leases file"
