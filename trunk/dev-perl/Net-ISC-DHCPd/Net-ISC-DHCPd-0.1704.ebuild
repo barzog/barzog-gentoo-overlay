@@ -2,9 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=3
-
-MODULE_AUTHOR=JHTHORSEN
+MODULE_AUTHOR=RDRAKE
 inherit perl-module
 
 DESCRIPTION="Interacts with ISC DHCPd"
@@ -14,6 +12,8 @@ IUSE=""
 SRC_TEST="do"
 
 DEPEND="virtual/perl-ExtUtils-MakeMaker
+	virtual/perl-File-Temp
+	dev-perl/Class-Load   
 	>=dev-perl/MooseX-Types-Path-Class-0.05
 	>=dev-perl/NetAddr-IP-4.0
 	>=virtual/perl-Time-HiRes-1.9
