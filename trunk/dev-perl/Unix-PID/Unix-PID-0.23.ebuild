@@ -2,8 +2,6 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=3
-
 MODULE_AUTHOR=DMUEY
 inherit perl-module
 
@@ -13,3 +11,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE=""
 SRC_TEST="do"
 
+DEPEND="dev-perl/List-Cycle
+    dev-perl/Math-Fibonacci-Phi"
+RDEPEND="${DEPEND}"
+            
