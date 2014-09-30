@@ -19,6 +19,8 @@ RDEPEND="dev-libs/boost
 DEPEND="${RDEPEND}"
 
 src_prepare() {
+#Dirty hack to add -lz alongside with gentoo vars
+	export LDFLAGS="-lz"
 	sed -i -e \
 		's:add_subdirectory("BT Test")::g' \
 		CMakeLists.txt || die "CMakeLists.txt remove test failed!"
