@@ -1,0 +1,135 @@
+diff --git a/ngx_http_concat_module.c b/ngx_http_concat_module.c
+index 80e427c..c799426 100644
+--- a/ngx_http_concat_module.c
++++ b/ngx_http_concat_module.c
+@@ -16,6 +16,9 @@ typedef struct {
+     ngx_str_t    delimiter;
+     ngx_flag_t   ignore_file_error;
+ 
++	ngx_str_t begin;
++	ngx_str_t end;
++
+     ngx_hash_t   types;
+     ngx_array_t *types_keys;
+ } ngx_http_concat_loc_conf_t;
+@@ -80,6 +83,20 @@ static ngx_command_t  ngx_http_concat_commands[] = {
+       offsetof(ngx_http_concat_loc_conf_t, ignore_file_error),
+       NULL },
+ 
++	{ ngx_string("slice_arg_begin"),
++		NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
++		ngx_conf_set_str_slot,
++		NGX_HTTP_LOC_CONF_OFFSET,
++		offsetof(ngx_http_concat_loc_conf_t, begin),
++	NULL },
++	
++	{ ngx_string("slice_arg_end"),
++		NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
++		ngx_conf_set_str_slot,
++		NGX_HTTP_LOC_CONF_OFFSET,
++		offsetof(ngx_http_concat_loc_conf_t, end),
++	NULL },
++
+       ngx_null_command
+ };
+ 
+@@ -119,11 +136,13 @@ static ngx_int_t
+ ngx_http_concat_handler(ngx_http_request_t *r)
+ {
+     off_t                       length;
++    off_t begin, end, len;
+     size_t                      root, last_len;
+     time_t                      last_modified;
+     u_char                     *p, *v, *e, *last, *last_type;
+     ngx_int_t                   rc;
+     ngx_str_t                  *uri, *filename, path;
++    ngx_str_t value;
+     ngx_buf_t                  *b;
+     ngx_uint_t                  i, j, level;
+     ngx_flag_t                  timestamp;
+@@ -147,6 +166,29 @@ ngx_http_concat_handler(ngx_http_request_t *r)
+         return NGX_DECLINED;
+     }
+ 
++    begin = 0;
++    //end = of.size;
++
++    if (r->args.len) {
++    	if (ngx_http_arg(r, clcf->begin.data, clcf->begin.len, &value) == NGX_OK)
++    	{
++    		begin = ngx_atoof(value.data, value.len);
++    		if (begin == NGX_ERROR || begin >= of.size) {
++    			begin = 0;
++    		}
++    	}
++    	if (ngx_http_arg(r, clcf->end.data, clcf->end.len, &value) == NGX_OK) {
++    		end = ngx_atoof(value.data, value.len);
++    		if (end == NGX_ERROR || end >= of.size) {
++    			end = of.size;
++   		}
++    	}
++    }
++	
++	ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
++                   "http concat begin: \"%d\"", begin);	
++
++
+     /* the length of args must be greater than or equal to 2 */
+     if (r->args.len < 2 || r->args.data[0] != '?') {
+         return NGX_DECLINED;
+@@ -181,7 +223,23 @@ ngx_http_concat_handler(ngx_http_request_t *r)
+     e = r->args.data + r->args.len;
+     for (p = r->args.data + 1, v = p, timestamp = 0; p != e; p++) {
+ 
+-        if (*p == ',') {
++        if (*p == ';') {
++            if (p == v || timestamp == 1) {
++                v = p + 1;
++                timestamp = 0;
++                continue;
++            }
++
++            rc = ngx_http_concat_add_path(r, &uris, clcf->max_files, &path,
++                                          p, v);
++
++            if (rc != NGX_OK) {
++                return rc;
++            }
++
++            v = p + 1;
++
++        } else if (*p == ',') {
+             if (p == v || timestamp == 1) {
+                 v = p + 1;
+                 timestamp = 0;
+@@ -354,7 +412,18 @@ ngx_http_concat_handler(ngx_http_request_t *r)
+             return NGX_HTTP_INTERNAL_SERVER_ERROR;
+         }
+ 
+-        b->file_pos = 0;
++		if (begin >= of.size) {
++			begin = 0;
++		}
++		
++		if (i == 0) {
++			 b->file_pos = begin;
++		} else {
++			 b->file_pos = 0;
++		}
++		
++		
++       
+         b->file_last = of.size;
+ 
+         b->in_file = b->file_last ? 1 : 0;
+@@ -476,6 +545,10 @@ ngx_http_concat_add_path(ngx_http_request_t *r, ngx_array_t *uris,
+     ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                    "http concat add file: \"%s\"", uri->data);
+ 
++    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
++                   "http concat p: \"%s\"", p);    
++
++
+     return NGX_OK;
+ }
+ 
