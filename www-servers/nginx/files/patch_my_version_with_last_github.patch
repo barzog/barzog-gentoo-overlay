@@ -1,5 +1,5 @@
 diff --git a/ngx_http_concat_module.c b/ngx_http_concat_module.c
-index 80e427c..c799426 100644
+index 80e427c..0a64c54 100644
 --- a/ngx_http_concat_module.c
 +++ b/ngx_http_concat_module.c
 @@ -16,6 +16,9 @@ typedef struct {
@@ -37,7 +37,7 @@ index 80e427c..c799426 100644
  ngx_http_concat_handler(ngx_http_request_t *r)
  {
      off_t                       length;
-+    off_t begin, end, len;
++    off_t begin, end;
      size_t                      root, last_len;
      time_t                      last_modified;
      u_char                     *p, *v, *e, *last, *last_type;
@@ -58,7 +58,7 @@ index 80e427c..c799426 100644
 +    	if (ngx_http_arg(r, clcf->begin.data, clcf->begin.len, &value) == NGX_OK)
 +    	{
 +    		begin = ngx_atoof(value.data, value.len);
-+    		if (begin == NGX_ERROR || begin >= of.size) {
++    		if (begin == NGX_ERROR) {
 +    			begin = 0;
 +    		}
 +    	}
