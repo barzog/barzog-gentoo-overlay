@@ -289,7 +289,7 @@ src_prepare() {
     if use nginx_modules_http_concat ; then
     	cd ${HTTP_CONCAT_MODULE_WD}
     	epatch "${FILESDIR}"/patch_last_github_varsion_with_1.2.2.patch    	      	    
-    	epatch "${FILESDIR}"/patch_my_version_with_last_github.patch  
+    	epatch "${FILESDIR}"/patch_my_version_with_last_github_v2.patch
     	cd ${S}
     fi
 	if use nginx_modules_http_lua; then
