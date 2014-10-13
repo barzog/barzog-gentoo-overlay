@@ -14,13 +14,14 @@ LICENSE="GPL-3"
 SLOT="0"
 IUSE=""
 
-RDEPEND=">=net-misc/asterisk-1.6.2.0"
+RDEPEND=">=net-misc/asterisk-11.0"
 DEPEND="${RDEPEND}"
 
 AT_NOEAUTOMAKE=yes
 
 src_prepare() {
 	cd ${S}
+	epatch ${FILESDIR}/chan_dongle.patch
 	eaclocal
 	eautoconf
 	automake -a
