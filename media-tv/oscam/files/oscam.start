@@ -1,0 +1,24 @@
+#!/sbin/runscript
+
+
+depend() {
+        need net
+        provide oscam
+}
+
+
+oscam_DIR="/etc/oscam"
+oscam_PID="/var/run/oscam.pid"
+
+start() {
+        ebegin "Starting oscam"
+        start-stop-daemon --start --quiet --background --make-pidfile --pidfile ${oscam_PID} --exec /usr/bin/oscam -- -c ${oscam_DIR}
+        eend $?
+}
+
+stop() {
+        ebegin "Stopping oscam"
+        start-stop-daemon --stop --quiet --pidfile ${oscam_PID} --name ${SVCNAME}
+        eend $?
+}
+
