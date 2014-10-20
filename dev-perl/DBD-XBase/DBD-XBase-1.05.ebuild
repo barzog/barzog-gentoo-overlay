@@ -2,9 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="4"
+EAPI="5"
 
-MODULE_AUTHOR=MEWP
+MODULE_AUTHOR=JANPAZ
 
 inherit perl-module
 
@@ -16,12 +16,7 @@ IUSE="test"
 
 DEPEND="virtual/perl-Module-Build
 	test? ( virtual/perl-Test-Simple )
-	dev-db/freetds[mssql]"
-RDEPEND="${DEPEND}"
+"
+RDEPEND=""
 
 SRC_TEST="do"
-
-src_configure() {
-	export SYBASE=/usr
-	perl-module_src_configure
-}
