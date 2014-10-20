@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-perl/Cflow/Cflow-1.051-r1.ebuild,v 1.5 2010/12/19 12:42:35 armin76 Exp $
 
+EAPI=5
+
 inherit eutils perl-app
 
 FLOW_TOOLS_VERSION="0.68"
