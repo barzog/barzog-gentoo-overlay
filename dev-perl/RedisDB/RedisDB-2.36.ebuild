@@ -15,7 +15,7 @@ IUSE=""
 SRC_TEST="do"
 
 DEPEND="dev-perl/RedisDB-Parser
-dev-perl/IO-Socket-IP"
+perl-core/IO-Socket-IP"
 RDEPEND="${DEPEND}"
 
 
