@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=4
+EAPI=5
 
 MODULE_AUTHOR=ZWON
 inherit perl-module
@@ -15,7 +15,10 @@ IUSE=""
 SRC_TEST="do"
 
 DEPEND="dev-perl/RedisDB-Parser
-perl-core/IO-Socket-IP"
+		perl-core/IO-Socket-IP
+		dev-perl/Test-Most
+		dev-perl/Test-TCP
+		dev-perl/Test-Differences"
 RDEPEND="${DEPEND}"
 
 
