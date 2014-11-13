@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=4
+EAPI=5
 
 MODULE_AUTHOR=ZWON
 inherit perl-module
@@ -14,4 +14,5 @@ KEYWORDS="~amd64 ~x86"
 IUSE=""
 SRC_TEST="do"
 
-
+DEPEND="dev-perl/Test-Most"
+RDEPEND="${DEPEND}"
