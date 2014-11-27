@@ -13,6 +13,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE=""
 SRC_TEST="do"
 
-DEPEND="dev-perl/Test-Deep"
+DEPEND="dev-perl/Test-Deep
+		dev-perl/Log-Report"
 RDEPEND="${DEPEND}"
 
