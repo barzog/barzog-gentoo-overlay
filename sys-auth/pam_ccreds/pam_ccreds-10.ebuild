@@ -14,7 +14,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE=""
 
 DEPEND="sys-libs/pam
-	sys-libs/db"
+	=sys-libs/db-4.8"
 RDEPEND="${DEPEND}"
 
 src_unpack() {
