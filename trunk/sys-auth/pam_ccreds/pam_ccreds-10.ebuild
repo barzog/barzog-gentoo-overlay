@@ -2,9 +2,6 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
-WANT_AUTOCONF="2.5"
-WANT_AUTOMAKE="1.11"
-
 inherit pam autotools eutils
 
 DESCRIPTION="PAM module that provides disconnected authentication"
@@ -23,9 +20,7 @@ RDEPEND="${DEPEND}"
 src_unpack() {
 	unpack ${A}
 	cd "${S}"
-
-	epatch "${FILESDIR}"/${P}-as-needed.patch
-
+	mv configure.in configure.ac
 	eautoreconf
 }
 
