@@ -4,7 +4,7 @@
 
 EAPI="4"
 
-inherit eutils versionator
+inherit eutils versionator user
 
 IUSE="doc perl"
 
@@ -21,15 +21,11 @@ SLOT="0"
 KEYWORDS="~amd64 ~ppc ~x86"
 
 DEPEND="|| (
-			dev-db/postgresql-server:9.2
-			dev-db/postgresql-server:9.1
-			dev-db/postgresql-server:9.0
-			dev-db/postgresql-server:8.4
-			dev-db/postgresql-server:8.3
+			>=dev-db/postgresql-9.2[server,threads,perl]
+			>=dev-db/postgresql-9.1[server,threads,perl]
+			>=dev-db/postgresql-9.0[server,threads,perl]
 		)
-		dev-db/postgresql-base[threads]
-		perl? ( dev-perl/DBD-Pg )
-"
+		perl? ( dev-perl/DBD-Pg )"
 
 pkg_setup() {
 	local PGSLOT="$(postgresql-config show)"
