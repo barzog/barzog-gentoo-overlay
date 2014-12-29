@@ -24,7 +24,7 @@ RDEPEND="net-firewall/iptables
 	>=net-libs/libnetfilter_conntrack-0.9.1
 	>=net-libs/libnetfilter_log-1.0
 	mysql? ( virtual/mysql )
-	postgres? ( dev-db/postgresql-base )
+	postgres? ( dev-db/postgresql )
 	pcap? ( net-libs/libpcap )
 	dev-db/libdbi"
 
