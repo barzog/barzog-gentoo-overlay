@@ -8,7 +8,7 @@ inherit eutils autotools python
 
 DESCRIPTION="Database management tools from Skype: WAL shipping, queueing,replication."
 HOMEPAGE="http://pgfoundry.org/projects/skytools/"
-SRC_URI="http://pgfoundry.org/frs/download.php/3515/${P}.tar.gz"
+SRC_URI="http://pgfoundry.org/frs/download.php/3622/${P}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
