@@ -19,7 +19,7 @@ RDEPEND="sys-apps/tcp-wrappers
 	sys-libs/zlib
 	sys-devel/flex
 	mysql? ( virtual/mysql )
-	postgres? ( virtual/postgresql-base )
+	postgres? ( dev-db/postgresql )
 	ssl? ( dev-libs/openssl )"
 
 DEPEND="${RDEPEND}
