@@ -15,7 +15,7 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
 
-DEPEND=">=dev-db/postgresql-server-8.2"
+DEPEND="dev-db/postgresql[server]"
 RDEPEND="${DEPENDS}"
 
 src_install() {
