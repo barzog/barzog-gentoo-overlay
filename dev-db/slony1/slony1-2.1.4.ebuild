@@ -21,7 +21,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~ppc ~x86"
 
 DEPEND="|| (
-			=dev-db/postgresql-9.3[server,threads,perl]
+			=dev-db/postgresql-9.3[server,threads,perl]    
 			=dev-db/postgresql-9.2[server,threads,perl]
 			=dev-db/postgresql-9.1[server,threads,perl]
 			=dev-db/postgresql-9.0[server,threads,perl]
@@ -38,9 +38,9 @@ pkg_setup() {
 	enewuser slony1 -1 -1 -1 "postgres"
 }
 
-#src_prepare() {
-#	epatch "${FILESDIR}/slony1-2.1.2-ldflags.patch"
-#}
+src_prepare() {
+	epatch "${FILESDIR}/slony1-2.1.2-ldflags.patch"
+}
 
 src_configure() {
 	local myconf
