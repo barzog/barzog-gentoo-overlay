@@ -1,6 +1,6 @@
-# Copyright 1999-2012 Gentoo Foundation
+# Copyright 1999-2013 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/dev-db/slony1/slony1-2.1.1.ebuild,v 1.5 2012/07/28 12:24:08 titanofold Exp $
+# $Header: /var/cvsroot/gentoo-x86/dev-db/slony1/slony1-2.1.2.ebuild,v 1.1 2013/01/12 21:37:18 titanofold Exp $
 
 EAPI="4"
 
@@ -18,9 +18,10 @@ SRC_URI="http://main.slony.info/downloads/${MAJ_PV}/source/${P}.tar.bz2
 
 LICENSE="BSD GPL-2"
 SLOT="0"
-KEYWORDS="amd64 ppc x86"
+KEYWORDS="~amd64 ~ppc ~x86"
 
 DEPEND="|| (
+			>=dev-db/postgresql-9.2[server,threads,perl]
 			>=dev-db/postgresql-9.1[server,threads,perl]
 			>=dev-db/postgresql-9.0[server,threads,perl]
 		)
@@ -33,18 +34,12 @@ pkg_setup() {
 		eerror "Set an appropriate slot with postgresql-config."
 		die "postgresql-config not set to 8.3 or higher."
 	fi
-
-	if [[ ${PGSLOT//.} > 91 ]] ; then
-		ewarn "You are building ${CATEGORY}/${PN} against a version of PostgreSQL greater than 9.1."
-		ewarn "This is neither supported here nor upstream."
-		ewarn "Any bugs you encounter should be reported upstream."
-	fi
-        enewuser slony1 -1 -1 -1 "postgres"
+	enewuser slony1 -1 -1 -1 "postgres"
 }
 
-src_prepare() {
-	epatch "${FILESDIR}/slony1-2.1.1-ldflags.patch"
-}
+#src_prepare() {
+#	epatch "${FILESDIR}/slony1-2.1.2-ldflags.patch"
+#}
 
 src_configure() {
 	local myconf
@@ -65,10 +60,10 @@ src_install() {
 	fi
 
         newinitd "${FILESDIR}"/slony1.initd slony1
-        keepdir /var/log/slony1
+	keepdir /var/log/slony1
         insinto /etc/slony1
         doins ${FILESDIR}/slony1.conf
         fperms 660 /etc/slony1/slony1.conf
-        fperms 770 /var/log/slony1
+	fperms 770 /var/log/slony1
         fowners slony1:postgres /etc/slony1/slony1.conf /var/log/slony1
 }
