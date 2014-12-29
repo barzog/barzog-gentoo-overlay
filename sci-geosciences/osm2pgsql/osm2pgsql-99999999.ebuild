@@ -23,8 +23,7 @@ DEPEND="
 	sci-libs/geos
 	sci-libs/proj
 	sys-libs/zlib
-	dev-db/postgresql-base
-"
+	dev-db/postgresql"
 RDEPEND="${DEPEND}"
 
 DOCS=( README 900913.sql )
