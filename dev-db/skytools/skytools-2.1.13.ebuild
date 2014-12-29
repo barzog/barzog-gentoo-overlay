@@ -19,7 +19,7 @@ SUPPORT_PYTHON_ABIS="1"
 RESTRICT_PYTHON_ABIS="3.* *-jython"
 python_enable_pyc
 
-DEPEND=">=dev-db/postgresql-server-8.2
+DEPEND=">=dev-db/postgresql-8.2[server]
 		asciidoc? ( app-text/asciidoc )
 		dev-python/psycopg"
 RDEPEND="${DEPENDS}"
