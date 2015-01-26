@@ -4,19 +4,28 @@
 
 EAPI="2"
 
-inherit eutils user
+inherit eutils user git-2 autotools
 
 DESCRIPTION="LLDP/CDP daemon for *NIX"
-HOMEPAGE="https://code.google.com/p/ladvd/"
-SRC_URI="http://${PN}.googlecode.com/files/${P}.tar.gz"
+HOMEPAGE="https://github.com/sspans/ladvd"
+SRC_URI=""
+EGIT_REPO_URI="https://github.com/sspans/ladvd.git"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="amd64 x86"
+KEYWORDS="~amd64 ~ia64 ~ppc ~x86"
 
 RDEPEND="dev-libs/libevent"
 
 DEPEND="${RDEPEND}"
+
+src_unpack() {
+    git-2_src_unpack
+    cd ${S}
+    cat configure.ac | sed -e "s/AC_CC_D_FORTIFY_SOURCE//" > new_conf.ac
+    mv new_conf.ac configure.ac
+    eautoreconf
+}
 
 pkg_setup() {
         enewgroup ladvd
