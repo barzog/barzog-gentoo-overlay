@@ -12,6 +12,12 @@ start() {
 		--pidfile ${PIDFILE}.${PORT} \
 		-- ${FLOW_OPTS} >/dev/null 2>&1
 	eend $?
+
+	# Set CPU affinity
+	if [ -x /usr/bin/taskset ]; then
+		sleep 1
+		/usr/bin/taskset -pc ${CPU_AFFINITY} `cat ${PIDFILE}.${PORT}` &> /dev/null
+	fi
 }
 
 stop() {
