@@ -13,7 +13,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE=""
 SRC_TEST="do"
 
-DEPEND="perl-core/ExtUtils-MakeMaker
+DEPEND="virtual/perl-ExtUtils-MakeMaker
 	dev-perl/Cache-Memcached-Fast"
 RDEPEND="${DEPEND}"
 
