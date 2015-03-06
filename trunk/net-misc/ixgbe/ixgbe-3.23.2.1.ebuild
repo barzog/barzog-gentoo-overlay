@@ -12,6 +12,8 @@ SRC_URI="mirror://sourceforge/project/e1000/ixgbe%20stable/${PV}/${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
+IUSE="nolro norsc"
+
 BUILD_TARGETS="clean install"
 
 MODULE_NAMES="ixgbe(drivers/net:${S}/src)"
@@ -19,7 +21,9 @@ MODULE_NAMES="ixgbe(drivers/net:${S}/src)"
 src_compile() {
 	CONFIG_CHECK="!CONFIG_IXGBE"
 	cd "${S}/src"
-	emake
+	use nolro && CFLAGS_EXTRA+=-DIXGBE_NO_LRO
+	use norsc && CFLAGS_EXTRA+=" -DIXGBE_NO_HW_RSC"
+	emake CFLAGS_EXTRA="${CFLAGS_EXTRA}"
 }
 
 src_install() {
