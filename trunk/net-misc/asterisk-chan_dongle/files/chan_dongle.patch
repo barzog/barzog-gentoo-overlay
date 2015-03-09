@@ -582,18 +582,6 @@ diff -x '*svn*' -Nru ./cli.c /home/gawriloff/2/asterisk-chan-dongle-asterisk11/c
  
  #include "cli.h"
  #include "chan_dongle.h"			/* devices */
-diff -x '*svn*' -Nru ./configure.in /home/gawriloff/2/asterisk-chan-dongle-asterisk11/configure.in
---- ./configure.in	2014-10-08 09:06:55.000000000 +0300
-+++ /home/gawriloff/2/asterisk-chan-dongle-asterisk11/configure.in	2013-08-28 23:55:14.000000000 +0300
-@@ -2,7 +2,7 @@
- dnl AC_REVISION($Revision: 1.30 $)
- AC_PREREQ([2.60])
- AC_INIT([chan_dongle],[1.1],[http://code.google.com/p/asterisk-chan-dongle/issues/list],[chan_dongle],[http://code.google.com/p/asterisk-chan-dongle])
--PACKAGE_REVISION="36"
-+PACKAGE_REVISION="34"
- AC_CANONICAL_TARGET
- AM_INIT_AUTOMAKE
- AC_CONFIG_HEADERS([config.h])
 diff -x '*svn*' -Nru ./.gitignore /home/gawriloff/2/asterisk-chan-dongle-asterisk11/.gitignore
 --- ./.gitignore	1970-01-01 03:00:00.000000000 +0300
 +++ /home/gawriloff/2/asterisk-chan-dongle-asterisk11/.gitignore	2013-08-28 23:55:14.000000000 +0300
