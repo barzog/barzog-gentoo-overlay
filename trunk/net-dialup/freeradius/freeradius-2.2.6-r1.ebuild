@@ -66,7 +66,7 @@ src_prepare() {
 	epatch \
 		"${WORKDIR}"/patches/0002*patch \
 		"${WORKDIR}"/patches/0004*patch \
-		"${FILESDIR}"/${P}-gentoo.patch \
+		"${FILESDIR}"/freeradius-2.2.5-gentoo.patch \
 		"${FILESDIR}"/rlm_perl-tag.patch
 
 
