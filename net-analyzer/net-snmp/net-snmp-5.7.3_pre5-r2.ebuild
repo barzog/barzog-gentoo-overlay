@@ -125,7 +125,7 @@ src_install () {
 	emake -j1 DESTDIR="${D}" install
 
 	if use perl ; then
-		fixlocalpod
+		perl_delete_localpod
 		use X || rm -f "${D}"/usr/bin/tkmib
 	else
 		rm -f "${D}"/usr/bin/mib2c "${D}"/usr/bin/snmpcheck "${D}"/usr/bin/tkmib
