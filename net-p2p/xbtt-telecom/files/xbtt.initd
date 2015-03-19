@@ -6,7 +6,7 @@ depend() {
         
 start() {
         ebegin "Starting XBT Tracker (Telecom)"
-        mkdir /var/run/xbtt && chown xbtt:xbtt /var/run/xbtt
+        [ ! -d /var/run/xbtt ] && mkdir /var/run/xbtt && chown xbtt:xbtt /var/run/xbtt
         start-stop-daemon --start --quiet --user xbtt:xbtt --exec /usr/sbin/xbt_tracker-telecom -- --conf_file /etc/xbtt-telecom/xbt_tracker-telecom.conf
         eend $?
 }

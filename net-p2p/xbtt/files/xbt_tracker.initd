@@ -8,7 +8,7 @@ XBTT_CONFIG=${XBTT_CONFIG:-/etc/xbtt/xbt_tracker.conf}
 
 start() {
         ebegin "Starting XBT Tracker"
-	mkdir /var/run/xbtt && chown xbtt:xbtt /var/run/xbtt
+	[ ! -d /var/run/xbtt ] && mkdir /var/run/xbtt && chown xbtt:xbtt /var/run/xbtt
         start-stop-daemon --start --quiet --user xbtt:xbtt --exec /usr/bin/xbt_tracker -- --conf_file ${XBTT_CONFIG}
         eend $?
 }
