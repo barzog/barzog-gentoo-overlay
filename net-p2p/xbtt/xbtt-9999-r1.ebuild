@@ -5,7 +5,7 @@
 EAPI="2"
 
 inherit cmake-utils subversion
-DESCRIPTION="XBT BitTorrent tracker"
+DESCRIPTION="https://code.google.com/p/xbt/"
 HOMEPAGE="http://xbtt.sourceforge.net/tracker/"
 ESVN_REPO_URI="http://xbt.googlecode.com/svn/trunk/xbt"
 LICENSE="GPL-2"
@@ -36,8 +36,6 @@ src_install() {
 	insinto /etc/xbtt
 	newins "${FILESDIR}/xbt_tracker.conf.default" xbt_tracker.conf.default
 	newins "${FILESDIR}/xbt_tracker.sql" xbt_tracker.sql
-	dodir /var/run/xbtt
-	fowners xbtt:xbtt /var/run/xbtt
 	fowners xbtt:xbtt /etc/xbtt
 	fperms 750 /etc/xbtt
 }
