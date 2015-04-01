@@ -4,7 +4,7 @@
 
 EAPI="2"
 
-inherit eutils user autotools
+inherit eutils user autotools flag-o-matic
 
 DESCRIPTION="LLDP/CDP daemon for *NIX"
 HOMEPAGE="https://github.com/sspans/ladvd/releases"
@@ -30,6 +30,7 @@ src_prepare() {
 }
 
 src_configure() {
+    append-flags "-D_DEFAULT_SOURCE"
     econf
 }
 
