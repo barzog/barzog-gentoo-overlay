@@ -15,8 +15,11 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE="doc"
 
-DEPEND="=sys-libs/libapparmor-2.8.4"
+DEPEND="=sys-libs/libapparmor-${PV}"
 
 S=${WORKDIR}/apparmor-${PV}/changehat/pam_apparmor
 
 
+src_compile() {
+	emake USE_SYSTEM=1
+}
