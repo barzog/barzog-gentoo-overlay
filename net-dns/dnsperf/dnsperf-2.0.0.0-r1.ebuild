@@ -19,7 +19,8 @@ S="${WORKDIR}/${PN}-src-${PV}-1"
 IUSE="queryparse"
 
 DEPEND=">=net-dns/bind-9.4.0
-		queryparse? ( dev-python/dnspython dev-python/pcapy ) "
+		queryparse? ( dev-python/dnspython dev-python/pcapy )
+		sci-visualization/gnuplot"
 
 src_install() {
 	dobin dnsperf resperf resperf-report
