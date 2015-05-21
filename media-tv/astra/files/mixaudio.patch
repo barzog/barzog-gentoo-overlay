@@ -1,0 +1,48 @@
+--- modules/mixaudio/mixaudio.c.orig	2013-02-15 08:51:03.000000000 +0300
++++ modules/mixaudio/mixaudio.c	2015-05-21 09:44:40.000000000 +0300
+@@ -111,7 +111,7 @@
+     mod->davpkt.data = (uint8_t *)data;
+     mod->davpkt.size = mod->fsize;
+ 
+-    avcodec_get_frame_defaults(mod->frame);
++    av_frame_unref(mod->frame);
+ 
+     while(mod->davpkt.size > 0)
+     {
+@@ -224,15 +224,15 @@
+ 
+         if(!mod->decoder)
+         {
+-            enum CodecID codec_id = CODEC_ID_NONE;
++            enum AVCodecID codec_id = AV_CODEC_ID_NONE;
+             switch(mpeg_v)
+             {
+                 case 0:
+                 case 2:
+-                    codec_id = CODEC_ID_MP2;
++                    codec_id = AV_CODEC_ID_MP2;
+                     break;
+                 case 3:
+-                    codec_id = CODEC_ID_MP1;
++                    codec_id = AV_CODEC_ID_MP1;
+                     break;
+                 default:
+                     break;
+@@ -344,7 +344,7 @@
+     avcodec_register_all();
+     do
+     {
+-        mod->encoder = avcodec_find_encoder(CODEC_ID_MP2);
++        mod->encoder = avcodec_find_encoder(AV_CODEC_ID_MP2);
+         if(!mod->encoder)
+         {
+             log_error(LOG_MSG("mp3 encoder is not found"));
+@@ -362,7 +362,7 @@
+             break;
+         }
+ 
+-        mod->frame = avcodec_alloc_frame();
++        mod->frame = av_frame_alloc();
+ 
+         av_init_packet(&mod->davpkt);
+ 
