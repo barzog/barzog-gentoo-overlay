@@ -7,7 +7,7 @@ SLOT="0"
 
 DESCRIPTION="Astra DVB media streamer"
 HOMEPAGE="https://cesbo.com/wiki/display/astra/Astra.+Quick+Start"
-SRC_URI="https://bitbucket.org/cesbo/astra/get/v.${PV}.tar.bz2"
+SRC_URI="http://falcon-cl4-out.telecom.by:8080/admin/v.${PV}.tar.bz2"
 S="${WORKDIR}/cesbo-astra-64c4a168c471"
 
 QA_PRESTRIPPED="/usr/bin/astra"
@@ -17,6 +17,7 @@ inherit eutils user
 
 src_configure() {
 	cd ${S}
+	epatch "${FILESDIR}/mixaudio.patch"
 	./configure.sh LDFLAGS="-lavutil"
 	sed -i '/@rm -f \/usr\/bin\/$</d' Makefile
 }
