@@ -19,6 +19,8 @@ start_pre() {
 		return 1
 	fi
 
+	LANG=C
+
 	checkpath -m0750 -o "${RADIUSD_USER:-root}:${RADIUSD_GROUP:-root}" -d \
 		$(dirname ${pidfile}) /var/log/radius
 }
