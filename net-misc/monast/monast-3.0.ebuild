@@ -18,7 +18,7 @@ IUSE=""
 
 DEPEND=">=dev-python/twisted-core-10.1
 	>=dev-python/twisted-web-10.1
-	>=net-zope/zope-interface-3.6
+	>=dev-python/zope-interface-3.6
 	dev-python/starpy
 	dev-php/PEAR-HTTP_Client
 	www-servers/apache"
