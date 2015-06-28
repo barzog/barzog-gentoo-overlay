@@ -3,11 +3,11 @@
 # $Header: $
 EAPI=4
 
-inherit eutils subversion autotools
+inherit eutils git-2 autotools
 
 DESCRIPTION="Asterisk Huawei 3G Dongle Channel Driver."
-ESVN_REPO_URI="http://asterisk-chan-dongle.googlecode.com/svn/trunk/"
-HOMEPAGE="http://code.google.com/p/asterisk-chan-dongle/"
+EGIT_REPO_URI="https://github.com/bg111/asterisk-chan-dongle.git"
+HOMEPAGE="https://github.com/bg111/asterisk-chan-dongle"
 KEYWORDS=""
 
 LICENSE="GPL-3"
