@@ -14,7 +14,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE="test"
 
-DEPEND="virtual/perl-Module-Build
+DEPEND="dev-perl/Module-Build
 	test? ( virtual/perl-Test-Simple )
 	dev-db/freetds[mssql]
 	dev-perl/DBI"
