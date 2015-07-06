@@ -11,9 +11,9 @@ inherit distutils eutils
 
 REVISION="a13"
 DESCRIPTION="StarPy Asterisk Protocols for Twisted"
-HOMEPAGE="http://starpy.sourceforge.net/"
-SRC_URI="mirror://sourceforge/${PN}/${P}${REVISION}.tar.gz"
-S="${WORKDIR}/${P}${REVISION}"
+HOMEPAGE="https://github.com/asterisk/starpy"
+SRC_URI="https://github.com/asterisk/${PN}/archive/${PV}.tar.gz"
+#S="${WORKDIR}/${P}${REVISION}"
 
 LICENSE="BSD"
 SLOT="0"
