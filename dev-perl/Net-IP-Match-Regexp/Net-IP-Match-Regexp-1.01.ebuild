@@ -9,9 +9,9 @@ inherit perl-module
 
 DESCRIPTION="Efficiently match IP addresses against ranges"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 x86"
 IUSE=""
 SRC_TEST="do"
 
-DEPEND="virtual/perl-Module-Build"
+DEPEND="dev-perl/Module-Build"
 RDEPEND="${DEPEND}"
