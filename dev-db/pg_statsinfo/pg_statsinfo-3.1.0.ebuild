@@ -15,8 +15,14 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
 
-DEPEND=">=dev-db/postgresql-9.3"
+DEPEND=">=dev-db/postgresql-9.3[static-libs]
+	dev-db/repmgr"
 RDEPEND="${DEPENDS}"
+
+#src_configure() {
+#	cd ${S}/agent/bin
+#	sed -i '34 i LIBS := $(filter -lpgport -lpgcommon, $(LIBS))' Makefile
+#}
 
 src_compile() {
 	emake USE_PGXS=1
