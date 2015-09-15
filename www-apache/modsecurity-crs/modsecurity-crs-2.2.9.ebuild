@@ -72,9 +72,7 @@ src_prepare() {
 
 src_install() {
 	insinto "${RULESDIR}"
-	# slr_rules as of 2.2.6 have broken IDs that don't work with
-	# ModSecurity 2.7, but the rules require 2.7 to begin with.
-	doins -r base_rules optional_rules experimental_rules #slr_rules
+	doins -r base_rules optional_rules experimental_rules slr_rules
 
 	insinto "${LUADIR}"
 	doins lua/*.lua
