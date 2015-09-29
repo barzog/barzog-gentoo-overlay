@@ -1,0 +1,22 @@
+--- configure.in.orig	2015-09-29 12:39:16.000000000 +0300
++++ configure.in	2015-09-29 12:40:00.000000000 +0300
+@@ -776,15 +776,15 @@
+ # presuing if one given then correct
+ if test "${with_pgsql}" = "yes"; then
+   with_pgsql=notfound
+-  for pgsqlloc in lib/pgsql lib pgsql/lib
++  for pgsqlloc in lib/postgresql lib/pgsql lib pgsql/lib
+   do
+-    if test -f ${prefix}/${pgsqlloc}/libpq.a; then
++    if test -f ${prefix}/${pgsqlloc}/libpq.a || test -f ${prefix}/${pgsqlloc}/libpq.so; then
+       with_pgsql="${prefix}"
+       break
+-    elif test -f /usr/local/${pgsqlloc}/libpq.a; then
++    elif test -f /usr/local/${pgsqlloc}/libpq.a || test -f /usr/local/${pgsqlloc}/libpq.so; then
+       with_pgsql="/usr/local"
+       break
+-    elif test -f /usr/${pgsqlloc}/libpq.a; then
++    elif test -f /usr/${pgsqlloc}/libpq.a || /usr/${pgsqlloc}/libpq.so; then
+       with_pgsql="/usr"
+       break
+     fi
