@@ -4,7 +4,7 @@
 
 EAPI=4
 
-inherit eutils
+inherit eutils autotools user
 
 DESCRIPTION="library and programs to collect, send, process, and generate reports from NetFlow data"
 HOMEPAGE="http://code.google.com/p/flow-tools/"
@@ -37,6 +37,9 @@ src_unpack() {
        cd "${S}"
        epatch "${FILESDIR}"/flow-print.patch
        epatch "${FILESDIR}"/patch-ftlib.h
+       sed -i -e 's:_BSD_SOURCE:_DEFAULT_SOURCE:' configure
+       sed -i -e 's:_BSD_SOURCE:_DEFAULT_SOURCE:' configure.ac
+       eautoreconf
 }
 
 src_configure() {
