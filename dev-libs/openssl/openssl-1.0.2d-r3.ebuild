@@ -14,7 +14,7 @@ SRC_URI="mirror://openssl/source/${MY_P}.tar.gz"
 LICENSE="openssl"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd ~arm-linux ~x86-linux"
-IUSE="+asm bindist gmp kerberos rfc3779 sctp cpu_flags_x86_sse2 static-libs test +tls-heartbeat vanilla zlib"
+IUSE="+asm bindist gmp kerberos rfc3779 sctp cpu_flags_x86_sse2 static-libs test +tls-heartbeat vanilla zlib chacha20_poly1305"
 RESTRICT="!bindist? ( bindist )"
 
 # The blocks are temporary just to make sure people upgrade to a
@@ -63,9 +63,12 @@ src_prepare() {
 		epatch "${FILESDIR}"/${PN}-1.0.2-ipv6.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-x32-asm.patch #542618
 		epatch "${FILESDIR}"/${PN}-1.0.1p-default-source.patch #554338
-		epatch "${FILESDIR}"/${PN}__chacha20_poly1305_cf.patch
 
 		epatch_user #332661
+	fi
+
+	if use chacha20_poly1305 ; then
+		epatch "${FILESDIR}"/${PN}__chacha20_poly1305_cf.patch
 	fi
 
 	# disable fips in the build
