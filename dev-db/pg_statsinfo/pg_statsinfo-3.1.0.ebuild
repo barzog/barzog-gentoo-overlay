@@ -15,7 +15,7 @@ SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
 
-DEPEND=">=dev-db/postgresql-9.3[static-libs]
+DEPEND="<=dev-db/postgresql-9.4[xml,static-libs,server]
 	dev-db/repmgr"
 RDEPEND="${DEPENDS}"
 
