@@ -1,10 +1,10 @@
-# Copyright 1999-2012 Gentoo Foundation
+# Copyright 1999-2015 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/net-misc/dhcp/dhcp-4.2.4_p1.ebuild,v 1.4 2012/07/26 19:18:30 jer Exp $
+# $Id$
 
 EAPI="4"
 
-inherit eutils toolchain-funcs
+inherit eutils systemd toolchain-funcs user
 
 MY_PV="${PV//_alpha/a}"
 MY_PV="${MY_PV//_beta/b}"
@@ -16,18 +16,27 @@ HOMEPAGE="http://www.isc.org/products/DHCP"
 SRC_URI="ftp://ftp.isc.org/isc/dhcp/${MY_P}.tar.gz
 	ftp://ftp.isc.org/isc/dhcp/${MY_PV}/${MY_P}.tar.gz"
 
-LICENSE="as-is BSD"
+LICENSE="ISC BSD SSLeay GPL-2" # GPL-2 only for init script
 SLOT="0"
-KEYWORDS="~alpha amd64 ~arm hppa ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd"
-IUSE="+client ipv6 kernel_linux ldap selinux server ssl vim-syntax subclasses one-lease-per-mac"
+KEYWORDS="~alpha amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd"
+IUSE="+client ipv6 kernel_linux ldap libressl selinux +server ssl vim-syntax subclassess binary-leases"
 
-DEPEND="selinux? ( sec-policy/selinux-dhcp )
-	client? ( kernel_linux? ( sys-apps/net-tools ) )
+DEPEND="
+	client? (
+		kernel_linux? (
+			ipv6? ( sys-apps/iproute2 )
+			sys-apps/net-tools
+		)
+	)
 	ldap? (
 		net-nds/openldap
-		ssl? ( dev-libs/openssl )
+		ssl? (
+			!libressl? ( dev-libs/openssl:0 )
+			libressl? ( dev-libs/libressl )
+		)
 	)"
 RDEPEND="${DEPEND}
+	selinux? ( sec-policy/selinux-dhcp )
 	vim-syntax? ( app-vim/dhcpd-syntax )"
 
 S="${WORKDIR}/${MY_P}"
@@ -45,18 +54,24 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-3.0-fix-perms.patch
 	# Enable dhclient to equery NTP servers
 	epatch "${FILESDIR}"/${PN}-4.0-dhclient-ntp.patch
+	epatch "${FILESDIR}"/${PN}-4.3.1-dhclient-resolvconf.patch
 	# Stop downing the interface on Linux as that breaks link daemons
 	# such as wpa_supplicant and netplug
 	epatch "${FILESDIR}"/${PN}-3.0.3-dhclient-no-down.patch
 	# Enable dhclient to get extra configuration from stdin
 	epatch "${FILESDIR}"/${PN}-4.2.2-dhclient-stdin-conf.patch
 	epatch "${FILESDIR}"/${PN}-4.2.2-nogateway.patch #265531
+	epatch "${FILESDIR}"/${PN}-4.2.4-quieter-ping.patch #296921
+	epatch "${FILESDIR}"/${PN}-4.2.4-always-accept-4.patch #437108
+	epatch "${FILESDIR}"/${PN}-4.2.5-iproute2-path.patch #480636
+	epatch "${FILESDIR}"/${PN}-4.2.5-bindtodevice-inet6.patch #471142
+	epatch "${FILESDIR}"/${PN}-4.3.3-ldap-ipv6-client-id.patch #559832
 
-	# NetworkManager support patches
-	# If they fail to apply to future versions they will be dropped
-	# Add dbus support to dhclient
-	epatch "${FILESDIR}"/${PN}-3.0.3-dhclient-dbus.patch
-
+	if use subclassess ; then
+		cd ${S}
+		epatch "${FILESDIR}"/01-subclass-4.3.0
+		epatch "${FILESDIR}"/02-log-agent-options
+	fi
 	# Brand the version with Gentoo
 	sed -i \
 		-e "/VERSION=/s:'$: Gentoo-${PR}':" \
@@ -75,8 +90,8 @@ src_prepare() {
 	sed -i -e '/LOGGER=/ s/-s -p user.notice //g' client/scripts/freebsd || die
 
 	# Remove these options from the sample config
-	sed -i \
-		-e "/\(script\|host-name\|domain-name\) / d" \
+	sed -i -r \
+		-e "/(script|host-name|domain-name) /d" \
 		client/dhclient.conf.example || die
 
 	if use client && ! use server ; then
@@ -108,19 +123,10 @@ src_prepare() {
 	binddir=${binddir}
 	GMAKE=${MAKE:-gmake}
 	EOF
-	epatch "${FILESDIR}"/${PN}-4.2.2-bind-disable.patch
+	epatch "${FILESDIR}"/${PN}-4.3.3-bind-disable.patch
 	cd bind-*/
 	epatch "${FILESDIR}"/${PN}-4.2.2-bind-parallel-build.patch #380717
 	epatch "${FILESDIR}"/${PN}-4.2.2-bind-build-flags.patch
-        if use subclasses ; then
-               cd ${S}
-               epatch "${FILESDIR}"/01-subclass
-               epatch "${FILESDIR}"/02-log-agent-options
-        fi
-	if use one-lease-per-mac ; then
-		cd ${S}
-		epatch "${FILESDIR}"/dhcp-4.2.2-one-lease-per-mac.patch
-	fi
 }
 
 src_configure() {
@@ -157,13 +163,14 @@ src_configure() {
 		--sysconfdir=${e} \
 		$(use_enable ipv6 dhcpv6) \
 		$(use_with ldap) \
-		$(use ldap && use_with ssl ldapcrypto || echo --without-ldapcrypto)
+		$(use ldap && use_with ssl ldapcrypto || echo --without-ldapcrypto) \
+		$(use_enable binary-leases)
 
 	# configure local bind cruft.  symtable option requires
 	# perl and we don't want to require that #383837.
 	cd bind/bind-*/ || die
 	eval econf \
-		$(sed -n '/ [.].configure /{s:^[^-]*::;s:>.*::;p}' ../Makefile) \
+		$(sed -n '/^bindconfig =/,/^$/{:a;N;$!ba;s,^[^-]*,,;s,\\\s*\n\s*--,--,g;s, @[[:upper:]]\+@,,g;P;D}' ../Makefile.in) \
 		--disable-symtable \
 		--without-make-clean
 }
@@ -172,11 +179,11 @@ src_compile() {
 	# build local bind cruft first
 	emake -C bind/bind-*/lib/export install
 	# then build standard dhcp code
-	emake
+	emake AR="$(tc-getAR)"
 }
 
 src_install() {
-	emake install DESTDIR="${D}"
+	default
 
 	dodoc README RELNOTES doc/{api+protocol,IANA-arp-parameters}
 	dohtml doc/References.html
@@ -207,10 +214,24 @@ src_install() {
 		newconfd "${FILESDIR}"/dhcrelay.conf dhcrelay
 		newinitd "${FILESDIR}"/dhcrelay.init3 dhcrelay6
 		newconfd "${FILESDIR}"/dhcrelay6.conf dhcrelay6
+
+		systemd_newtmpfilesd "${FILESDIR}"/dhcpd.tmpfiles dhcpd.conf
+		systemd_dounit "${FILESDIR}"/dhcpd4.service
+		systemd_dounit "${FILESDIR}"/dhcpd6.service
+		systemd_dounit "${FILESDIR}"/dhcrelay4.service
+		systemd_dounit "${FILESDIR}"/dhcrelay6.service
+		systemd_install_serviced "${FILESDIR}"/dhcrelay4.service.conf
+		systemd_install_serviced "${FILESDIR}"/dhcrelay6.service.conf
+
+		sed -i "s:#@slapd@:$(usex ldap slapd ''):" "${ED}"/etc/init.d/* || die #442560
 	fi
 
 	# the default config files aren't terribly useful #384087
-	sed -i '/^[^#]/s:^:#:' "${D}"/etc/dhcp/*.conf.example || die
+	local f
+	for f in "${ED}"/etc/dhcp/*.conf.example ; do
+		mv "${f}" "${f%.example}" || die
+	done
+	sed -i '/^[^#]/s:^:#:' "${ED}"/etc/dhcp/*.conf || die
 }
 
 pkg_preinst() {
@@ -223,10 +244,10 @@ pkg_preinst() {
 	for f in dhclient:da7c8496a96452190aecf9afceef4510 dhcpd:10979e7b71134bd7f04d2a60bd58f070 ; do
 		h=${f#*:}
 		f="/etc/dhcp/${f%:*}.conf"
-		if [ -e "${ROOT}"${f} ] ; then
-			case $(md5sum "${ROOT}"${f}) in
+		if [ -e "${EROOT}"${f} ] ; then
+			case $(md5sum "${EROOT}"${f}) in
 				${h}*) ;;
-				*) cp -p "${ROOT}"${f} "${D}"${f};;
+				*) cp -p "${EROOT}"${f} "${ED}"${f};;
 			esac
 		fi
 	done
