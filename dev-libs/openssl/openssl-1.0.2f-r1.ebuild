@@ -1,8 +1,8 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI="4"
+EAPI=5
 
 inherit eutils flag-o-matic toolchain-funcs multilib multilib-minimal
 
@@ -56,7 +56,7 @@ src_prepare() {
 	if ! use vanilla ; then
 		epatch "${FILESDIR}"/${PN}-1.0.0a-ldflags.patch #327421
 		epatch "${FILESDIR}"/${PN}-1.0.0d-windres.patch #373743
-		epatch "${FILESDIR}"/${PN}-1.0.2d-parallel-build.patch
+		epatch "${FILESDIR}"/${PN}-1.0.2e-parallel-build.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-parallel-obj-headers.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-parallel-install-dirs.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-parallel-symlinking.patch #545028
@@ -68,9 +68,8 @@ src_prepare() {
 	fi
 
 	if use chacha20_poly1305 ; then
-		epatch "${FILESDIR}"/${PN}__chacha20_poly1305_cf.patch
+		epatch "${FILESDIR}"/${PN}-1.0.2f-chacha20_poly1305_cf.patch
 	fi
-
 	# disable fips in the build
 	# make sure the man pages are suffixed #302165
 	# don't bother building man pages if they're disabled
