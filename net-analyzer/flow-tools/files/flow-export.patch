@@ -1,0 +1,286 @@
+--- src/flow-export.c.orig	2009-02-10 11:31:45.000000000 +0200
++++ src/flow-export.c	2015-12-22 16:54:10.000000000 +0300
+@@ -683,29 +683,18 @@
+   int len;
+ 
+   ftio_get_ver(ftio, &ftv);
+-
+   /* remove invalid fields */
+-  opt->ft_mask &= ftrec_xfield(&ftv);
+-
++  //opt->ft_mask &= ftrec_xfield(&ftv);
+   fts3rec_compute_offsets(&fo, &ftv);
+-
+   fmt_xfields_type(fmt_buf, opt->ft_mask);
+-
+   printf("#:%s\n", fmt_buf);
+-
+   while ((rec = ftio_read(ftio))) {
+-
+     len = fmt_xfields_val(fmt_buf, rec, &fo, opt->ft_mask, 0);
+-
+     if (len)
+       printf("%s\n", fmt_buf);
+-
+     ++opt->records;
+-
+   } /* while */
+-
+   return 0;
+- 
+ } /* format2 */ 
+ 
+ /*
+@@ -1046,12 +1035,35 @@
+     comma = 1;
+   }
+ 
++  if (xfield & FT_XFIELD_FIRST_TIMESTAMP) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_FIRST_TIMESTAMP);
++    comma = 1;
++  }
++  if (xfield & FT_XFIELD_FIRST_DATETIME) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_FIRST_DATETIME);
++    comma = 1;
++  }
++
+   if (xfield & FT_XFIELD_LAST) {
+     if (comma) strcat(buf, ",");
+     strcat(buf, FT_XFIELD_ASC_LAST);
+     comma = 1;
+   }
+ 
++  if (xfield & FT_XFIELD_LAST_TIMESTAMP) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_LAST_TIMESTAMP);
++    comma = 1;
++  }
++
++  if (xfield & FT_XFIELD_LAST_DATETIME) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_LAST_DATETIME);
++    comma = 1;
++  }
++
+   if (xfield & FT_XFIELD_ENGINE_TYPE) {
+     if (comma) strcat(buf, ",");
+     strcat(buf, FT_XFIELD_ASC_ENGINE_TYPE);
+@@ -1070,18 +1082,36 @@
+     comma = 1;
+   }
+ 
++  if (xfield & FT_XFIELD_SRCADDR_ATON) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_SRCADDR_ATON);
++    comma = 1;
++  }
++  
+   if (xfield & FT_XFIELD_DSTADDR) {
+     if (comma) strcat(buf, ",");
+     strcat(buf, FT_XFIELD_ASC_DSTADDR);
+     comma = 1;
+   }
+ 
++  if (xfield & FT_XFIELD_DSTADDR_ATON) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_DSTADDR_ATON);
++    comma = 1;
++  }
++  
+   if (xfield & FT_XFIELD_NEXTHOP) {
+     if (comma) strcat(buf, ",");
+     strcat(buf, FT_XFIELD_ASC_NEXTHOP);
+     comma = 1;
+   }
+ 
++  if (xfield & FT_XFIELD_NEXTHOP_ATON) {
++    if (comma) strcat(buf, ",");
++    strcat(buf, FT_XFIELD_ASC_NEXTHOP_ATON);
++    comma = 1;
++  }
++  
+   if (xfield & FT_XFIELD_INPUT) {
+     if (comma) strcat(buf, ",");
+     strcat(buf, FT_XFIELD_ASC_INPUT);
+@@ -1204,10 +1234,13 @@
+ int fmt_xfields_val(char *fmt_buf, char *rec, struct fts3rec_offsets *fo,
+   uint64_t xfields, int quote)
+ {
+-  int comma, len;
+-
++  int comma, len, slen;
++  struct fttime ftt;
++  struct tm *tm;
++  time_t time_ftt;
++  char datetime[100];
++  
+   fmt_buf[0] = 0;
+-
+   len = comma = 0;
+ 
+   if (xfields & FT_XFIELD_UNIX_SECS) {
+@@ -1268,6 +1301,26 @@
+     comma = 1;
+   }
+ 
++  if (xfields & FT_XFIELD_FIRST_TIMESTAMP) {
++    if (comma) fmt_buf[len++] = ',';
++    ftt = ftltime(*((uint32_t*)(rec+fo->sysUpTime)), *((uint32_t*)(rec+fo->unix_secs)), *((uint32_t*)(rec+fo->unix_nsecs)), *((uint32_t*)(rec+fo->First)));
++    len += fmt_uint32(fmt_buf+len,ftt.secs,FMT_JUST_LEFT);
++    comma = 1;
++  }
++
++  if (xfields & FT_XFIELD_FIRST_DATETIME) {
++    if (comma) fmt_buf[len++] = ',';
++    ftt = ftltime(*((uint32_t*)(rec+fo->sysUpTime)), *((uint32_t*)(rec+fo->unix_secs)), *((uint32_t*)(rec+fo->unix_nsecs)), *((uint32_t*)(rec+fo->First)));
++    time_ftt = ftt.secs;
++    tm = localtime(&time_ftt);
++    slen=sprintf(datetime,"%-4.4d-%-2.2d-%-2.2d %-2.2d:%-2.2d:%-2.2d",
++      (int)tm->tm_year+1900, (int)tm->tm_mon+1, (int)tm->tm_mday, (int)tm->tm_hour,
++      (int)tm->tm_min, (int)tm->tm_sec);    
++    strcpy(fmt_buf+len,datetime);
++    len+=slen;
++    comma = 1;
++  }
++  
+   if (xfields & FT_XFIELD_LAST) {
+     if (comma) fmt_buf[len++] = ',';
+     len += fmt_uint32(fmt_buf+len, *((uint32_t*)(rec+fo->Last)),
+@@ -1275,6 +1328,26 @@
+     comma = 1;
+   }
+ 
++  if (xfields & FT_XFIELD_LAST_TIMESTAMP) {
++    if (comma) fmt_buf[len++] = ',';
++    ftt = ftltime(*((uint32_t*)(rec+fo->sysUpTime)), *((uint32_t*)(rec+fo->unix_secs)), *((uint32_t*)(rec+fo->unix_nsecs)), *((uint32_t*)(rec+fo->Last)));
++    len += fmt_uint32(fmt_buf+len,ftt.secs,FMT_JUST_LEFT);
++    comma = 1;
++  }
++
++  if (xfields & FT_XFIELD_LAST_DATETIME) {
++    if (comma) fmt_buf[len++] = ',';
++    ftt = ftltime(*((uint32_t*)(rec+fo->sysUpTime)), *((uint32_t*)(rec+fo->unix_secs)), *((uint32_t*)(rec+fo->unix_nsecs)), *((uint32_t*)(rec+fo->Last)));
++    time_ftt = ftt.secs;
++    tm = localtime(&time_ftt);
++    slen=sprintf(datetime,"%-4.4d-%-2.2d-%-2.2d %-2.2d:%-2.2d:%-2.2d",
++      (int)tm->tm_year+1900, (int)tm->tm_mon+1, (int)tm->tm_mday, (int)tm->tm_hour,
++      (int)tm->tm_min, (int)tm->tm_sec);    
++    strcpy(fmt_buf+len,datetime);
++    len+=slen;
++    comma = 1;
++  }
++  
+   if (xfields & FT_XFIELD_ENGINE_TYPE) {
+     if (comma) fmt_buf[len++] = ',';
+     len += fmt_uint8(fmt_buf+len, *((uint8_t*)(rec+fo->engine_type)),
+@@ -1298,6 +1371,14 @@
+     comma = 1;
+   }
+ 
++  if (xfields & FT_XFIELD_SRCADDR_ATON) {
++    if (comma) fmt_buf[len++] = ',';
++    if (quote) fmt_buf[len++] = '\'';
++    len += fmt_uint32(fmt_buf+len, *((uint32_t*)(rec+fo->srcaddr)),FMT_JUST_LEFT);
++    if (quote) fmt_buf[len++] = '\'';
++    comma = 1;
++  }
++  
+   if (xfields & FT_XFIELD_DSTADDR) {
+     if (comma) fmt_buf[len++] = ',';
+     if (quote) fmt_buf[len++] = '\'';
+@@ -1307,6 +1388,14 @@
+     comma = 1;
+   }
+ 
++  if (xfields & FT_XFIELD_DSTADDR_ATON) {
++    if (comma) fmt_buf[len++] = ',';
++    if (quote) fmt_buf[len++] = '\'';
++    len += fmt_uint32(fmt_buf+len, *((uint32_t*)(rec+fo->dstaddr)),FMT_JUST_LEFT);
++    if (quote) fmt_buf[len++] = '\'';
++    comma = 1;
++  }
++
+   if (xfields & FT_XFIELD_NEXTHOP) {
+     if (comma) fmt_buf[len++] = ',';
+     if (quote) fmt_buf[len++] = '\'';
+@@ -1316,6 +1405,14 @@
+     comma = 1;
+   }
+ 
++  if (xfields & FT_XFIELD_NEXTHOP_ATON) {
++    if (comma) fmt_buf[len++] = ',';
++    if (quote) fmt_buf[len++] = '\'';
++    len += fmt_uint32(fmt_buf+len, *((uint32_t*)(rec+fo->nexthop)),FMT_JUST_LEFT);
++    if (quote) fmt_buf[len++] = '\'';
++    comma = 1;
++  }
++  
+   if (xfields & FT_XFIELD_INPUT) {
+     if (comma) fmt_buf[len++] = ',';
+     len += fmt_uint16(fmt_buf+len, *((uint16_t*)(rec+fo->input)),
+--- lib/ftlib.h.orig	2010-08-25 19:49:44.000000000 +0300
++++ lib/ftlib.h	2015-11-23 18:25:42.000000000 +0300
+@@ -272,9 +272,12 @@
+ #define FT_XFIELD_LAST            0x0000000000000100LL
+ #define FT_XFIELD_ENGINE_TYPE     0x0000000000000200LL
+ #define FT_XFIELD_ENGINE_ID       0x0000000000000400LL
++#define FT_XFIELD_NEXTHOP_ATON    0x0000000000000800LL
+ 
+ #define FT_XFIELD_SRCADDR         0x0000000000001000LL
+ #define FT_XFIELD_DSTADDR         0x0000000000002000LL
++#define FT_XFIELD_SRCADDR_ATON    0x0000000000004000LL
++#define FT_XFIELD_DSTADDR_ATON    0x0000000000008000LL
+ 
+ #define FT_XFIELD_NEXTHOP         0x0000000000010000LL
+ #define FT_XFIELD_INPUT           0x0000000000020000LL
+@@ -301,6 +304,11 @@
+ #define FT_XFIELD_SRC_TAG         0x0000000400000000LL
+ #define FT_XFIELD_DST_TAG         0x0000000800000000LL
+ 
++#define FT_XFIELD_FIRST_TIMESTAMP 0x0000001000000000LL
++#define FT_XFIELD_LAST_TIMESTAMP  0x0000002000000000LL
++#define FT_XFIELD_FIRST_DATETIME  0x0000004000000000LL
++#define FT_XFIELD_LAST_DATETIME   0x0000008000000000LL
++
+ #define FT_XFIELD_V1_MASK         0x0000000000FF31EFLL
+ #define FT_XFIELD_V5_MASK         0x000000000FFF37EFLL
+ #define FT_XFIELD_V6_MASK         0x000000007FFF37EFLL
+@@ -364,6 +372,14 @@
+ #define FT_XFIELD_ASC_SRC_TAG "src_tag"
+ #define FT_XFIELD_ASC_DST_TAG "dst_tag"
+ 
++#define FT_XFIELD_ASC_FIRST_TIMESTAMP  "first_timestamp"
++#define FT_XFIELD_ASC_LAST_TIMESTAMP  "last_timestamp"
++#define FT_XFIELD_ASC_FIRST_DATETIME  "first_datetime"
++#define FT_XFIELD_ASC_LAST_DATETIME  "last_datetime"
++#define FT_XFIELD_ASC_SRCADDR_ATON "srcaddr_aton"
++#define FT_XFIELD_ASC_DSTADDR_ATON "dstaddr_aton"
++#define FT_XFIELD_ASC_NEXTHOP_ATON "nexthop_aton"
++
+ struct ftipmask {
+   uint32_t src_mask;
+   uint32_t dst_mask;
+--- lib/ftxfield.c.orig	2008-01-27 22:48:49.000000000 +0200
++++ lib/ftxfield.c	2015-11-23 18:26:14.000000000 +0300
+@@ -52,12 +52,19 @@
+   {FT_XFIELD_ASC_DPKTS, FT_XFIELD_DPKTS},
+   {FT_XFIELD_ASC_DOCTETS, FT_XFIELD_DOCTETS},
+   {FT_XFIELD_ASC_FIRST, FT_XFIELD_FIRST},
++  {FT_XFIELD_ASC_FIRST_TIMESTAMP, FT_XFIELD_FIRST_TIMESTAMP},
++  {FT_XFIELD_ASC_FIRST_DATETIME, FT_XFIELD_FIRST_DATETIME},  
+   {FT_XFIELD_ASC_LAST, FT_XFIELD_LAST},
++  {FT_XFIELD_ASC_LAST_TIMESTAMP, FT_XFIELD_LAST_TIMESTAMP},
++  {FT_XFIELD_ASC_LAST_DATETIME, FT_XFIELD_LAST_DATETIME},  
+   {FT_XFIELD_ASC_ENGINE_TYPE, FT_XFIELD_ENGINE_TYPE},
+   {FT_XFIELD_ASC_ENGINE_ID, FT_XFIELD_ENGINE_ID},
+   {FT_XFIELD_ASC_SRCADDR, FT_XFIELD_SRCADDR},
++  {FT_XFIELD_ASC_SRCADDR_ATON, FT_XFIELD_SRCADDR_ATON},  
+   {FT_XFIELD_ASC_DSTADDR, FT_XFIELD_DSTADDR},
++  {FT_XFIELD_ASC_DSTADDR_ATON, FT_XFIELD_DSTADDR_ATON},  
+   {FT_XFIELD_ASC_NEXTHOP, FT_XFIELD_NEXTHOP},
++  {FT_XFIELD_ASC_NEXTHOP_ATON, FT_XFIELD_NEXTHOP_ATON},  
+   {FT_XFIELD_ASC_INPUT, FT_XFIELD_INPUT},
+   {FT_XFIELD_ASC_OUTPUT, FT_XFIELD_OUTPUT},
+   {FT_XFIELD_ASC_SRCPORT, FT_XFIELD_SRCPORT},
