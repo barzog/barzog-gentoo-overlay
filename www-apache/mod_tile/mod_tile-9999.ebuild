@@ -21,8 +21,7 @@ DEPEND="
 	app-arch/bzip2
 	media-libs/freetype
 	sci-geosciences/mapnik
-	sys-libs/zlib
-"
+	dev-libs/iniparser"
 RDEPEND="${DEPEND}"
 
 APACHE2_MOD_CONF="14_${PN}"
