@@ -19,7 +19,6 @@ IUSE=""
 
 DEPEND="
 	dev-lang/ruby
-	dev-ruby/rails
 "
 RDEPEND="${DEPEND}"
 
