@@ -9,7 +9,7 @@ depend() {
 
 start() {
 	ebegin "Starting tac_plus"
-	start-stop-daemon --start --quiet --exec /usr/sbin/tac_plus \
+	start-stop-daemon --start --quiet --exec /usr/sbin/tac_plus -p ${PID} \
 		-- -b -p ${PID} ${CFG}
 	eend $?
 }
