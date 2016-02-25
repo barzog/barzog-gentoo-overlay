@@ -9,7 +9,7 @@ depend() {
 start() {
 	ebegin "Starting ladvd"
         [ ! -d /var/run/ladvd ] && mkdir /var/run/ladvd
-	start-stop-daemon --start --exec /usr/sbin/ladvd \
+	start-stop-daemon --start --exec /usr/sbin/ladvd -p /var/run/ladvd.pid \
 		-- -u ${USER} ${MODE} ${INTERFACE}
 	eend $?
 }
