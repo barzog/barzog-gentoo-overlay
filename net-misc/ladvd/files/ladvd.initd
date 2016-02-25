@@ -8,7 +8,7 @@ depend() {
 
 start() {
 	ebegin "Starting ladvd"
-	checkpath -m0755 -o "ladvd:ladvd" /var/run/ladvd
+	checkpath -m0755 -o "root:root" /var/run/ladvd -d
 	start-stop-daemon --start --exec /usr/sbin/ladvd -p /var/run/ladvd.pid \
 		-- -u ${USER} ${MODE} ${INTERFACE}
 	eend $?
