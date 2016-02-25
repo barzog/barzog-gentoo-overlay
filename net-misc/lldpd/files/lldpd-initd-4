@@ -10,7 +10,7 @@ retry="TERM/10/KILL/5"
 command_args="${LLDPD_OPTS}"
 
 depend() {
-	use net
+	use net snmpd
 }
 
 start_pre() {
