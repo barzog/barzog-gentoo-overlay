@@ -20,7 +20,7 @@ DEPEND="${RDEPEND}"
 
 pkg_setup() {
         enewgroup ladvd
-        enewuser ladvd -1 -1 /var/lib/flows ladvd
+        enewuser ladvd -1 -1 /dev/null ladvd
 }
 
 src_prepare() {
