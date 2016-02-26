@@ -12,6 +12,7 @@ SRC_URI="http://media.luffy.cx/files/${PN}/${P}.tar.gz"
 
 LICENSE="ISC"
 SLOT="0"
+KEYWORDS="amd64 x86"
 IUSE="cdp doc +dot1 +dot3 edp fdp graph json +lldpmed seccomp sonmp
 	snmp static-libs readline xml zsh-completion"
 
