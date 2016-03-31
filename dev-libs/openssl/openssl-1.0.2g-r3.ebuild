@@ -12,24 +12,17 @@ HOMEPAGE="http://www.openssl.org/"
 SRC_URI="mirror://openssl/source/${MY_P}.tar.gz"
 
 LICENSE="openssl"
+# subslot set to 1.0.2g version as this is the first release without SSLv2
+# support and thus breaks nearly every openssl consumer (see bug #575548)
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~m68k ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~amd64-fbsd ~sparc-fbsd ~x86-fbsd ~arm-linux ~x86-linux"
 IUSE="+asm bindist gmp kerberos rfc3779 sctp cpu_flags_x86_sse2 static-libs test +tls-heartbeat vanilla zlib chacha20_poly1305"
 RESTRICT="!bindist? ( bindist )"
 
-# The blocks are temporary just to make sure people upgrade to a
-# version that lack runtime version checking.  We'll drop them in
-# the future.
 RDEPEND=">=app-misc/c_rehash-1.7-r1
 	gmp? ( >=dev-libs/gmp-5.1.3-r1[static-libs(+)?,${MULTILIB_USEDEP}] )
 	zlib? ( >=sys-libs/zlib-1.2.8-r1[static-libs(+)?,${MULTILIB_USEDEP}] )
-	kerberos? ( >=app-crypt/mit-krb5-1.11.4[${MULTILIB_USEDEP}] )
-	abi_x86_32? (
-		!<=app-emulation/emul-linux-x86-baselibs-20140508
-		!app-emulation/emul-linux-x86-baselibs[-abi_x86_32(-)]
-	)
-	!<net-misc/openssh-5.9_p1-r4
-	!<net-libs/neon-0.29.6-r1"
+	kerberos? ( >=app-crypt/mit-krb5-1.11.4[${MULTILIB_USEDEP}] )"
 DEPEND="${RDEPEND}
 	>=dev-lang/perl-5
 	sctp? ( >=net-misc/lksctp-tools-1.0.12 )
@@ -56,7 +49,7 @@ src_prepare() {
 	if ! use vanilla ; then
 		epatch "${FILESDIR}"/${PN}-1.0.0a-ldflags.patch #327421
 		epatch "${FILESDIR}"/${PN}-1.0.0d-windres.patch #373743
-		epatch "${FILESDIR}"/${PN}-1.0.2e-parallel-build.patch
+		epatch "${FILESDIR}"/${PN}-1.0.2g-parallel-build.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-parallel-obj-headers.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-parallel-install-dirs.patch
 		epatch "${FILESDIR}"/${PN}-1.0.2a-parallel-symlinking.patch #545028
@@ -68,8 +61,9 @@ src_prepare() {
 	fi
 
 	if use chacha20_poly1305 ; then
-		epatch "${FILESDIR}"/${PN}-1.0.2f-chacha20_poly1305_cf.patch
+		epatch "${FILESDIR}"/${PN}-1.0.2g-chacha20_poly1305_cf.patch
 	fi
+
 	# disable fips in the build
 	# make sure the man pages are suffixed #302165
 	# don't bother building man pages if they're disabled
@@ -157,6 +151,7 @@ multilib_src_configure() {
 		enable-mdc2 \
 		enable-rc5 \
 		enable-tlsext \
+		enable-ssl2 \
 		$(use_ssl asm) \
 		$(use_ssl gmp gmp -lgmp) \
 		$(use_ssl kerberos krb5 --with-krb5-flavor=${krb5}) \
