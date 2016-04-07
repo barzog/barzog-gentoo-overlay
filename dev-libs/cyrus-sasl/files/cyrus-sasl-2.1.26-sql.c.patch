@@ -1,0 +1,322 @@
+--- plugins/sql.c.orig	2016-04-07 13:40:23.000000000 +0300
++++ plugins/sql.c	2016-04-07 13:52:30.000000000 +0300
+@@ -54,6 +54,7 @@
+     const char *sql_insert;
+     const char *sql_update;
+     int sql_usessl;
++	int sql_verbose;
+ } sql_settings_t;
+ 
+ static const char * SQL_BLANK_STRING = "";
+@@ -87,8 +88,11 @@
+ }
+ 
+ static int _mysql_exec(void *conn, const char *cmd, char *value, size_t size,
+-		       size_t *value_len, const sasl_utils_t *utils)
++		       size_t *value_len, const sasl_utils_t *utils, void *glob_context)
+ {
++	sql_settings_t *settings;
++    settings = (sql_settings_t *) glob_context;
++
+     MYSQL_RES *result;
+     MYSQL_ROW row;
+     int row_count, len;
+@@ -161,7 +165,7 @@
+     return 0;
+ }
+ 
+-static int _mysql_begin_txn(void *conn, const sasl_utils_t *utils)
++static int _mysql_begin_txn(void *conn, const sasl_utils_t *utils, void *glob_context)
+ {
+     return _mysql_exec(conn,
+ #if MYSQL_VERSION_ID >= 40011
+@@ -169,17 +173,17 @@
+ #else
+ 		       "BEGIN",
+ #endif
+-		       NULL, 0, NULL, utils);
++		       NULL, 0, NULL, utils, glob_context);
+ }
+ 
+-static int _mysql_commit_txn(void *conn, const sasl_utils_t *utils)
++static int _mysql_commit_txn(void *conn, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _mysql_exec(conn, "COMMIT", NULL, 0, NULL, utils);
++    return _mysql_exec(conn, "COMMIT", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+-static int _mysql_rollback_txn(void *conn, const sasl_utils_t *utils)
++static int _mysql_rollback_txn(void *conn, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _mysql_exec(conn, "ROLLBACK", NULL, 0, NULL, utils);
++    return _mysql_exec(conn, "ROLLBACK", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+ static void _mysql_close(void *conn)
+@@ -270,9 +274,12 @@
+ }
+ 
+ static int _pgsql_exec(void *conn, const char *cmd, char *value, size_t size,
+-		       size_t *value_len, const sasl_utils_t *utils)
++		       size_t *value_len, const sasl_utils_t *utils, void *glob_context)
+ {
+-    PGresult *result;
++	sql_settings_t *settings;
++    settings = (sql_settings_t *) glob_context;
++	
++	PGresult *result;
+     int row_count;
+     ExecStatusType status;
+     
+@@ -288,8 +295,10 @@
+     }
+     else if (status != PGRES_TUPLES_OK) {
+ 	/* error */
+-	utils->log(NULL, SASL_LOG_DEBUG, "sql plugin: %s ",
+-		   PQresStatus(status));
++	if (settings->sql_verbose) {
++		utils->log(NULL, SASL_LOG_DEBUG, "sql plugin: %s ",
++			PQresStatus(status));
++	}
+ 	PQclear(result);
+ 	return -1;
+     }
+@@ -320,19 +329,19 @@
+     return 0;
+ }
+ 
+-static int _pgsql_begin_txn(void *conn, const sasl_utils_t *utils)
++static int _pgsql_begin_txn(void *conn, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _pgsql_exec(conn, "BEGIN;", NULL, 0, NULL, utils);
++    return _pgsql_exec(conn, "BEGIN;", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+-static int _pgsql_commit_txn(void *conn, const sasl_utils_t *utils)
++static int _pgsql_commit_txn(void *conn, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _pgsql_exec(conn, "COMMIT;", NULL, 0, NULL, utils);
++    return _pgsql_exec(conn, "COMMIT;", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+-static int _pgsql_rollback_txn(void *conn, const sasl_utils_t *utils)
++static int _pgsql_rollback_txn(void *conn, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _pgsql_exec(conn, "ROLLBACK;", NULL, 0, NULL, utils);
++    return _pgsql_exec(conn, "ROLLBACK;", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+ static void _pgsql_close(void *conn)
+@@ -406,15 +415,20 @@
+ }
+ 
+ static int _sqlite_exec(void *db, const char *cmd, char *value, size_t size,
+-		        size_t *value_len, const sasl_utils_t *utils)
++		        size_t *value_len, const sasl_utils_t *utils, void *glob_context)
+ {
+-    int rc;
++	sql_settings_t *settings;
++    settings = (sql_settings_t *) glob_context;
++    
++	int rc;
+     char *result = NULL;
+     char *zErrMsg = NULL;
+ 
+     rc = sqlite_exec((sqlite*)db, cmd, sqlite_my_callback, (void*)&result, &zErrMsg);
+     if (rc != SQLITE_OK && rc != SQLITE_ABORT) {
+-	utils->log(NULL, SASL_LOG_DEBUG, "sql plugin: %s ", zErrMsg);
++		if (settings->sql_verbose) {
++			utils->log(NULL, SASL_LOG_DEBUG, "sql plugin: %s ", zErrMsg);
++		}
+ 	sqlite_freemem (zErrMsg);
+ 	return -1;
+     }
+@@ -447,19 +461,19 @@
+     return 0;
+ }
+ 
+-static int _sqlite_begin_txn(void *db, const sasl_utils_t *utils)
++static int _sqlite_begin_txn(void *db, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _sqlite_exec(db, "BEGIN TRANSACTION", NULL, 0, NULL, utils);
++    return _sqlite_exec(db, "BEGIN TRANSACTION", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+-static int _sqlite_commit_txn(void *db, const sasl_utils_t *utils)
++static int _sqlite_commit_txn(void *db, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _sqlite_exec(db, "COMMIT TRANSACTION", NULL, 0, NULL, utils);
++    return _sqlite_exec(db, "COMMIT TRANSACTION", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+-static int _sqlite_rollback_txn(void *db, const sasl_utils_t *utils)
++static int _sqlite_rollback_txn(void *db, const sasl_utils_t *utils, void *glob_context)
+ {
+-    return _sqlite_exec(db, "ROLLBACK TRANSACTION", NULL, 0, NULL, utils);
++    return _sqlite_exec(db, "ROLLBACK TRANSACTION", NULL, 0, NULL, utils, glob_context);
+ }
+ 
+ static void _sqlite_close(void *db)
+@@ -750,7 +764,7 @@
+ {
+     sql_settings_t *settings;
+     int r;
+-    const char *usessl, *engine_name;
++    const char *usessl, *engine_name, *sql_verbose;
+     const sql_engine_t *e;
+     
+     settings = (sql_settings_t *) glob_context;
+@@ -832,6 +846,20 @@
+     } else {
+ 	settings->sql_usessl = 0;
+     }
++	
++    /* sql verbose
++	 * If you need DEBUG logging, set value to true.
++	 * eg: sql_verbose: true
++	 */
++    r = utils->getopt(utils->getopt_context, "SQL", "sql_verbose",
++		  &sql_verbose, NULL);
++    if (r || !sql_verbose) sql_verbose = "no";
++    if (*sql_verbose == '1' || *sql_verbose == 'y' || *sql_verbose == 't' ||
++	(*sql_verbose == 'o' && sql_verbose[1] == 'n')) {
++	settings->sql_verbose = 1;
++	} else {
++	settings->sql_verbose = 0;
++	}
+ }
+ 
+ static void *sql_connect(sql_settings_t *settings, const sasl_utils_t *utils)
+@@ -845,8 +873,10 @@
+      * it should probably save the connection but for 
+      * now we will just disconnect everytime
+      */
+-    utils->log(NULL, SASL_LOG_DEBUG,
+-	       "sql plugin try and connect to a host\n");
++    if (settings->sql_verbose) {
++		utils->log(NULL, SASL_LOG_DEBUG,
++			"sql plugin try and connect to a host\n");
++	}
+     
+     /* create a working version of the hostnames */
+     _plug_strdup(utils, settings->sql_hostnames, &db_host_ptr, NULL);
+@@ -861,10 +891,12 @@
+ 	    while (!isalnum(db_host[0])) db_host++;
+ 	}
+ 	
+-	utils->log(NULL, SASL_LOG_DEBUG,
+-		   "sql plugin trying to open db '%s' on host '%s'%s\n",
+-		   settings->sql_database, cur_host,
+-		   settings->sql_usessl ? " using SSL" : "");
++	if (settings->sql_verbose) {
++		utils->log(NULL, SASL_LOG_DEBUG,
++			"sql plugin trying to open db '%s' on host '%s'%s\n",
++		    settings->sql_database, cur_host,
++		    settings->sql_usessl ? " using SSL" : "");
++	}
+ 	
+ 	/* set the optional port */
+ 	if ((cur_port = strchr(cur_host, ':'))) *cur_port++ = '\0';
+@@ -917,8 +949,10 @@
+     /* setup the settings */
+     settings = (sql_settings_t *) glob_context;
+     
+-    sparams->utils->log(NULL, SASL_LOG_DEBUG,
++    if (settings->sql_verbose) {
++		sparams->utils->log(NULL, SASL_LOG_DEBUG,
+ 			"sql plugin Parse the username %s\n", user);
++	}
+     
+     user_buf = sparams->utils->malloc(ulen + 1);
+     if (!user_buf) {
+@@ -1014,16 +1048,20 @@
+ 
+ 	if (!do_txn) {
+ 	    do_txn = 1;
+-	    sparams->utils->log(NULL, SASL_LOG_DEBUG, "begin transaction");
++		if (settings->sql_verbose) {
++		    sparams->utils->log(NULL, SASL_LOG_DEBUG, "begin transaction");
++		}
+ 	    if (settings->sql_engine->sql_begin_txn(conn, sparams->utils)) {
+ 		sparams->utils->log(NULL, SASL_LOG_ERR, 
+ 				    "Unable to begin transaction\n");
+ 	    }
+ 	}
+     
+-	sparams->utils->log(NULL, SASL_LOG_DEBUG,
+-			    "sql plugin create statement from %s %s %s\n",
+-			    realname, escap_userid, escap_realm);
++	if (settings->sql_verbose) {
++		sparams->utils->log(NULL, SASL_LOG_DEBUG,
++		    "sql plugin create statement from %s %s %s\n",
++		    realname, escap_userid, escap_realm);
++	}
+ 	
+ 	/* create a statement that we will use */
+ 	query = sql_create_statement(settings->sql_select,
+@@ -1035,8 +1073,10 @@
+ 	    break;
+ 	}
+ 	
+-	sparams->utils->log(NULL, SASL_LOG_DEBUG,
+-			    "sql plugin doing query %s\n", query);
++	if (settings->sql_verbose) {
++		sparams->utils->log(NULL, SASL_LOG_DEBUG,
++		    "sql plugin doing query %s\n", query);
++	}
+ 	
+ 	value[0] = '\0';
+ 	value_len = 0;
+@@ -1110,9 +1150,11 @@
+ 
+ 
+     if (do_txn) {
+-	sparams->utils->log(NULL, SASL_LOG_DEBUG, "commit transaction");
+-	if (settings->sql_engine->sql_commit_txn(conn, sparams->utils)) {
+-	    sparams->utils->log(NULL, SASL_LOG_ERR, 
++		if (settings->sql_verbose) {
++			sparams->utils->log(NULL, SASL_LOG_DEBUG, "commit transaction");
++		}
++		if (settings->sql_engine->sql_commit_txn(conn, sparams->utils)) {
++		    sparams->utils->log(NULL, SASL_LOG_ERR, 
+ 				"Unable to commit transaction\n");
+ 	    /* Failure of the commit is non fatal when reading values */
+ 	}
+@@ -1160,8 +1202,10 @@
+     /* make sure our input is okay */
+     if (!glob_context || !sparams || !user) return SASL_BADPARAM;
+     
+-    sparams->utils->log(NULL, SASL_LOG_DEBUG,
++    if (settings->sql_verbose) {
++		sparams->utils->log(NULL, SASL_LOG_DEBUG,
+ 			"sql plugin Parse the username %s\n", user);
++	}
+     
+     user_buf = sparams->utils->malloc(ulen + 1);
+     if (!user_buf) {
+@@ -1301,7 +1345,9 @@
+     
+     if (!settings) return;
+     
+-    utils->log(NULL, SASL_LOG_DEBUG, "sql freeing memory\n");
++    if (settings->sql_verbose) {
++		utils->log(NULL, SASL_LOG_DEBUG, "sql freeing memory\n");
++	}
+     
+     utils->free(settings);
+ }
+@@ -1349,9 +1395,11 @@
+ 	return SASL_NOMECH;
+     }
+ 
+-    utils->log(NULL, SASL_LOG_DEBUG,
+-	       "sql auxprop plugin using %s engine\n",
+-	       settings->sql_engine->name);
++    if (settings->sql_verbose) {
++		utils->log(NULL, SASL_LOG_DEBUG,
++			"sql auxprop plugin using %s engine\n",
++	        settings->sql_engine->name);
++	}
+     
+     sql_auxprop_plugin.glob_context = settings;
+     
