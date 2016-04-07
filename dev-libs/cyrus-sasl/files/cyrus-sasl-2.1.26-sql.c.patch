@@ -1,5 +1,5 @@
---- plugins/sql.c.orig	2016-04-07 13:40:23.000000000 +0300
-+++ plugins/sql.c	2016-04-07 13:52:30.000000000 +0300
+--- plugins/sql.c.orig	2012-01-28 02:31:36.000000000 +0300
++++ plugins/sql.c	2016-04-07 15:22:36.000000000 +0300
 @@ -54,6 +54,7 @@
      const char *sql_insert;
      const char *sql_update;
@@ -267,7 +267,43 @@
  	
  	value[0] = '\0';
  	value_len = 0;
-@@ -1110,9 +1150,11 @@
+@@ -1065,19 +1105,21 @@
+ 	       the userPassword attribute */
+ 	    if (!do_txn) {
+ 		do_txn = 1;
++                if (settings->sql_verbose) {
+ 		sparams->utils->log(NULL, SASL_LOG_DEBUG, "begin transaction");
++		}
+ 		if (settings->sql_engine->sql_begin_txn(conn, sparams->utils)) {
+ 		    sparams->utils->log(NULL, SASL_LOG_ERR, 
+ 					"Unable to begin transaction\n");
+ 		}
+ 	    }
+-
++            if (settings->sql_verbose) {
+ 	    sparams->utils->log(NULL, SASL_LOG_DEBUG,
+ 				"sql plugin create statement from %s %s %s\n",
+ 				SASL_AUX_PASSWORD_PROP,
+ 				escap_userid,
+ 				escap_realm);
+-    	
++            }    	
+ 	    /* create a statement that we will use */
+ 	    query = sql_create_statement(settings->sql_select,
+ 					 SASL_AUX_PASSWORD_PROP,
+@@ -1088,9 +1130,10 @@
+ 	    if (query == NULL) {
+ 		ret = SASL_NOMEM;
+ 	    } else {
++                if (settings->sql_verbose) {
+ 		sparams->utils->log(NULL, SASL_LOG_DEBUG,
+ 				    "sql plugin doing query %s\n", query);
+-        	
++                }        	
+ 		value[0] = '\0';
+ 		value_len = 0;
+ 		/* run the query */
+@@ -1110,9 +1153,11 @@
  
  
      if (do_txn) {
@@ -282,7 +318,7 @@
  				"Unable to commit transaction\n");
  	    /* Failure of the commit is non fatal when reading values */
  	}
-@@ -1160,8 +1202,10 @@
+@@ -1160,8 +1205,10 @@
      /* make sure our input is okay */
      if (!glob_context || !sparams || !user) return SASL_BADPARAM;
      
@@ -294,7 +330,7 @@
      
      user_buf = sparams->utils->malloc(ulen + 1);
      if (!user_buf) {
-@@ -1301,7 +1345,9 @@
+@@ -1301,7 +1348,9 @@
      
      if (!settings) return;
      
@@ -305,7 +341,7 @@
      
      utils->free(settings);
  }
-@@ -1349,9 +1395,11 @@
+@@ -1349,9 +1398,11 @@
  	return SASL_NOMECH;
      }
  
