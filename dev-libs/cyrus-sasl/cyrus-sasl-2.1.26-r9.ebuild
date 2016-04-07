@@ -59,6 +59,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-2.1.26-fix_dovecot_authentication.patch
     if use crypt ; then
     	epatch "${FILESDIR}"/cyrus-sasl-2.1.26-pwcheck.c.patch
+    	epatch "${FILESDIR}"/cyrus-sasl-2.1.26-sql.c.patch
     fi
 	if use postgres; then
 		epatch "${FILESDIR}"/cyrus-sasl-2.1.26-postgrsql_configure.patch
@@ -78,13 +79,13 @@ src_prepare() {
 		configure.in || die
 	sed -i -e 's:AC_CONFIG_MACRO_DIR:AC_CONFIG_MACRO_DIRS:g' \
 		saslauthd/configure.in || die
-
+              
 	eautoreconf
 }
 
 src_configure() {
 	append-flags -fno-strict-aliasing
-	append-cppflags -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED -D_BSD_SOURCE -DLDAP_DEPRECATED
+	append-cppflags -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED -D_DEFAULT_SOURCE -DLDAP_DEPRECATED
 
 	multilib-minimal_src_configure
 }
