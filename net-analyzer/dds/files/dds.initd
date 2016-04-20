@@ -1,0 +1,17 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Starting DoS/DDoS Detector"
+	start-stop-daemon --start --quiet --pidfile ${DDS_PID} --exec /usr/bin/dds -- ${DDS_OPTS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping DoS/DDoS Detector"
+	start-stop-daemon --stop --quiet --pidfile ${DDS_PID} --name ${SVCNAME}
+	eend $?
+}
