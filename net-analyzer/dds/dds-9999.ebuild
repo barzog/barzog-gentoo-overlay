@@ -15,7 +15,7 @@ HOMEPAGE="http://gul-tech.livejournal.com/5959.html"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64 ~ppc ~x86"
 IUSE="+perl +snmp vlans pcap debug"
 
 DEPEND=""
