@@ -20,7 +20,7 @@ MODULE_NAMES="igb(drivers/net:${S}/src)"
 src_compile() {
 	CONFIG_CHECK="!CONFIG_IGB"
 	cd "${S}/src"
-	emake
+	BUILD_KERNEL=${KV_FULL} emake
 }
 
 src_install() {
