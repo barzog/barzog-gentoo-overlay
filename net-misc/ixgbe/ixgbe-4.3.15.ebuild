@@ -19,11 +19,12 @@ BUILD_TARGETS="clean install"
 MODULE_NAMES="ixgbe(drivers/net:${S}/src)"
 
 src_compile() {
+	ARCH="$(tc-arch-kernel)"
 	CONFIG_CHECK="!CONFIG_IXGBE"
 	cd "${S}/src"
 	use nolro && CFLAGS_EXTRA+=-DIXGBE_NO_LRO
 	use norsc && CFLAGS_EXTRA+=" -DIXGBE_NO_HW_RSC"
-	emake CFLAGS_EXTRA="${CFLAGS_EXTRA}"
+	BUILD_KERNEL=${KV_FULL} emake CFLAGS_EXTRA="${CFLAGS_EXTRA}"
 }
 
 src_install() {
