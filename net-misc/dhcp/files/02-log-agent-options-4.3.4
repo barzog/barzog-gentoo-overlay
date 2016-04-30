@@ -1,0 +1,130 @@
+--- server/dhcp.c.orig	2016-04-30 21:49:43.000000000 +0300
++++ server/dhcp.c	2016-04-30 21:50:09.000000000 +0300
+@@ -33,6 +33,12 @@
+ 
+ static void maybe_return_agent_options(struct packet *packet,
+ 				       struct option_state *options);
++/*
++ *     This setting makes the server log the agent.circuit-id
++ *     and agent.remote-id options on DHCPDISCOVER.
++ */
++#define        LOG_AGENT_OPTIONS                       1
++				       
+ static int reuse_lease (struct packet* packet, struct lease* new_lease,
+ 			struct lease* lease, struct lease_state *state,
+ 			int offer);
+@@ -281,6 +287,60 @@
+ 		lease_dereference (&lease, MDL);
+ }
+ 
++#if LOG_AGENT_OPTIONS
++static int get_agent_option(struct packet *packet, int opt,
++                                       struct data_string *data)
++{
++       struct data_string new;
++       struct option_cache *oc;
++       char *b;
++       int i;
++
++       oc =  lookup_option (&agent_universe, packet -> options, opt);
++       if (!oc)
++               return 0;
++       memset (data, 0, sizeof(*data));
++       if (!evaluate_option_cache (data, packet, (struct lease *)0,
++                                  (struct client_state *)0,
++                                  packet -> options, (struct option_state *)0,
++                                  &global_scope, oc, MDL))
++               return 0;
++
++       if (data -> len == 0) {
++               data_string_forget (data, MDL);
++               return 0;
++       }
++
++       /* Printable ? */
++       for (i = 0; i < data -> len; i++)
++               if (data -> data[i] < 32 || data -> data[i] > 127)
++                       break;
++       if (i == data -> len)
++               return 1;
++
++       /* Non-printable, return hex string */
++       memset (&new, 0, sizeof(new));
++       if (!buffer_allocate (&new.buffer, 3 * data -> len, MDL)) {
++               log_error ("get_agent_option: No memory");
++               data_string_forget (data, MDL);
++               return 0;
++       }
++       new.data = new.buffer -> data;
++       b = (char *)new.data;
++       for (i = 0; i < data -> len; i++) {
++               /* This is Safe. */
++               b += sprintf (b, "%x:", data -> data[i]);
++       }
++       b--;
++       new.len = b - (char *)new.data;
++       data_string_forget (data, MDL);
++       data_string_copy (data, &new, MDL);
++       data_string_forget (&new, MDL);
++
++       return 1;
++}
++#endif
++
+ void dhcpdiscover (packet, ms_nulltp)
+ 	struct packet *packet;
+ 	int ms_nulltp;
+@@ -290,9 +350,14 @@
+ 	TIME when;
+ 	const char *s;
+ 	int peer_has_leases = 0;
++        char agentbuf[1024];
+ #if defined (FAILOVER_PROTOCOL)
+ 	dhcp_failover_state_t *peer;
+ #endif
++#if LOG_AGENT_OPTIONS
++        struct data_string data;
++        int l;
++#endif
+ 
+ 	find_lease (&lease, packet, packet -> shared_network,
+ 		    0, &peer_has_leases, (struct lease *)0, MDL);
+@@ -306,6 +371,21 @@
+ 	} else
+ 		s = (char *)0;
+ 
++       agentbuf[0] = 0;
++#if LOG_AGENT_OPTIONS
++       l = 0;
++       if (get_agent_option(packet, RAI_CIRCUIT_ID, &data)) {
++               l += snprintf (agentbuf + l, sizeof(agentbuf) - l,
++                               "circuit-id %.*s ", data.len, data.data);
++               data_string_forget (&data, MDL);
++       }
++       if (get_agent_option(packet, RAI_REMOTE_ID, &data)) {
++               l += snprintf (agentbuf + l, sizeof(agentbuf) - l,
++                               "remote-id %.*s ", data.len, data.data);
++               data_string_forget (&data, MDL);
++       }
++#endif
++
+ 	/* %Audit% This is log output. %2004.06.17,Safe%
+ 	 * If we truncate we hope the user can get a hint from the log.
+ 	 */
+@@ -324,7 +404,7 @@
+ 			  piaddr(packet->client_addr));
+ 	} else
+ #endif
+-	snprintf (msgbuf, sizeof msgbuf, "DHCPDISCOVER from %s %s%s%svia %s",
++        snprintf (msgbuf, sizeof msgbuf, "DHCPDISCOVER from %s %s%s%s%svia %s",
+ 		 (packet -> raw -> htype
+ 		  ? print_hw_addr (packet -> raw -> htype,
+ 				   packet -> raw -> hlen,
+@@ -333,6 +413,7 @@
+ 		     ? print_hex_1(lease->uid_len, lease->uid, 60)
+ 		     : "<no identifier>")),
+ 		  s ? "(" : "", s ? s : "", s ? ") " : "",
++                  agentbuf,
+ 		  packet -> raw -> giaddr.s_addr
+ 		  ? inet_ntoa (packet -> raw -> giaddr)
+ 		  : packet -> interface -> name);

@@ -1,8 +1,8 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2016 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI="4"
+EAPI=5
 
 inherit eutils systemd toolchain-funcs user
 
@@ -48,30 +48,37 @@ src_unpack() {
 	unpack ./bind.tar.gz
 }
 
-src_prepare() {
+PATCHES=(
 	# Gentoo patches - these will probably never be accepted upstream
 	# Fix some permission issues
-	epatch "${FILESDIR}"/${PN}-3.0-fix-perms.patch
+	"${FILESDIR}/${PN}-3.0-fix-perms.patch"
+
 	# Enable dhclient to equery NTP servers
-	epatch "${FILESDIR}"/${PN}-4.0-dhclient-ntp.patch
-	epatch "${FILESDIR}"/${PN}-4.3.1-dhclient-resolvconf.patch
+	"${FILESDIR}/${PN}-4.3.4-dhclient-ntp.patch"
+	"${FILESDIR}/${PN}-4.3.1-dhclient-resolvconf.patch"
+
 	# Stop downing the interface on Linux as that breaks link daemons
 	# such as wpa_supplicant and netplug
-	epatch "${FILESDIR}"/${PN}-3.0.3-dhclient-no-down.patch
-	# Enable dhclient to get extra configuration from stdin
-	epatch "${FILESDIR}"/${PN}-4.2.2-dhclient-stdin-conf.patch
-	epatch "${FILESDIR}"/${PN}-4.2.2-nogateway.patch #265531
-	epatch "${FILESDIR}"/${PN}-4.2.4-quieter-ping.patch #296921
-	epatch "${FILESDIR}"/${PN}-4.2.4-always-accept-4.patch #437108
-	epatch "${FILESDIR}"/${PN}-4.2.5-iproute2-path.patch #480636
-	epatch "${FILESDIR}"/${PN}-4.2.5-bindtodevice-inet6.patch #471142
-	epatch "${FILESDIR}"/${PN}-4.3.3-ldap-ipv6-client-id.patch #559832
+	"${FILESDIR}/${PN}-3.0.3-dhclient-no-down.patch"
 
+	# Enable dhclient to get extra configuration from stdin
+	"${FILESDIR}/${PN}-4.2.2-dhclient-stdin-conf.patch"
+	"${FILESDIR}/${PN}-4.2.2-nogateway.patch" #265531
+	"${FILESDIR}/${PN}-4.2.4-quieter-ping.patch" #296921
+	"${FILESDIR}/${PN}-4.2.4-always-accept-4.patch" #437108
+	"${FILESDIR}/${PN}-4.2.5-iproute2-path.patch" #480636
+	"${FILESDIR}/${PN}-4.2.5-bindtodevice-inet6.patch" #471142
+	"${FILESDIR}/${PN}-4.3.3-ldap-ipv6-client-id.patch" #559832
+)
+
+src_prepare() {
+	epatch "${PATCHES[@]}"
 	if use subclassess ; then
 		cd ${S}
 		epatch "${FILESDIR}"/01-subclass-4.3.0
-		epatch "${FILESDIR}"/02-log-agent-options
+		epatch "${FILESDIR}"/02-log-agent-options-4.3.4
 	fi
+
 	# Brand the version with Gentoo
 	sed -i \
 		-e "/VERSION=/s:'$: Gentoo-${PR}':" \
@@ -123,7 +130,7 @@ src_prepare() {
 	binddir=${binddir}
 	GMAKE=${MAKE:-gmake}
 	EOF
-	epatch "${FILESDIR}"/${PN}-4.3.3-bind-disable.patch
+	epatch "${FILESDIR}"/${PN}-4.3.4-bind-disable.patch
 	cd bind-*/
 	epatch "${FILESDIR}"/${PN}-4.2.2-bind-parallel-build.patch #380717
 	epatch "${FILESDIR}"/${PN}-4.2.2-bind-build-flags.patch
@@ -165,6 +172,7 @@ src_configure() {
 		$(use_with ldap) \
 		$(use ldap && use_with ssl ldapcrypto || echo --without-ldapcrypto) \
 		$(use_enable binary-leases)
+		
 
 	# configure local bind cruft.  symtable option requires
 	# perl and we don't want to require that #383837.
