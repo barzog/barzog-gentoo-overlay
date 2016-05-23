@@ -1,0 +1,13 @@
+diff --git a/src/cluster.c b/src/cluster.c
+index 7a6bda8..6750c06 100644
+--- a/src/cluster.c
++++ b/src/cluster.c
+@@ -937,7 +937,7 @@ get_userinfo(ProxyCluster *cluster, Oid user_oid)
+ 	struct AANode *node;
+ 	const char *username;
+ 
+-	username = GetUserNameFromId(user_oid);
++	username = GetUserNameFromId(user_oid, true);
+ 
+ 	node = aatree_search(&cluster->userinfo_tree, (uintptr_t)username);
+ 	if (node) {
