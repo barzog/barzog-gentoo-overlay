@@ -335,6 +335,13 @@ pkg_setup() {
 src_prepare() {
 	eapply "${FILESDIR}/${PN}-1.4.1-fix-perl-install-path.patch"
 
+    if use nginx_modules_http_concat ; then
+       cd ${HTTP_CONCAT_MODULE_WD}
+       epatch "${FILESDIR}"/patch_last_github_varsion_with_1.2.2.patch
+       epatch "${FILESDIR}"/patch_my_version_with_last_github_v3.patch
+       cd ${S}
+    fi
+
 	if use nginx_modules_http_upstream_check; then
 		eapply -p0 "${FILESDIR}/check-1.9.2".patch
 	fi

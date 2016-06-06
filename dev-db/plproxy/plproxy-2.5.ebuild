@@ -18,6 +18,9 @@ KEYWORDS="~x86 ~amd64"
 DEPEND="dev-db/postgresql[server]"
 RDEPEND="${DEPENDS}"
 
+src_prepare() {
+	epatch "${FILESDIR}/bugfix_PG95_too_few_arguments_to_function_GetUserNameFromId.patch"
+}
 src_install() {
 	emake DESTDIR="${D}" install || die
 }
