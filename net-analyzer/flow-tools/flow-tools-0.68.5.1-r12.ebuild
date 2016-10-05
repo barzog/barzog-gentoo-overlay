@@ -62,7 +62,6 @@ src_install() {
 	keepdir /var/lib/flows/bin
 	exeinto /var/lib/flows/bin
 	doexe "${FILESDIR}"/linkme
-	keepdir /var/run/flows
 
 	newinitd "${FILESDIR}/flowcapture.initd" flowcapture
 	newconfd "${FILESDIR}/flowcapture.confd" flowcapture
