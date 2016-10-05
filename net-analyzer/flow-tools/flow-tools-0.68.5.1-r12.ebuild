@@ -72,10 +72,8 @@ src_install() {
 }
 
 pkg_postinst() {
-	chown flows:flows /var/run/flows
 	chown flows:flows /var/lib/flows
 	chown flows:flows /var/lib/flows/bin
-	chmod 0755 /var/run/flows
 	chmod 0755 /var/lib/flows
 	chmod 0755 /var/lib/flows/bin
 }
