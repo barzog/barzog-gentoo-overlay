@@ -3,7 +3,7 @@
 # $Header: /var/cvsroot/gentoo-x86/net-p2p/transmission/transmission-2.41.ebuild,v 1.2 2011/10/19 11:49:53 pva Exp $
 
 EAPI=4
-inherit eutils autotools
+inherit eutils autotools user
 TINYXML_PN=tinyxml
 TINYXML_PV=2.6.2
 DESCRIPTION="PtokaX Direct Connect Hub is a multi-platform server application for Neo-Modus Direct Connect Peer-To-Peer sharing network."

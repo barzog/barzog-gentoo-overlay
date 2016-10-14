@@ -3,13 +3,12 @@
 # $Header: /var/cvsroot/gentoo-x86/net-p2p/transmission/transmission-2.41.ebuild,v 1.2 2011/10/19 11:49:53 pva Exp $
 
 EAPI=4
-inherit eutils autotools
+inherit eutils autotools user
 TINYXML_PN=tinyxml
 TINYXML_PV=2.6.2
 DESCRIPTION="PtokaX Direct Connect Hub is a multi-platform server application for Neo-Modus Direct Connect Peer-To-Peer sharing network."
 HOMEPAGE="http://www.ptokax.org"
-SRC_URI="http://www.czdc.org/PtokaX/${PV}-nix-src.tgz
-	 mirror://sourceforge/${TINYXML_PN}/${TINYXML_PN}_${TINYXML_PV//./_}.tar.gz" 
+SRC_URI="http://www.ptokax.org/files/${PV}-nix-src.tgz"
 
 LICENSE="MIT GPL-2"
 SLOT="0"
@@ -23,15 +22,6 @@ DEPEND="${RDEPEND}"
 
 S="${WORKDIR}/${PN}"
 
-src_unpack() {
-	unpack ${A}
-	rm ${WORKDIR}/tinyxml/Makefile
-	cp ${S}/tinyxml/makefile ${WORKDIR}/tinyxml/makefile
-	rm -rf ${S}/tinyxml
-	ln -s ${WORKDIR}/tinyxml ${S}/tinyxml
-	mkdir ${S}/tinyxml/obj
-}
-
 src_prepare() {
 	sed -i 's/-llua5.1/-llua/' "${S}/makefile"
 }
@@ -40,7 +30,7 @@ src_compile() {
 	cd ${S}/tinyxml
 	emake
 	cd ${S}
-	emake
+	emake lua51
 }
 
 src_install() {
