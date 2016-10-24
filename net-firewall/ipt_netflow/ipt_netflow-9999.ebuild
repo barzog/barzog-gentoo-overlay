@@ -17,7 +17,7 @@ LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 
-IUSE="pax_kernel"
+IUSE="pax_kernel ipv6"
 
 RDEPEND="net-firewall/iptables"
 DEPEND="${RDEPEND}
@@ -52,6 +52,9 @@ src_install() {
 	linux-mod_src_install
 	exeinto "${IPT_LIB}"
 	doexe libipt_NETFLOW.so
+	if use ipv6; then
+		doexe libip6t_NETFLOW.so
+	fi
 	doheader ipt_NETFLOW.h
 	dodoc README*
 }
