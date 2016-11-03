@@ -19,5 +19,5 @@ DEPEND="dev-perl/File-Flock
 	virtual/perl-Storable
 	dev-perl/File-Sync
 	dev-perl/File-Slurp
-	dev-perl/Time-modules"
+	dev-perl/Time-ParseDate"
 RDEPEND="${DEPEND}"
