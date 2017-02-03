@@ -31,7 +31,7 @@ index 2983d5e..55962b0 100644
 +        return int(version[0]), int(version[1])
 +
 +    def is_version_higher_than_18():
-+        return MONIT_MAJOR_VERSION > 3 or MONIT_MAJOR_VERSION == 3 and MONIT_MINOR_VERSION>18
++        return MONIT_MAJOR_VERSION > 5 or MONIT_MAJOR_VERSION == 5 and MONIT_MINOR_VERSION>18
 +
 +    def parse(parts):
 +        if is_version_higher_than_18():
