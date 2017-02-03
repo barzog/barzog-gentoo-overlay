@@ -4,7 +4,6 @@
 EAPI=5
 MODULE_AUTHOR=HMBRAND
 MODULE_A_EXT="tgz"
-MODULE_VERSION=0.38
 inherit perl-module
 
 DESCRIPTION='DBI driver for CSV files'
