@@ -2,12 +2,10 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="3"
-PYTHON_DEPEND="2"
-SUPPORT_PYTHON_ABIS="1"
-RESTRICT_PYTHON_ABIS="3.* *-jython"
+EAPI=5
+PYTHON_COMPAT=( python{2_6,2_7,3_2,3_3} )
 
-inherit distutils eutils
+inherit distutils-r1 python-r1 eutils
 
 DESCRIPTION="Python for asterisk"
 HOMEPAGE="http://sourceforge.net/projects/pyst/"

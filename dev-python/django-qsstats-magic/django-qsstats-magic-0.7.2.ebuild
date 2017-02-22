@@ -2,12 +2,10 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-python/django-social-auth/django-social-auth-0.6.8.ebuild,v 1.1 2012/04/25 18:58:58 tampakrap Exp $
 
-EAPI=4
-PYTHON_DEPEND="2"
-SUPPORT_PYTHON_ABIS=1
-RESTRICT_PYTHON_ABIS="3.*"
+EAPI=5
+PYTHON_COMPAT=( python{2_6,2_7,3_2,3_3} )
 
-inherit distutils
+inherit distutils-r1 python-r1
 
 DESCRIPTION="A django microframework that eases the generation of aggregate data for querysets."
 HOMEPAGE="http://bitbucket.org/kmike/django-qsstats-magic/"
@@ -17,7 +15,6 @@ IUSE=""
 
 LICENSE="MIT"
 SLOT="0"
-PYTHON_MODNAME="qsstats"
 
 RDEPEND="dev-python/python-dateutil"
 DEPEND="${RDEPEND}
