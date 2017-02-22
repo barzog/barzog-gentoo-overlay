@@ -2,9 +2,10 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="3"
+EAPI=5
+PYTHON_COMPAT=( python{2_6,2_7,3_2,3_3} )
 
-inherit eutils autotools python
+inherit eutils autotools python-r1
 
 DESCRIPTION="Database management tools from Skype: WAL shipping, queueing,replication."
 HOMEPAGE="http://pgfoundry.org/projects/skytools/"
@@ -15,10 +16,7 @@ SLOT="0"
 KEYWORDS="~x86 ~sparc ~amd64"
 IUSE="asciidoc"
 
-PYTHON_DEPEND="2"
-SUPPORT_PYTHON_ABIS="1"
-RESTRICT_PYTHON_ABIS="3.* *-jython"
-python_enable_pyc
+PYTHON_COMPAT=( python{2_6,2_7,3_2,3_3} )
 
 DEPEND=">=dev-db/postgresql-8.2[server]
 		asciidoc? ( app-text/asciidoc )
