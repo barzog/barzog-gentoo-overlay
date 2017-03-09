@@ -1,6 +1,5 @@
-# Copyright 1999-2016 Gentoo Foundation
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
 EAPI="5"
 
@@ -131,6 +130,12 @@ multilib_src_configure() {
 	#		ec_nistp_64_gcc_128="enable-ec_nistp_64_gcc_128"
 	#	fi
 	#fi
+
+	# https://github.com/openssl/openssl/issues/2286
+	if use ia64 ; then
+		replace-flags -g3 -g2
+		replace-flags -ggdb3 -ggdb2
+	fi
 
 	local sslout=$(./gentoo.config)
 	einfo "Use configuration ${sslout:-(openssl knows best)}"
