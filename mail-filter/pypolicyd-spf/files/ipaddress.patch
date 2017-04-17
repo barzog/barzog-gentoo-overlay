@@ -1,0 +1,38 @@
+--- policyd-spf	2015-08-13 05:45:08.000000000 +0300
++++ policyd-spf.mod	2017-04-17 12:34:51.000000000 +0300
+@@ -37,10 +37,7 @@
+ if int(micro) < 7:
+     raise ImportError("At least pyspf 2.0.7 is required.")
+ import policydspfsupp
+-try:
+-    import ipaddress
+-except ImportError:
+-    import ipaddr as ipaddress
++import ipaddress
+ try:
+     import authres
+ except:
+@@ -53,6 +50,12 @@
+ def _cidrmatch(ip, netwrk):
+     """Match connect IP against a CIDR network of other IP addresses."""
+ 
++    if sys.version_info.major < 3:
++        if isinstance(ip, str):
++            ip = ip.decode('ascii')
++        if isinstance(netwrk, str):
++            netwrk = netwrk.decode('ascii')
++
+     try:
+         address = ipaddress.ip_address(ip)
+     except AttributeError:
+@@ -64,6 +67,10 @@
+     return network.__contains__(address)
+ 
+ def _get_rdns_lookup(ip):
++    if sys.version_info.major < 3:
++        if isinstance(ip, str):
++            ip = ip.decode('ascii')
++
+     try:
+         address = ipaddress.ip_address(ip)
+     except AttributeError:
