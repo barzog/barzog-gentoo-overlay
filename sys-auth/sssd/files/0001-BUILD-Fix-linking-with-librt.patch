@@ -1,0 +1,57 @@
+From dc416984d92890f31122d32240d8bc0cbf48a48e Mon Sep 17 00:00:00 2001
+From: Lukas Slebodnik <lslebodn@redhat.com>
+Date: Mon, 7 Nov 2016 11:53:21 +0100
+Subject: [PATCH] BUILD: Fix linking with librt
+
+The posix realime extensions defines timer_* functions
+but it does not mention library with these functions.
+http://www.unix.org/version2/whatsnew/realtime.html
+
+The autoconf macro AC_SEARCH_LIBS firstly check the function
+timer_create with no libraries, then for each library listed
+in 2nd parameter. Possible libraries librt and libposix4
+were used in nspr for similar detection.
+---
+ Makefile.am  |  1 +
+ configure.ac | 13 +++++++++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/Makefile.am b/Makefile.am
+index 64328766e09213167dc392ed307c75e318845ed3..e037930ff3a4d462ace5db02dad6c3c0d5fbb0d8 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -980,6 +980,7 @@ libsss_util_la_CFLAGS = \
+     $(SYSTEMD_LOGIN_CFLAGS) \
+     $(NULL)
+ libsss_util_la_LIBADD = \
++    $(LIBADD_TIMER) \
+     $(SSSD_LIBS) \
+     $(SYSTEMD_LOGIN_LIBS) \
+     $(UNICODE_LIBS) \
+diff --git a/configure.ac b/configure.ac
+index 3dbcf9e1f9e3cd3787dc7c01907d43bc55eda72d..d3ef1e162b2b8f8c1185b64a40584d3078a2c6be 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -70,6 +70,19 @@ AC_CHECK_FUNCS([ pthread_mutexattr_setrobust \
+                  pthread_mutex_consistent_np ])
+ LIBS=$SAVE_LIBS
+ 
++# Check library for the timer_create function
++SAVE_LIBS=$LIBS
++LIBS=
++LIBADD_TIMER=
++AC_SEARCH_LIBS([timer_create], [rt posix4],
++    [AC_DEFINE([HAVE_LIBRT], [1],
++         [Define if you have the librt library or equivalent.])
++     LIBADD_TIMER="$LIBS"],
++    [AC_MSG_ERROR([unable to find library fot the timer_create() function])])
++
++AC_SUBST([LIBADD_TIMER])
++LIBS=$SAVE_LIBS
++
+ # Check for presence of modern functions for setting file timestamps
+ AC_CHECK_FUNCS([ utimensat \
+                  futimens ])
+-- 
+2.9.3
+
