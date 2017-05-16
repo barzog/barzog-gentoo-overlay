@@ -36,6 +36,7 @@ COMMON_DEP="
 	>=sys-apps/keyutils-1.5
 	>=net-dns/c-ares-1.7.4
 	>=dev-libs/nss-3.12.9
+	net-libs/http-parser
 	python? ( ${PYTHON_DEPS} )
 	selinux? (
 		>=sys-libs/libselinux-2.1.9
