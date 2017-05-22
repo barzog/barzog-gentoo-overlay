@@ -2,16 +2,20 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI="2"
+EAPI="5"
 
-inherit cmake-utils subversion
-DESCRIPTION="https://code.google.com/p/xbt/"
-HOMEPAGE="http://xbtt.sourceforge.net/tracker/"
-ESVN_REPO_URI="http://xbt.googlecode.com/svn/trunk/xbt"
+inherit cmake-utils git-2
+DESCRIPTION="BitTorrent tracker written in C++"
+HOMEPAGE="https://github.com/shakahl/xbt"
+SRC_URI=""
+EGIT_REPO_URI="https://github.com/shakahl/xbt.git"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
+#WORKDIR="${PORTAGE_BUILDDIR}/work/xbt"
+#PN="xbt"
+#S="${WORKDIR}/xbt"
 
 RDEPEND="dev-libs/boost
 	virtual/mysql
@@ -19,13 +23,9 @@ RDEPEND="dev-libs/boost
 DEPEND="${RDEPEND}"
 
 src_prepare() {
-	sed -i -e \
-		's:add_subdirectory("BT Test")::g' \
-		CMakeLists.txt || die "CMakeLists.txt remove test failed!"
-
-	sed -i -e \
-		's:add_subdirectory("Client Command Line Interface")::g' \
-		CMakeLists.txt || die "CMakeLists.txt remove client failed!"
+	cmake_comment_add_subdirectory "BT Test"
+	cmake_comment_add_subdirectory "Client Command Line Interface"
+	S="${S}/xbt"
 }
 
 src_install() {
