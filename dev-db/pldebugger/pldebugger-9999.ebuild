@@ -16,6 +16,7 @@ KEYWORDS="~x86 ~sparc ~amd64"
 IUSE=""
 
 DEPEND=" || ( 
+		dev-db/postgresql:9.6[server,perl]
                 dev-db/postgresql:9.5[server,perl]
                 dev-db/postgresql:9.4[server,perl]
                 dev-db/postgresql:9.3[server,perl]
