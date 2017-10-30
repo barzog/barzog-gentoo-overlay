@@ -1,0 +1,1196 @@
+diff -aur bin/named/client.c bin/named/client.c
+--- bin/named/client.c	2014-11-21 02:59:27.000000000 +0300
++++ bin/named/client.c	2015-08-25 10:37:11.000000000 +0300
+@@ -113,6 +113,8 @@
+  */
+ #endif
+ 
++//static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
++
+ /*% nameserver client manager structure */
+ struct ns_clientmgr {
+ 	/* Unlocked. */
+@@ -228,6 +230,8 @@
+ static void clientmgr_destroy(ns_clientmgr_t *manager);
+ static isc_boolean_t exit_check(ns_client_t *client);
+ static void ns_client_endrequest(ns_client_t *client);
++static void ns_client_endrequest_log(ns_client_t *client);
++static void ns_client_endrequest_log_debug(ns_client_t *client);
+ static void client_start(isc_task_t *task, isc_event_t *event);
+ static void client_request(isc_task_t *task, isc_event_t *event);
+ static void ns_client_dumpmessage(ns_client_t *client, const char *reason);
+@@ -363,6 +367,8 @@
+ 						client, rlink);
+ 			UNLOCK(&manager->reclock);
+ 		}
++		ns_client_endrequest_log(client);
++		ns_client_endrequest_log_debug(client);
+ 		ns_client_endrequest(client);
+ 
+ 		client->state = NS_CLIENTSTATE_READING;
+@@ -688,6 +727,76 @@
+ 	client->attributes &= NS_CLIENTATTR_TCP;
+ }
+ 
++static void
++ns_client_endrequest_log(ns_client_t *client) {
++        isc_buffer_t buffer2;
++        isc_result_t result2;
++        char *buf = NULL;
++        int len = 1024;
++	
++	if (!isc_log_wouldlog(ns_g_lctx, ISC_LOG_INFO))
++	    return;
++
++	do {
++            buf = isc_mem_get(client->mctx, len);
++            if (buf == NULL)
++                break;
++            isc_buffer_init(&buffer2, buf, len);
++            result2 = dns_message_totext2(client->message, 
++        			&dns_master_style_custom,
++	                        0, &buffer2);
++            if (result2 == ISC_R_NOSPACE) {
++                isc_mem_put(client->mctx, buf, len);
++                len += 1024;
++            } else if (result2 == ISC_R_SUCCESS)
++        
++            ns_client_log2(client, NS_LOGCATEGORY_CUSTOM, NS_LOGMODULE_CLIENT,
++//                          ISC_LOG_INFO, "query: \n%.*s", 
++                          ISC_LOG_INFO, "\n%.*s", 
++//                          ns_g_lctx->debug_level, "\n%.*s", 
++                          (int)isc_buffer_usedlength(&buffer2), buf);
++                                                                                       
++            } while (result2 == ISC_R_NOSPACE);
++
++            if (buf != NULL)
++	        isc_mem_put(client->mctx, buf, len);
++
++}
++
++static void
++ns_client_endrequest_log_debug(ns_client_t *client) {
++        isc_buffer_t buffer2;
++        isc_result_t result2;
++        char *buf = NULL;
++        int len = 1024;
++	
++	if (!isc_log_wouldlog(ns_g_lctx, ISC_LOG_DEBUG(3)))
++	    return;
++
++	do {
++            buf = isc_mem_get(client->mctx, len);
++            if (buf == NULL)
++                break;
++            isc_buffer_init(&buffer2, buf, len);
++            result2 = dns_message_totext2(client->message, 
++        			&dns_master_style_custom,
++	                        0, &buffer2);
++            if (result2 == ISC_R_NOSPACE) {
++                isc_mem_put(client->mctx, buf, len);
++                len += 1024;
++            } else if (result2 == ISC_R_SUCCESS)
++        
++            ns_client_log2(client, NS_LOGCATEGORY_CUSTOM, NS_LOGMODULE_CLIENT,
++                          ISC_LOG_DEBUG(3), "\n%.*s", 
++                          (int)isc_buffer_usedlength(&buffer2), buf);
++                                                                                       
++            } while (result2 == ISC_R_NOSPACE);
++
++            if (buf != NULL)
++	        isc_mem_put(client->mctx, buf, len);
++
++}
++
+ void
+ ns_client_next(ns_client_t *client, isc_result_t result) {
+ 	int newstate;
+@@ -700,7 +809,7 @@
+ 	CTRACE("next");
+ 
+ 	if (result != ISC_R_SUCCESS)
+-		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
++		ns_client_log2(client, DNS_LOGCATEGORY_SECURITY,
+ 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(3),
+ 			      "request failed: %s", isc_result_totext(result));
+ 
+@@ -2800,6 +2950,178 @@
+ }
+ 
+ void
++ns_client_logv2(ns_client_t *client, isc_logcategory_t *category,
++	       isc_logmodule_t *module, int level, const char *fmt, va_list ap)
++{
++	char msgbuf[20480] = "";
++	char peerbuf[ISC_SOCKADDR_FORMATSIZE] = "";
++	char onbuf[ISC_NETADDR_FORMATSIZE] = "";
++//	char signerbuf[DNS_NAME_FORMATSIZE], 
++	char qnamebuf[DNS_NAME_FORMATSIZE] = "";
++//	const char *viewname = "";
++//	const char *sep1 = "", *sep2 = "", *sep3 = "", *sep4 = "";
++//	const char *signer = "", 
++	const char *qname = "";
++	dns_name_t *q = NULL;
++	const char seps[]   = "\n";
++	const char seps2[]   = "#";
++	const char *sepsA   = "A\t";
++	const char *sepsSOA   = "SOA\t";
++	char *token;
++	char *tokensock;
++	char *p1;
++//	char str[2049] = "";
++	char str[20481] = "";
++	char p2[20481] = "";
++	char peerbufport[ISC_SOCKADDR_FORMATSIZE] = "";
++	char *str_str;
++	char *peerbuf_str;
++
++	vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
++
++/*
++ *	pass only "A" or "AAAA" records into log - requested by Velcom
++ */
++//	    pthread_mutex_lock(&log_mutex);
++
++	if(strstr(msgbuf,sepsA) != NULL && strstr(msgbuf,sepsSOA) == NULL)
++	{
++	
++	    ns_client_name(client, peerbuf, sizeof(peerbuf));
++	    isc_netaddr_format(&client->destaddr, onbuf, sizeof(onbuf));
++
++//	if (client->signer != NULL) {
++//		dns_name_format(client->signer, signerbuf, sizeof(signerbuf));
++//		sep1 = "/key ";
++//		signer = signerbuf;
++//	}
++
++	    q = client->query.origqname != NULL
++		    ? client->query.origqname : client->query.qname;
++	    if (q != NULL) {
++		    dns_name_format(q, qnamebuf, sizeof(qnamebuf));
++//		sep2 = " (";
++//		sep3 = ")";
++		    qname = qnamebuf;
++	    }
++
++//	if (client->view != NULL && strcmp(client->view->name, "_bind") != 0 &&
++//	    strcmp(client->view->name, "_default") != 0) {
++//		sep4 = ": view ";
++//		viewname = client->view->name;
++//	}
++
++
++/*
++ *	replace "#" delimiter in sockaddr with ";" - requested by Velcom
++ */
++//    	    tokensock = strtok( peerbuf, seps2 );
++    	    tokensock = strtok_r( peerbuf, seps2, &peerbuf_str );
++    	    strcpy(peerbufport,"");
++    	    while( tokensock != NULL )
++    	    {
++        	strcat(peerbufport,tokensock);
++        	strcat(peerbufport,";");
++//		tokensock = strtok( NULL, seps2 );
++		tokensock = strtok_r( NULL, seps2, &peerbuf_str );
++    	    }
++    	    peerbufport[strlen(peerbufport)-1] = 0;
++
++/*
++ *	modify formatted multiline record with ";" separated one-liner   - requested by Velcom
++ */
++
++	    strcpy(str,msgbuf);
++
++
++//    	    token = strtok( str, seps );
++    	    token = strtok_r( str, seps, &str_str );
++	    strcpy(p2,"");
++    	    while( token != NULL )
++    	    {
++        	p1 = strrchr(token, '\t');
++        	if (p1 != NULL)
++        	{
++    		    if( strcmp(".", &p1[strlen(p1)-1]) != 0)
++        	    {
++        		while (isspace(*p1))
++    	        	    ++p1;
++	    		strcat(p2,p1);
++            		strcat(p2,",");
++		    }
++		}
++//        	token = strtok( NULL, seps );
++        	token = strtok_r( NULL, seps, &str_str );
++    	    }
++
++    	    p2[strlen(p2)-1] = 0;
++	    
++	    
++	    if (level == ISC_LOG_INFO)
++	    {
++		isc_log_write2(ns_g_lctx, category, module, level,
++		      "%s;%s;%s",
++		      peerbufport, qname, p2
++		      );
++	    }
++	    else if (level >= ISC_LOG_DEBUG(3))
++    	    {
++		isc_log_write2(ns_g_lctx, category, module, level,
++		      "DEBUG;%s;%s%s",
++		      peerbufport, qname, msgbuf
++		      );
++	    }
++	}
++//	    pthread_mutex_unlock(&log_mutex);
++
++}
++
++/*
++void
++ns_client_logv2(ns_client_t *client, isc_logcategory_t *category,
++	       isc_logmodule_t *module, int level, const char *fmt, va_list ap)
++{
++	char msgbuf[2048];
++	char peerbuf[ISC_SOCKADDR_FORMATSIZE];
++	char signerbuf[DNS_NAME_FORMATSIZE], qnamebuf[DNS_NAME_FORMATSIZE];
++	const char *viewname = "";
++	const char *sep1 = "", *sep2 = "", *sep3 = "", *sep4 = "";
++	const char *signer = "", *qname = "";
++	dns_name_t *q = NULL;
++
++	vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
++
++	ns_client_name(client, peerbuf, sizeof(peerbuf));
++
++	if (client->signer != NULL) {
++		dns_name_format(client->signer, signerbuf, sizeof(signerbuf));
++		sep1 = "/key ";
++		signer = signerbuf;
++	}
++
++	q = client->query.origqname != NULL
++		? client->query.origqname : client->query.qname;
++	if (q != NULL) {
++		dns_name_format(q, qnamebuf, sizeof(qnamebuf));
++		sep2 = " (";
++		sep3 = ")";
++		qname = qnamebuf;
++	}
++
++	if (client->view != NULL && strcmp(client->view->name, "_bind") != 0 &&
++	    strcmp(client->view->name, "_default") != 0) {
++		sep4 = ": view ";
++		viewname = client->view->name;
++	}
++
++	isc_log_write2(ns_g_lctx, category, module, level,
++		      "client %s%s%s%s%s%s%s%s: %s",
++		      peerbuf, sep1, signer, sep2, qname, sep3,
++		      sep4, viewname, msgbuf);
++}
++*/
++
++void
+ ns_client_log(ns_client_t *client, isc_logcategory_t *category,
+ 	   isc_logmodule_t *module, int level, const char *fmt, ...)
+ {
+@@ -2814,6 +3136,36 @@
+ }
+ 
+ void
++ns_client_log2(ns_client_t *client, isc_logcategory_t *category,
++	   isc_logmodule_t *module, int level, const char *fmt, ...)
++{
++	va_list ap;
++
++	if (! isc_log_wouldlog(ns_g_lctx, level))
++		return;
++
++	va_start(ap, fmt);
++	ns_client_logv2(client, category, module, level, fmt, ap);
++	va_end(ap);
++}
++
++/*
++void
++ns_client_log2(ns_client_t *client, isc_logcategory_t *category,
++	   isc_logmodule_t *module, int level, const char *fmt, ...)
++{
++	va_list ap;
++
++	if (! isc_log_wouldlog(ns_g_lctx, level))
++		return;
++
++	va_start(ap, fmt);
++	ns_client_logv2(client, category, module, level, fmt, ap);
++	va_end(ap);
++}
++*/
++
++void
+ ns_client_aclmsg(const char *msg, dns_name_t *name, dns_rdatatype_t type,
+ 		 dns_rdataclass_t rdclass, char *buf, size_t len)
+ {
+diff -aur bin/named/include/named/client.h bin/named/include/named/client.h
+--- bin/named/include/named/client.h	2014-11-21 02:59:27.000000000 +0300
++++ bin/named/include/named/client.h	2015-05-26 12:08:58.000000000 +0300
+@@ -342,6 +342,15 @@
+ 	       isc_logmodule_t *module, int level, const char *fmt, va_list ap) ISC_FORMAT_PRINTF(5, 0);
+ 
+ void
++ns_client_log2(ns_client_t *client, isc_logcategory_t *category,
++	      isc_logmodule_t *module, int level,
++	      const char *fmt, ...) ISC_FORMAT_PRINTF(5, 6);
++
++void
++ns_client_logv2(ns_client_t *client, isc_logcategory_t *category,
++	       isc_logmodule_t *module, int level, const char *fmt, va_list ap) ISC_FORMAT_PRINTF(5, 0);
++
++void
+ ns_client_aclmsg(const char *msg, dns_name_t *name, dns_rdatatype_t type,
+ 		 dns_rdataclass_t rdclass, char *buf, size_t len);
+ 
+diff -aur bin/named/include/named/log.h bin/named/include/named/log.h
+--- bin/named/include/named/log.h	2014-11-21 02:59:27.000000000 +0300
++++ bin/named/include/named/log.h	2015-05-05 19:22:16.000000000 +0300
+@@ -37,6 +37,7 @@
+ #define NS_LOGCATEGORY_UNMATCHED	(&ns_g_categories[5])
+ #define NS_LOGCATEGORY_UPDATE_SECURITY	(&ns_g_categories[6])
+ #define NS_LOGCATEGORY_QUERY_ERRORS	(&ns_g_categories[7])
++#define NS_LOGCATEGORY_CUSTOM		(&ns_g_categories[8])
+ 
+ /*
+  * Backwards compatibility.
+diff -aur bin/named/log.c bin/named/log.c
+--- bin/named/log.c	2014-11-21 02:59:27.000000000 +0300
++++ bin/named/log.c	2015-05-05 19:23:17.000000000 +0300
+@@ -45,6 +45,7 @@
+ 	{ "unmatched",	 		0 },
+ 	{ "update-security",		0 },
+ 	{ "query-errors",		0 },
++	{ "custom",			0 },
+ 	{ NULL, 			0 }
+ };
+ 
+diff -aur lib/dns/include/dns/log.h lib/dns/include/dns/log.h
+--- lib/dns/include/dns/log.h	2014-11-21 02:59:27.000000000 +0300
++++ lib/dns/include/dns/log.h	2015-05-26 11:55:41.000000000 +0300
+@@ -44,6 +44,7 @@
+ #define DNS_LOGCATEGORY_CNAME		(&dns_categories[14])
+ #define DNS_LOGCATEGORY_SPILL		(&dns_categories[15])
+ #define DNS_LOGCATEGORY_DNSTAP		(&dns_categories[16])
++#define DNS_LOGCATEGORY_CUSTOM		(&dns_categories[17])
+ 
+ /* Backwards compatibility. */
+ #define DNS_LOGCATEGORY_GENERAL		ISC_LOGCATEGORY_GENERAL
+diff -aur lib/dns/include/dns/masterdump.h lib/dns/include/dns/masterdump.h
+--- lib/dns/include/dns/masterdump.h	2014-11-21 02:59:27.000000000 +0300
++++ lib/dns/include/dns/masterdump.h	2015-05-06 13:30:43.000000000 +0300
+@@ -149,6 +149,11 @@
+ LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_debug;
+ 
+ /*%
++ * The style used for custom log output.
++ */
++LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_custom;
++
++/*%
+  * The style used for dumping "key" zones.
+  */
+ LIBDNS_EXTERNAL_DATA extern const dns_master_style_t dns_master_style_keyzone;
+diff -aur lib/dns/include/dns/message.h lib/dns/include/dns/message.h
+--- lib/dns/include/dns/message.h	2014-11-21 02:59:27.000000000 +0300
++++ lib/dns/include/dns/message.h	2015-05-05 14:54:31.000000000 +0300
+@@ -334,6 +334,12 @@
+ 			  isc_buffer_t *target);
+ 
+ isc_result_t
++dns_message_sectiontotext2(dns_message_t *msg, dns_section_t section,
++			  const dns_master_style_t *style,
++			  dns_messagetextflag_t flags,
++			  isc_buffer_t *target);
++
++isc_result_t
+ dns_message_pseudosectiontotext(dns_message_t *msg,
+ 				dns_pseudosection_t section,
+ 				const dns_master_style_t *style,
+@@ -373,6 +379,10 @@
+ isc_result_t
+ dns_message_totext(dns_message_t *msg, const dns_master_style_t *style,
+ 		   dns_messagetextflag_t flags, isc_buffer_t *target);
++
++isc_result_t
++dns_message_totext2(dns_message_t *msg, const dns_master_style_t *style,
++		   dns_messagetextflag_t flags, isc_buffer_t *target);
+ /*%<
+  * Convert all sections of message 'msg' to a cleartext representation
+  *
+diff -aur lib/dns/log.c lib/dns/log.c
+--- lib/dns/log.c	2014-11-21 02:59:27.000000000 +0300
++++ lib/dns/log.c	2015-05-06 10:26:53.000000000 +0300
+@@ -46,6 +46,7 @@
+ 	{ "cname",	0 },
+ 	{ "spill",	0 },
+ 	{ "dnstap",	0 },
++	{ "custom",	0 },
+ 	{ NULL, 	0 }
+ };
+ 
+diff -aur lib/dns/masterdump.c lib/dns/masterdump.c
+--- lib/dns/masterdump.c	2014-11-21 02:59:27.000000000 +0300
++++ lib/dns/masterdump.c	2015-05-06 13:31:48.000000000 +0300
+@@ -137,6 +137,13 @@
+ };
+ 
+ LIBDNS_EXTERNAL_DATA const dns_master_style_t
++dns_master_style_custom = {
++	DNS_STYLEFLAG_NO_TTL |
++	DNS_STYLEFLAG_NO_CLASS,
++	46, 46, 46, 64, 120, 8, UINT_MAX
++};
++
++LIBDNS_EXTERNAL_DATA const dns_master_style_t
+ dns_master_style_explicitttl = {
+ 	DNS_STYLEFLAG_OMIT_OWNER |
+ 	DNS_STYLEFLAG_OMIT_CLASS |
+diff -aur lib/dns/message.c lib/dns/message.c
+--- lib/dns/message.c	2014-11-21 02:59:27.000000000 +0300
++++ lib/dns/message.c	2015-05-05 22:19:30.000000000 +0300
+@@ -3202,6 +3202,81 @@
+ }
+ 
+ isc_result_t
++dns_message_sectiontotext2(dns_message_t *msg, dns_section_t section,
++			  const dns_master_style_t *style,
++			  dns_messagetextflag_t flags,
++			  isc_buffer_t *target) {
++	dns_name_t *name, empty_name;
++	dns_rdataset_t *rdataset;
++	isc_result_t result;
++	isc_boolean_t seensoa = ISC_FALSE;
++
++	REQUIRE(DNS_MESSAGE_VALID(msg));
++	REQUIRE(target != NULL);
++	REQUIRE(VALID_SECTION(section));
++
++	if (ISC_LIST_EMPTY(msg->sections[section]))
++		return (ISC_R_SUCCESS);
++
++/*
++	if ((flags & DNS_MESSAGETEXTFLAG_NOCOMMENTS) == 0) {
++		ADD_STRING(target, ";; ");
++		if (msg->opcode != dns_opcode_update) {
++			ADD_STRING(target, sectiontext[section]);
++		} else {
++			ADD_STRING(target, updsectiontext[section]);
++		}
++		ADD_STRING(target, " SECTION:\n");
++	}
++*/
++	dns_name_init(&empty_name, NULL);
++	result = dns_message_firstname(msg, section);
++	if (result != ISC_R_SUCCESS) {
++		return (result);
++	}
++	do {
++		name = NULL;
++		dns_message_currentname(msg, section, &name);
++		for (rdataset = ISC_LIST_HEAD(name->list);
++		     rdataset != NULL;
++		     rdataset = ISC_LIST_NEXT(rdataset, link)) {
++			if (section == DNS_SECTION_ANSWER &&
++			    rdataset->type == dns_rdatatype_soa) {
++				if ((flags & DNS_MESSAGETEXTFLAG_OMITSOA) != 0)
++					continue;
++				if (seensoa &&
++				    (flags & DNS_MESSAGETEXTFLAG_ONESOA) != 0)
++					continue;
++				seensoa = ISC_TRUE;
++			}
++			if (section == DNS_SECTION_QUESTION) {
++				ADD_STRING(target, ";");
++				result = dns_master_questiontotext(name,
++								   rdataset,
++								   style,
++								   target);
++			} else {
++				result = dns_master_rdatasettotext(name,
++								   rdataset,
++								   style,
++								   target);
++			}
++			if (result != ISC_R_SUCCESS)
++				return (result);
++		}
++		result = dns_message_nextname(msg, section);
++	} while (result == ISC_R_SUCCESS);
++	if ((flags & DNS_MESSAGETEXTFLAG_NOHEADERS) == 0 &&
++	    (flags & DNS_MESSAGETEXTFLAG_NOCOMMENTS) == 0)
++		ADD_STRING(target, "\n");
++	if (result == ISC_R_NOMORE)
++		result = ISC_R_SUCCESS;
++	return (result);
++ cleanup:
++	return (result);
++}
++
++isc_result_t
+ dns_message_pseudosectiontotext(dns_message_t *msg,
+ 				dns_pseudosection_t section,
+ 				const dns_master_style_t *style,
+@@ -3435,6 +3508,122 @@
+ 	return (ISC_R_SUCCESS);
+ }
+ 
++
++isc_result_t
++dns_message_totext2(dns_message_t *msg, const dns_master_style_t *style,
++		   dns_messagetextflag_t flags, isc_buffer_t *target) {
++	//char buf[sizeof("1234567890")];
++	isc_result_t result;
++
++	REQUIRE(DNS_MESSAGE_VALID(msg));
++	REQUIRE(target != NULL);
++
++	//if ((flags & DNS_MESSAGETEXTFLAG_NOHEADERS) == 0) {
++		//ADD_STRING(target, ";; ->>HEADER<<- opcode: ");
++		//ADD_STRING(target, opcodetext[msg->opcode]);
++		//ADD_STRING(target, ", status: ");
++		//if (msg->rcode < (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
++		//	ADD_STRING(target, rcodetext[msg->rcode]);
++		//} else {
++		//	snprintf(buf, sizeof(buf), "%4u", msg->rcode);
++		//	ADD_STRING(target, buf);
++		//}
++		//ADD_STRING(target, ", id: ");
++		//snprintf(buf, sizeof(buf), "%6u", msg->id);
++		/*
++		ADD_STRING(target, buf);
++		ADD_STRING(target, "\n;; flags:");
++		if ((msg->flags & DNS_MESSAGEFLAG_QR) != 0)
++			ADD_STRING(target, " qr");
++		if ((msg->flags & DNS_MESSAGEFLAG_AA) != 0)
++			ADD_STRING(target, " aa");
++		if ((msg->flags & DNS_MESSAGEFLAG_TC) != 0)
++			ADD_STRING(target, " tc");
++		if ((msg->flags & DNS_MESSAGEFLAG_RD) != 0)
++			ADD_STRING(target, " rd");
++		if ((msg->flags & DNS_MESSAGEFLAG_RA) != 0)
++			ADD_STRING(target, " ra");
++		if ((msg->flags & DNS_MESSAGEFLAG_AD) != 0)
++			ADD_STRING(target, " ad");
++		if ((msg->flags & DNS_MESSAGEFLAG_CD) != 0)
++			ADD_STRING(target, " cd");
++			*/
++		/*
++		 * The final unnamed flag must be zero.
++		 */
++		/* 
++		if ((msg->flags & 0x0040U) != 0)
++			ADD_STRING(target, "; MBZ: 0x4");
++		if (msg->opcode != dns_opcode_update) {
++			ADD_STRING(target, "; QUESTION: ");
++		} else {
++			ADD_STRING(target, "; ZONE: ");
++		}
++		snprintf(buf, sizeof(buf), "%1u",
++			 msg->counts[DNS_SECTION_QUESTION]);
++		ADD_STRING(target, buf);
++		if (msg->opcode != dns_opcode_update) {
++			ADD_STRING(target, ", ANSWER: ");
++		} else {
++			ADD_STRING(target, ", PREREQ: ");
++		}
++		snprintf(buf, sizeof(buf), "%1u",
++			 msg->counts[DNS_SECTION_ANSWER]);
++		ADD_STRING(target, buf);
++		if (msg->opcode != dns_opcode_update) {
++			ADD_STRING(target, ", AUTHORITY: ");
++		} else {
++			ADD_STRING(target, ", UPDATE: ");
++		}
++		snprintf(buf, sizeof(buf), "%1u",
++			msg->counts[DNS_SECTION_AUTHORITY]);
++		ADD_STRING(target, buf);
++		ADD_STRING(target, ", ADDITIONAL: ");
++		snprintf(buf, sizeof(buf), "%1u",
++			msg->counts[DNS_SECTION_ADDITIONAL]);
++		ADD_STRING(target, buf);
++		ADD_STRING(target, "\n");
++		*/
++	//}
++/*
++	result = dns_message_pseudosectiontotext(msg,
++						 DNS_PSEUDOSECTION_OPT,
++						 style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++
++	result = dns_message_sectiontotext(msg, DNS_SECTION_QUESTION,
++					   style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++*/	result = dns_message_sectiontotext2(msg, DNS_SECTION_ANSWER,
++					   style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++/*	result = dns_message_sectiontotext(msg, DNS_SECTION_AUTHORITY,
++					   style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++	result = dns_message_sectiontotext(msg, DNS_SECTION_ADDITIONAL,
++					   style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++
++	result = dns_message_pseudosectiontotext(msg,
++						 DNS_PSEUDOSECTION_TSIG,
++						 style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++
++	result = dns_message_pseudosectiontotext(msg,
++						 DNS_PSEUDOSECTION_SIG0,
++						 style, flags, target);
++	if (result != ISC_R_SUCCESS)
++		return (result);
++*/
++	return (ISC_R_SUCCESS);
++}
++
+ isc_region_t *
+ dns_message_getrawmessage(dns_message_t *msg) {
+ 	REQUIRE(DNS_MESSAGE_VALID(msg));
+diff -aur lib/isc/include/isc/log.h lib/isc/include/isc/log.h
+--- lib/isc/include/isc/log.h	2014-11-21 02:59:27.000000000 +0300
++++ lib/isc/include/isc/log.h	2015-04-30 09:44:24.000000000 +0300
+@@ -571,6 +571,13 @@
+ 
+ ISC_FORMAT_PRINTF(5, 6);
+ 
++void
++isc_log_write2(isc_log_t *lctx, isc_logcategory_t *category,
++	       isc_logmodule_t *module, int level,
++	      const char *format, ...)
++
++ISC_FORMAT_PRINTF(5, 6);
++
+ /*%
+  * Write a message to the log channels.
+  *
+diff -aur lib/isc/log.c lib/isc/log.c
+--- lib/isc/log.c	2014-11-21 02:59:27.000000000 +0300
++++ lib/isc/log.c	2015-05-22 10:43:55.000000000 +0300
+@@ -243,6 +243,13 @@
+ 	     const char *format, va_list args)
+      ISC_FORMAT_PRINTF(9, 0);
+ 
++static void
++isc_log_doit2(isc_log_t *lctx, isc_logcategory_t *category,
++	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
++	     isc_msgcat_t *msgcat, int msgset, int msg,
++	     const char *format, va_list args)
++     ISC_FORMAT_PRINTF(9, 0);
++
+ /*@{*/
+ /*!
+  * Convenience macros.
+@@ -844,6 +851,22 @@
+ }
+ 
+ void
++isc_log_write2(isc_log_t *lctx, isc_logcategory_t *category,
++	      isc_logmodule_t *module, int level, const char *format, ...)
++{
++	va_list args;
++
++	/*
++	 * Contract checking is done in isc_log_doit().
++	 */
++
++	va_start(args, format);
++	isc_log_doit2(lctx, category, module, level, ISC_FALSE,
++		     NULL, 0, 0, format, args);
++	va_end(args);
++}
++
++void
+ isc_log_vwrite(isc_log_t *lctx, isc_logcategory_t *category,
+ 	       isc_logmodule_t *module, int level,
+ 	       const char *format, va_list args)
+@@ -1714,6 +1737,435 @@
+ 
+ 			/*
+ 			 * If the file now exceeds its maximum size
++			 * threshold, note it so that it will not be logged
++			 * to any more.
++			 */
++			if (FILE_MAXSIZE(channel) > 0) {
++				INSIST(channel->type == ISC_LOG_TOFILE);
++
++				/* XXXDCL NT fstat/fileno */
++				/* XXXDCL complain if fstat fails? */
++				if (fstat(fileno(FILE_STREAM(channel)),
++					  &statbuf) >= 0 &&
++				    statbuf.st_size > FILE_MAXSIZE(channel))
++					FILE_MAXREACHED(channel) = ISC_TRUE;
++			}
++
++			break;
++
++		case ISC_LOG_TOSYSLOG:
++			if (level > 0)
++				syslog_level = LOG_DEBUG;
++			else if (level < ISC_LOG_CRITICAL)
++				syslog_level = LOG_CRIT;
++			else
++				syslog_level = syslog_map[-level];
++
++			(void)syslog(FACILITY(channel) | syslog_level,
++			       "%s%s%s%s%s%s%s%s%s%s",
++			       printtime     ? time_string	: "",
++			       printtime     ? " "		: "",
++			       printtag      ? lcfg->tag	: "",
++			       printtag      ? ": "		: "",
++			       printcategory ? category->name	: "",
++			       printcategory ? ": "		: "",
++			       printmodule   ? (module != NULL	? module->name
++								: "no_module")
++								: "",
++			       printmodule   ? ": "		: "",
++			       printlevel    ? level_string	: "",
++			       lctx->buffer);
++			break;
++
++		case ISC_LOG_TONULL:
++			break;
++
++		}
++
++	} while (1);
++
++	UNLOCK(&lctx->lock);
++}
++
++static void
++isc_log_doit2(isc_log_t *lctx, isc_logcategory_t *category,
++	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
++	     isc_msgcat_t *msgcat, int msgset, int msg,
++	     const char *format, va_list args)
++{
++	int syslog_level;
++	char time_string[64];
++	char level_string[24];
++	const char *iformat;
++	//char bufff[LOG_BUFFER_SIZE] = "\0";
++	//const char *anssec = ";; ANSWER SECTION:";
++	//const char *cname_rec = "IN	CNAME	";
++	//const char *a_rec = "IN	A	";
++	//const char *in_rec = "	IN	";
++	//char *ress = NULL;
++	//char *ress2 = NULL;
++	//int i_pos = 0;
++	struct stat statbuf;
++	isc_boolean_t matched = ISC_FALSE;
++	isc_boolean_t printtime, printtag, printcolon;
++	isc_boolean_t printcategory, printmodule, printlevel;
++	isc_logconfig_t *lcfg;
++	isc_logchannel_t *channel;
++	isc_logchannellist_t *category_channels;
++	isc_result_t result;
++
++	REQUIRE(lctx == NULL || VALID_CONTEXT(lctx));
++	REQUIRE(category != NULL);
++	REQUIRE(module != NULL);
++	REQUIRE(level != ISC_LOG_DYNAMIC);
++	REQUIRE(format != NULL);
++
++	/*
++	 * Programs can use libraries that use this logging code without
++	 * wanting to do any logging, thus the log context is allowed to
++	 * be non-existent.
++	 */
++	if (lctx == NULL)
++		return;
++
++	REQUIRE(category->id < lctx->category_count);
++	REQUIRE(module->id < lctx->module_count);
++
++	if (! isc_log_wouldlog(lctx, level))
++		return;
++
++	if (msgcat != NULL)
++		iformat = isc_msgcat_get(msgcat, msgset, msg, format);
++	else
++		iformat = format;
++
++	time_string[0]  = '\0';
++	level_string[0] = '\0';
++
++	LOCK(&lctx->lock);
++
++	lctx->buffer[0] = '\0';
++
++	lcfg = lctx->logconfig;
++
++	category_channels = ISC_LIST_HEAD(lcfg->channellists[category->id]);
++
++	/*
++	 * XXXDCL add duplicate filtering? (To not write multiple times to
++	 * the same source via various channels).
++	 */
++	do {
++		/*
++		 * If the channel list end was reached and a match was made,
++		 * everything is finished.
++		 */
++		if (category_channels == NULL && matched)
++			break;
++
++		if (category_channels == NULL && ! matched &&
++		    category_channels != ISC_LIST_HEAD(lcfg->channellists[0]))
++			/*
++			 * No category/module pair was explicitly configured.
++			 * Try the category named "default".
++			 */
++			category_channels =
++				ISC_LIST_HEAD(lcfg->channellists[0]);
++
++		if (category_channels == NULL && ! matched)
++			/*
++			 * No matching module was explicitly configured
++			 * for the category named "default".  Use the internal
++			 * default channel.
++			 */
++			category_channels = &default_channel;
++
++		if (category_channels->module != NULL &&
++		    category_channels->module != module) {
++			category_channels = ISC_LIST_NEXT(category_channels,
++							  link);
++			continue;
++		}
++
++		matched = ISC_TRUE;
++
++		channel = category_channels->channel;
++		category_channels = ISC_LIST_NEXT(category_channels, link);
++
++		if (((channel->flags & ISC_LOG_DEBUGONLY) != 0) &&
++		    lctx->debug_level == 0)
++			continue;
++
++		if (channel->level == ISC_LOG_DYNAMIC) {
++			if (lctx->debug_level < level)
++				continue;
++		} else if (channel->level < level)
++			continue;
++
++		if ((channel->flags & ISC_LOG_PRINTTIME) != 0 &&
++		    time_string[0] == '\0') {
++			isc_time_t isctime;
++
++			TIME_NOW(&isctime);
++			isc_time_formattimestamp2(&isctime, time_string,
++						 sizeof(time_string));
++		}
++
++		if ((channel->flags & ISC_LOG_PRINTLEVEL) != 0 &&
++		    level_string[0] == '\0') {
++			if (level < ISC_LOG_CRITICAL)
++				snprintf(level_string, sizeof(level_string),
++					 isc_msgcat_get(isc_msgcat,
++							ISC_MSGSET_LOG,
++							ISC_MSG_LEVEL,
++							"level %d: "),
++					 level);
++			else if (level > ISC_LOG_DYNAMIC)
++				snprintf(level_string, sizeof(level_string),
++					 "%s %d: ", log_level_strings[0],
++					 level);
++			else
++				snprintf(level_string, sizeof(level_string),
++					 "%s: ", log_level_strings[-level]);
++		}
++
++		/*
++		 * Only format the message once.
++		 */
++		if (lctx->buffer[0] == '\0') {
++			(void)vsnprintf(lctx->buffer, sizeof(lctx->buffer),
++					iformat, args);
++
++			/*
++			 * Check for duplicates.
++			 */
++			if (write_once) {
++				isc_logmessage_t *message, *new;
++				isc_time_t oldest;
++				isc_interval_t interval;
++
++				isc_interval_set(&interval,
++						 lcfg->duplicate_interval, 0);
++
++				/*
++				 * 'oldest' is the age of the oldest messages
++				 * which fall within the duplicate_interval
++				 * range.
++				 */
++				TIME_NOW(&oldest);
++				if (isc_time_subtract(&oldest, &interval, &oldest)
++				    != ISC_R_SUCCESS)
++					/*
++					 * Can't effectively do the checking
++					 * without having a valid time.
++					 */
++					message = NULL;
++				else
++					message =ISC_LIST_HEAD(lctx->messages);
++
++				while (message != NULL) {
++					if (isc_time_compare(&message->time,
++							     &oldest) < 0) {
++						/*
++						 * This message is older
++						 * than the duplicate_interval,
++						 * so it should be dropped from
++						 * the history.
++						 *
++						 * Setting the interval to be
++						 * to be longer will obviously
++						 * not cause the expired
++						 * message to spring back into
++						 * existence.
++						 */
++						new = ISC_LIST_NEXT(message,
++								    link);
++
++						ISC_LIST_UNLINK(lctx->messages,
++								message, link);
++
++						isc_mem_put(lctx->mctx,
++							message,
++							sizeof(*message) + 1 +
++							strlen(message->text));
++
++						message = new;
++						continue;
++					}
++
++					/*
++					 * This message is in the duplicate
++					 * filtering interval ...
++					 */
++					if (strcmp(lctx->buffer, message->text)
++					    == 0) {
++						/*
++						 * ... and it is a duplicate.
++						 * Unlock the mutex and
++						 * get the hell out of Dodge.
++						 */
++						UNLOCK(&lctx->lock);
++						return;
++					}
++
++					message = ISC_LIST_NEXT(message, link);
++				}
++
++				/*
++				 * It wasn't in the duplicate interval,
++				 * so add it to the message list.
++				 */
++				new = isc_mem_get(lctx->mctx,
++						  sizeof(isc_logmessage_t) +
++						  strlen(lctx->buffer) + 1);
++				if (new != NULL) {
++					/*
++					 * Put the text immediately after
++					 * the struct.  The strcpy is safe.
++					 */
++					new->text = (char *)(new + 1);
++					strcpy(new->text, lctx->buffer);
++
++					TIME_NOW(&new->time);
++
++					ISC_LINK_INIT(new, link);
++					ISC_LIST_APPEND(lctx->messages,
++							new, link);
++				}
++			}
++		}
++
++		printtime     = ISC_TF((channel->flags & ISC_LOG_PRINTTIME)
++				       != 0);
++		printtag      = ISC_TF((channel->flags & ISC_LOG_PRINTTAG)
++				       != 0 && lcfg->tag != NULL);
++		printcolon    = ISC_TF((channel->flags & ISC_LOG_PRINTTAG)
++				       != 0 && lcfg->tag != NULL);
++		printcategory = ISC_TF((channel->flags & ISC_LOG_PRINTCATEGORY)
++				       != 0);
++		printmodule   = ISC_TF((channel->flags & ISC_LOG_PRINTMODULE)
++				       != 0);
++		printlevel    = ISC_TF((channel->flags & ISC_LOG_PRINTLEVEL)
++				       != 0);
++
++		switch (channel->type) {
++		case ISC_LOG_TOFILE:
++			if (FILE_MAXREACHED(channel)) {
++				/*
++				 * If the file can be rolled, OR
++				 * If the file no longer exists, OR
++				 * If the file is less than the maximum size,
++				 *    (such as if it had been renamed and
++				 *     a new one touched, or it was truncated
++				 *     in place)
++				 * ... then close it to trigger reopening.
++				 */
++				if (FILE_VERSIONS(channel) !=
++				    ISC_LOG_ROLLNEVER ||
++				    (stat(FILE_NAME(channel), &statbuf) != 0 &&
++				     errno == ENOENT) ||
++				    statbuf.st_size < FILE_MAXSIZE(channel)) {
++					(void)fclose(FILE_STREAM(channel));
++					FILE_STREAM(channel) = NULL;
++					FILE_MAXREACHED(channel) = ISC_FALSE;
++				} else
++					/*
++					 * Eh, skip it.
++					 */
++					break;
++			}
++
++			if (FILE_STREAM(channel) == NULL) {
++				result = isc_log_open(channel);
++				if (result != ISC_R_SUCCESS &&
++				    result != ISC_R_MAXSIZE &&
++				    (channel->flags & ISC_LOG_OPENERR) == 0) {
++					syslog(LOG_ERR,
++					       "isc_log_open '%s' failed: %s",
++					       FILE_NAME(channel),
++					       isc_result_totext(result));
++					channel->flags |= ISC_LOG_OPENERR;
++				}
++				if (result != ISC_R_SUCCESS)
++					break;
++				channel->flags &= ~ISC_LOG_OPENERR;
++			}
++			/* FALLTHROUGH */
++
++		case ISC_LOG_TOFILEDESC:
++			//fprintf(FILE_STREAM(channel), "FFFFFFFFFFFFFF: 1[%s]\n 2[%s]\n 3[%s]\n",
++			//	bufff, ress, lctx->buffer);
++
++			//ress = strcasestr(lctx->buffer, anssec);
++			//ress = strcasestr(lctx->buffer, a_rec);
++			//ress2 = strcasestr(lctx->buffer, cname_rec);
++			//ress2 = strcasestr(ress, a_rec);
++			
++			//fprintf(FILE_STREAM(channel), "SSSSSSSSSSSSSS: 1[%s]\n 2[%s]\n 3[%s]\n",
++			//	bufff, ress, lctx->buffer);
++			//if (ress != NULL) {
++			
++			//i_pos = lctx->buffer - ress;
++			//i_pos = strlen(lctx->buffer) - i_pos;
++			//strncpy(bufff, lctx->buffer + i_pos, sizeof(lctx->buffer-i_pos+1));
++			//ress2 = strcasestr(ress, "\n");
++			//fprintf(FILE_STREAM(channel),"TTTTTTTTTTTTTTT:: 1[%s]\n 2[%s]\n 3[%s]\n",
++			//	bufff, ress, lctx->buffer);
++			//fprintf(FILE_STREAM(channel), "%s%s%s%s%s%s%s%s%s[[[%s]]] %s (%d) <%s>\n",
++			/*
++			fprintf(FILE_STREAM(channel), "%s%s%s%s%s%s%s%s%s[[[requested: %s/%s]]] \n",
++				printtime     ? time_string	: "",
++				printtime     ? " "		: "",
++				printtag      ? lcfg->tag	: "",
++				printtag      ? ": "		: "",
++				printcategory ? category->name	: "",
++				printcategory ? ": "		: "",
++				printmodule   ? (module != NULL ? module->name
++								: "no_module")
++								: "",
++				printmodule   ? ": "		: "",
++				printlevel    ? level_string	: "",
++				//lctx->buffer);
++				ress,ress2);
++				//ress2);//, ress);//, i_pos, lctx->buffer);
++
++			fflush(FILE_STREAM(channel));
++			} else {*/
++//			fprintf(FILE_STREAM(channel), "%s%s%s%s%s%s%s%s%s %s\n",
++/*
++			fprintf(FILE_STREAM(channel), "%s;%s%s%s%s%s%s%s%s %s\n",
++				printtime     ? time_string	: "",
++				printtime     ? " "		: "",
++				printtag      ? lcfg->tag	: "",
++				printtag      ? ": "		: "",
++				printcategory ? category->name	: "",
++				printcategory ? ": "		: "",
++				printmodule   ? (module != NULL ? module->name
++								: "no_module")
++								: "",
++				printmodule   ? ": "		: "",
++				printlevel    ? level_string	: "",
++				lctx->buffer);
++				
++*/
++			fprintf(FILE_STREAM(channel), "%s;%s\n",
++				printtime     ? time_string	: "",
++				//printtime     ? " "		: "",
++				//printtag      ? lcfg->tag	: "",
++				//printtag      ? ": "		: "",
++				//printcategory ? category->name	: "",
++				//printcategory ? ": "		: "",
++				//printmodule   ? (module != NULL ? module->name
++				//				: "no_module")
++				//				: "",
++				//printmodule   ? ": "		: "",
++				//printlevel    ? level_string	: "",
++				lctx->buffer);
++
++			fflush(FILE_STREAM(channel));
++			//}
++
++			/*
++			 * If the file now exceeds its maximum size
+ 			 * threshold, note it so that it will not be logged
+ 			 * to any more.
+ 			 */
+diff -aur lib/isc/unix/include/isc/time.h lib/isc/unix/include/isc/time.h
+--- lib/isc/unix/include/isc/time.h	2014-11-21 02:59:27.000000000 +0300
++++ lib/isc/unix/include/isc/time.h	2015-05-20 14:27:10.000000000 +0300
+@@ -289,6 +289,9 @@
+ 
+ void
+ isc_time_formattimestamp(const isc_time_t *t, char *buf, unsigned int len);
++
++void
++isc_time_formattimestamp2(const isc_time_t *t, char *buf, unsigned int len);
+ /*%<
+  * Format the time 't' into the buffer 'buf' of length 'len',
+  * using a format like "30-Aug-2000 04:06:47.997" and the local time zone.
+diff -aur lib/isc/unix/time.c lib/isc/unix/time.c
+--- lib/isc/unix/time.c	2014-11-21 02:59:27.000000000 +0300
++++ lib/isc/unix/time.c	2015-05-26 12:18:58.000000000 +0300
+@@ -398,6 +398,24 @@
+ }
+ 
+ void
++isc_time_formattimestamp2(const isc_time_t *t, char *buf, unsigned int len) {
++	time_t now;
++	unsigned int flen;
++
++	REQUIRE(len > 0);
++
++	now = (time_t) t->seconds;
++	flen = strftime(buf, len, "%d.%m.%Y %T", localtime(&now));
++	INSIST(flen < len);
++/*	if (flen != 0)
++		snprintf(buf + flen, len - flen,
++			 ".%03u", t->nanoseconds / 1000000);
++	else
++		snprintf(buf, len, "99-Bad-9999 99:99:99.999");
++*/
++}
++
++void
+ isc_time_formathttptimestamp(const isc_time_t *t, char *buf, unsigned int len) {
+ 	time_t now;
+ 	unsigned int flen;
