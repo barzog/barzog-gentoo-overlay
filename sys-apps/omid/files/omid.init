@@ -1,0 +1,38 @@
+#!/sbin/openrc-run
+
+OMI_HOME=/opt/omi
+OMI_NAME="Microsoft OMI Server"
+OMI_BIN=$OMI_HOME/bin/omiserver
+LD_LIBRARY_PATH=$OMI_HOME/lib; export LD_LIBRARY_PATH
+CREATE_LINKS=/opt/omi/bin/support/installssllinks
+PIDFILE=/var/opt/omi/run/omiserver.pid
+
+checkconfig () {
+	test -x $OMI_BIN || { echo "$OMI_BIN not installed";
+ 	   if [ "$1" = "stop" ]; then exit 0;
+	    else exit 5; fi; }
+}
+
+depend() {
+        need net
+}
+
+start_pre()
+{
+     $CREATE_LINKS
+}
+
+start() {
+        ebegin "Starting $OMI_NAME: "
+        start-stop-daemon --start --quiet --background --make-pidfile \
+                --pidfile ${PIDFILE} --exec  $OMI_BIN -- --configfile=/etc/opt/omi/conf/omiserver.conf
+        eend $?
+}
+
+stop() {
+        ebegin "Stopping  $OMI_NAME: "
+
+         $OMI_BIN -s > /dev/null 2>&1
+        eend $?
+}
+

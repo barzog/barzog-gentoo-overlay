@@ -1,0 +1,22 @@
+--- src/sql/logtriga/textbuf.c 2013-07-29 11:14:55.000000000 +0300
++++ src/sql/logtriga/textbuf.c 2017-10-18 10:34:21.000000000 +0300
+@@ -4,7 +4,7 @@
+ #include "utils/elog.h"
+ #include "funcapi.h"
+ #include "mb/pg_wchar.h"
+-#include "parser/keywords.h"
++#include "common/keywords.h"
+
+ #if 1
+ #define talloc(len)        malloc(len)
+--- src/sql/pgq/triggers/stringutil.c  2013-07-29 11:20:51.000000000 +0300
++++ src/sql/pgq/triggers/stringutil.c  2017-10-18 10:34:06.000000000 +0300
+@@ -19,7 +19,7 @@
+ #include <postgres.h>
+ #include <lib/stringinfo.h>
+ #include <mb/pg_wchar.h>
+-#include <parser/keywords.h>
++#include <common/keywords.h>
+ #include <utils/memutils.h>
+
+ #include "stringutil.h"
