@@ -2,9 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-ftp/atftp/atftp-0.7-r2.ebuild,v 1.6 2012/05/13 11:13:32 swift Exp $
 
-EAPI=2
-
-inherit eutils autotools-utils
+EAPI=6
+inherit autotools flag-o-matic 
 
 DESCRIPTION="Advanced TFTP implementation client/server"
 HOMEPAGE="http://sourceforge.net/projects/atftp/"
@@ -22,16 +21,26 @@ DEPEND="tcpd? ( sys-apps/tcp-wrappers )
 RDEPEND="${DEPEND}
 	!net-ftp/netkit-tftp
 	!net-ftp/tftp-hpa"
-PATCHES=("${FILESDIR}/blksize.patch")
+DEBIAN_PV="11"
+DEBIAN_A="${PN}_${PV}-${DEBIAN_PV}.diff"
+PATCHES=(
+        "${FILESDIR}/atftp-0.7-blockno.patch"
+	"${FILESDIR}/blksize.patch"
+)
 
-src_compile() {
-	econf \
-		$(use_enable tcpd libwrap) \
-		$(use_enable readline libreadline) \
-		$(use_enable pcre libpcre) \
-		--enable-mtftp \
-		|| die "./configure failed"
-	emake CFLAGS="${CFLAGS}" || die
+src_prepare() {
+        append-cppflags -DRATE_CONTROL -std=gnu89
+
+        default
+        eautoreconf
+}
+
+src_configure() {
+        econf \
+                $(use_enable tcpd libwrap) \
+                $(use_enable readline libreadline) \
+                $(use_enable pcre libpcre) \
+                --enable-mtftp
 }
 
 src_install() {

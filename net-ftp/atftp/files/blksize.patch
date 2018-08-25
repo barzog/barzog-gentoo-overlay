@@ -1,7 +1,7 @@
 Index: tftp_def.h
 ===================================================================
---- tftp_def.h.orig	2008-09-12 16:30:56.092292872 +0200
-+++ tftp_def.h	2008-09-12 16:30:56.160294265 +0200
+--- atftp-0.7/tftp_def.h.orig	2008-09-12 16:30:56.092292872 +0200
++++ atftp-0.7/tftp_def.h	2008-09-12 16:30:56.160294265 +0200
 @@ -32,6 +32,7 @@
  #define TIMEOUT       5         /* Client timeout */
  #define S_TIMEOUT     5         /* Server timout. */
@@ -12,9 +12,9 @@ Index: tftp_def.h
  #define OPT_FILENAME  0
 Index: tftp_file.c
 ===================================================================
---- tftp_file.c.orig	2008-09-12 16:30:55.907808154 +0200
-+++ tftp_file.c	2008-09-12 16:31:46.663791666 +0200
-@@ -604,8 +604,8 @@ int tftp_send_file(struct client_data *d
+--- atftp-0.7/tftp_file.c.orig	2018-08-25 20:55:38.352296690 +0300
++++ atftp-0.7/tftp_file.c	2018-08-25 21:04:18.004227241 +0300
+@@ -628,8 +628,8 @@
       int state = S_SEND_REQ;    /* current state in the state machine */
       int timeout_state = state; /* what state should we go on when timeout */
       int result;
@@ -24,19 +24,19 @@ Index: tftp_file.c
 +     long last_block = -1;
       int data_size;             /* size of data received */
       int sockfd = data->sockfd; /* just to simplify calls */
-      struct sockaddr_in sa;     /* a copy of data.sa_peer */
-@@ -618,8 +618,8 @@ int tftp_send_file(struct client_data *d
-      int convert = 0;           /* if true, do netascii convertion */
+      struct sockaddr_storage sa; /* a copy of data.sa_peer */
+@@ -644,8 +644,8 @@
       char string[MAXLEN];
  
+      int ack_block_number;
 -     int prev_block_number = 0; /* needed to support netascii convertion */
 -     int prev_file_pos = 0;
 +     long prev_block_number = 0; /* needed to support netascii convertion */
 +     long prev_file_pos = 0;
       int temp = 0;
+      size_t ignore;
  
-      data->file_size = 0;
-@@ -726,7 +726,7 @@ int tftp_send_file(struct client_data *d
+@@ -753,7 +753,7 @@
                                data_size, data->data_buffer);
                 data->file_size += data_size;
                 if (data->trace)
@@ -45,19 +45,19 @@ Index: tftp_file.c
                              block_number + 1, data_size - 4);
                 state = S_WAIT_PACKET;
                 break;
-@@ -766,7 +766,7 @@ int tftp_send_file(struct client_data *d
-                     }
-                     block_number = ntohs(tftphdr->th_block);
+@@ -795,7 +795,7 @@
+                     if ((uint16_t)(block_number+1) == ack_block_number)
+                          ++block_number;
                      if (data->trace)
 -                         fprintf(stderr, "received ACK <block: %d>\n",
 +                         fprintf(stderr, "received ACK <block: %ld>\n",
-                                  block_number);
+                                  ack_block_number);
+                     
                      if ((last_block != -1) && (block_number > last_block))
-                     {
 Index: tftp_io.c
 ===================================================================
---- tftp_io.c.orig	2008-09-12 16:30:56.048295391 +0200
-+++ tftp_io.c	2008-09-12 16:30:56.200292051 +0200
+--- atftp-0.7/tftp_io.c.orig	2008-09-12 16:30:56.048295391 +0200
++++ atftp-0.7/tftp_io.c	2008-09-12 16:30:56.200292051 +0200
 @@ -334,8 +334,8 @@ int tftp_get_packet(int sock1, int sock2
  /*
   * Read from file and do netascii conversion if needed
@@ -71,8 +71,8 @@ Index: tftp_io.c
       int c;
 Index: tftp_io.h
 ===================================================================
---- tftp_io.h.orig	2004-03-06 21:41:41.000000000 +0100
-+++ tftp_io.h	2008-09-12 16:30:56.240291211 +0200
+--- atftp-0.7/tftp_io.h.orig	2004-03-06 21:41:41.000000000 +0100
++++ atftp-0.7/tftp_io.h	2008-09-12 16:30:56.240291211 +0200
 @@ -52,8 +52,8 @@ int tftp_send_data(int socket, struct so
  int tftp_get_packet(int sock1, int sock2, int *sock, struct sockaddr_in *sa,
                      struct sockaddr_in *from, struct sockaddr_in *to,
@@ -86,8 +86,8 @@ Index: tftp_io.h
  #endif
 Index: tftpd_file.c
 ===================================================================
---- tftpd_file.c.orig	2004-03-06 21:41:41.000000000 +0100
-+++ tftpd_file.c	2008-09-12 16:30:56.268005211 +0200
+--- atftp-0.7/tftpd_file.c.orig	2004-03-06 21:41:41.000000000 +0100
++++ atftp-0.7/tftpd_file.c	2008-09-12 16:30:56.268005211 +0200
 @@ -402,8 +402,9 @@ int tftpd_send_file(struct thread_data *
       int state = S_BEGIN;
       int timeout_state = state;
