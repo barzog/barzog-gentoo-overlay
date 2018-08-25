@@ -3,7 +3,7 @@
 # $Header: $
 
 EAPI=5
-POSTGRES_COMPAT=( 9.{3,4} )
+POSTGRES_COMPAT=( 9.{3,4,5,6} 10 )
 
 MY_PV=${PV//\./_}
 
@@ -18,6 +18,9 @@ IUSE=""
 
 DEPEND="virtual/mysql
 	|| (
+		dev-db/postgresql:10[server]
+		dev-db/postgresql:9.6[server]
+		dev-db/postgresql:9.5[server]
 		dev-db/postgresql:9.4[server]
 		dev-db/postgresql:9.3[server]
 	)"
