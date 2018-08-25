@@ -1,0 +1,78 @@
+--- atftp-0.7/tftp_file.c.orig	2012-07-31 09:17:34.000000000 +0300
++++ atftp-0.7/tftp_file.c	2018-08-25 20:38:21.498221645 +0300
+@@ -139,10 +139,12 @@
+      unsigned int file_bitmap[NB_BLOCK];
+      int prev_bitmap_hole = -1; /* the previous hole found in the bitmap */
+      char string[MAXLEN];
++     int rx_block_number;
+ 
+      int prev_block_number = 0; /* needed to support netascii convertion */
+      int temp = 0;
+      int err;
++     size_t ignore;
+ 
+      data->file_size = 0;
+      tftp_cancel = 0;
+@@ -306,7 +308,7 @@
+                     break;
+                case GET_ERROR:
+                     fprintf(stderr, "tftp: error received from server <");
+-                    fwrite(tftphdr->th_msg, 1, data_size - 4 - 1, stderr);
++                    ignore = fwrite(tftphdr->th_msg, 1, data_size - 4 - 1, stderr);
+                     fprintf(stderr, ">\n");
+                     state = S_ABORT;
+                     break;
+@@ -530,11 +532,15 @@
+                else
+                     timeout_state = S_WAIT_PACKET;
+ 
+-               block_number = ntohs(tftphdr->th_block);
++               rx_block_number = ntohs(tftphdr->th_block);
++               
+                if (data->trace)
+                     fprintf(stderr, "received DATA <block: %d, size: %d>\n",
+                             ntohs(tftphdr->th_block), data_size - 4);
+ 
++               if ((uint16_t)rx_block_number == (uint16_t)(block_number+1))
++                    ++block_number;
++
+                if (tftp_file_write(fp, tftphdr->th_data, data->data_buffer_size - 4, block_number,
+                                    data_size - 4, convert, &prev_block_number, &temp)
+                    != data_size - 4)
+@@ -637,9 +643,11 @@
+      int convert = 0;           /* if true, do netascii convertion */
+      char string[MAXLEN];
+ 
++     int ack_block_number;
+      int prev_block_number = 0; /* needed to support netascii convertion */
+      int prev_file_pos = 0;
+      int temp = 0;
++     size_t ignore;
+ 
+      data->file_size = 0;
+      tftp_cancel = 0;
+@@ -783,10 +791,13 @@
+                          //connect(sockfd, (struct sockaddr *)&sa, sizeof(sa));
+                          connected = 1;
+                     }
+-                    block_number = ntohs(tftphdr->th_block);
++                    ack_block_number = ntohs(tftphdr->th_block);
++                    if ((uint16_t)(block_number+1) == ack_block_number)
++                         ++block_number;
+                     if (data->trace)
+                          fprintf(stderr, "received ACK <block: %d>\n",
+-                                 block_number);
++                                 ack_block_number);
++                    
+                     if ((last_block != -1) && (block_number > last_block))
+                     {
+                          state = S_END;
+@@ -806,7 +817,7 @@
+                     break;
+                case GET_ERROR:
+                     fprintf(stderr, "tftp: error received from server <");
+-                    fwrite(tftphdr->th_msg, 1, data_size - 4 - 1, stderr);
++                    ignore = fwrite(tftphdr->th_msg, 1, data_size - 4 - 1, stderr);
+                     fprintf(stderr, ">\n");
+                     state = S_ABORT;
+                     break;
