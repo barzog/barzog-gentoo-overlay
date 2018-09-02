@@ -1,21 +1,26 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=6
 
-PYTHON_COMPAT=( python{2_7,3_4} )
+PYTHON_COMPAT=( python{2_7,3_3,3_4} )
 
-inherit eutils multilib pam linux-info autotools multilib-minimal python-r1 systemd toolchain-funcs
+inherit eutils multilib pam linux-info autotools flag-o-matic multilib-minimal python-r1 systemd toolchain-funcs
 
 DESCRIPTION="System Security Services Daemon provides access to identity and authentication"
-HOMEPAGE="http://fedorahosted.org/sssd/"
-SRC_URI="http://fedorahosted.org/released/${PN}/${P}.tar.gz"
-
+HOMEPAGE="https://pagure.io/SSSD/sssd"
+if [[ ${PV} == *9999* ]]; then
+	inherit git-r3
+	SRC_URI=""
+	EGIT_REPO_URI="https://github.com/SSSD/sssd.git"
+	KEYWORDS=""
+else
+	SRC_URI="http://releases.pagure.org/SSSD/${PN}/${P}.tar.gz"
+	KEYWORDS="~amd64 ~arm ~hppa ~ppc ~ppc64 ~x86"
+fi
 LICENSE="GPL-3"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~hppa ~ppc ~ppc64 ~x86"
-IUSE="acl augeas autofs +locator netlink nfsv4 nls +manpages python samba selinux sudo ssh test"
-REQUIRED_USE="python? ( ${PYTHON_REQUIRED_USE} )"
+IUSE="acl autofs +locator +netlink nfsv4 nls +manpages python samba selinux sudo ssh test"
 
 COMMON_DEP="
 	>=virtual/pam-0-r1[${MULTILIB_USEDEP}]
@@ -29,6 +34,8 @@ COMMON_DEP="
 	>=net-nds/openldap-2.4.30[sasl]
 	>=dev-libs/libpcre-8.30
 	>=app-crypt/mit-krb5-1.10.3
+	net-libs/http-parser
+	dev-libs/jansson
 	locator? (
 		>=app-crypt/mit-krb5-1.12.2[${MULTILIB_USEDEP}]
 		>=net-dns/c-ares-1.10.0-r1[${MULTILIB_USEDEP}]
@@ -36,9 +43,6 @@ COMMON_DEP="
 	>=sys-apps/keyutils-1.5
 	>=net-dns/c-ares-1.7.4
 	>=dev-libs/nss-3.12.9
-	net-libs/http-parser
-	dev-libs/jansson
-	python? ( ${PYTHON_DEPS} )
 	selinux? (
 		>=sys-libs/libselinux-2.1.9
 		>=sys-libs/libsemanage-2.1
@@ -47,12 +51,11 @@ COMMON_DEP="
 	>=dev-libs/cyrus-sasl-2.1.25-r3[kerberos]
 	>=sys-apps/dbus-1.6
 	acl? ( net-fs/cifs-utils[acl] )
-	augeas? ( app-admin/augeas )
-	nfsv4? ( net-libs/libnfsidmap )
+	nfsv4? ( || ( >=net-fs/nfs-utils-2.3.1-r2 net-libs/libnfsidmap ) )
 	nls? ( >=sys-devel/gettext-0.18 )
 	virtual/libintl
 	netlink? ( dev-libs/libnl:3 )
-	samba? ( >=net-fs/samba-4.0 )
+	samba? ( >=net-fs/samba-4.5 )
 	"
 
 RDEPEND="${COMMON_DEP}
@@ -65,6 +68,7 @@ DEPEND="${COMMON_DEP}
 		>=dev-libs/libxslt-1.1.26
 		app-text/docbook-xml-dtd:4.4
 		)"
+#PATCHES="(${FILESDIR}/sssd-1.16.3-Makefile.am.patch)"
 
 CONFIG_CHECK="~KEYS"
 
@@ -76,22 +80,26 @@ MULTILIB_WRAPPED_HEADERS=(
 	# --with-ifp
 	/usr/include/sss_sifp.h
 	/usr/include/sss_sifp_dbus.h
+	# from 1.15.3
+	/usr/include/sss_certmap.h
 )
 
 pkg_setup(){
 	linux-info_pkg_setup
 }
 
+xx_src_unpack() {
+	git-r3_fetch
+	git-r3_checkout
+}
+
 src_prepare() {
-	epatch ${FILESDIR}/0001-BUILD-Fix-linking-with-librt.patch
-        sed -i -e 's/runscript/openrc-run/' src/sysv/gentoo/sssd.in
+	sed -i 's:#!/sbin/runscript:#!/sbin/openrc-run:' \
+		"${S}"/src/sysv/gentoo/sssd.in || die "sed sssd.in"
 
+	default
 	eautoreconf
-
 	multilib_copy_sources
-
-	# Maybe run it before eautoreconf?
-	epatch_user
 }
 
 src_configure() {
@@ -104,9 +112,14 @@ multilib_src_configure() {
 	# set initscript to sysv because the systemd option needs systemd to
 	# be installed. We provide our own systemd file anyway.
 	local myconf=()
-	#No python support. Brokes if only python2_7 installed	
-	myconf+=($(multilib_native_use_with python python2-bindings))
-	myconf+=($(multilib_native_use_with python python3-bindings))
+	if [[ "${PYTHON_TARGETS}" == *python2* ]]; then
+		myconf+=($(multilib_native_use_with python python2-bindings))
+	fi
+	if [[ "${PYTHON_TARGETS}" == *python3* ]]; then
+		myconf+=($(multilib_native_use_with python python3-bindings))
+	fi
+	#Work around linker dependency problem.
+	append-ldflags "-Wl,--allow-shlib-undefined"
 
 	myconf+=(
 		--localstatedir="${EPREFIX}"/var
@@ -114,14 +127,17 @@ multilib_src_configure() {
 		--with-plugin-path="${EPREFIX}"/usr/$(get_libdir)/sssd
 		--enable-pammoddir="${EPREFIX}"/$(getpam_mod_dir)
 		--with-ldb-lib-dir="${EPREFIX}"/usr/$(get_libdir)/samba/ldb
-		--without-nscd
+		--with-os=gentoo
+		--with-nscd
 		--with-unicode-lib="glib2"
 		--disable-rpath
 		--disable-silent-rules
 		--sbindir=/usr/sbin
+		--without-kcm
+		$(use_with samba libwbclient)
+		--with-secrets
 		$(multilib_native_use_with samba)
 		$(multilib_native_use_enable acl cifs-idmap-plugin)
-		$(multilib_native_use_enable augeas config-lib)
 		$(multilib_native_use_with selinux)
 		$(multilib_native_use_with selinux semanage)
 		$(use_enable locator krb5-locator-plugin)
@@ -132,11 +148,11 @@ multilib_src_configure() {
 		$(multilib_native_use_with sudo)
 		$(multilib_native_use_with autofs)
 		$(multilib_native_use_with ssh)
-		--with-crypto="libcrypto"
+		--with-crypto="nss"
 		--with-initscript="sysv"
 
 		KRB5_CONFIG=/usr/bin/${CHOST}-krb5-config
-		)
+	)
 
 	if ! multilib_is_native_abi; then
 		# work-around all the libraries that are used for CLI and server
@@ -152,10 +168,14 @@ multilib_src_configure() {
 
 			# non-pkgconfig checks
 			ac_cv_lib_ldap_ldap_search=yes
+			--without-secrets
+			--without-libwbclient
+			--without-kcm
+			--with-crypto=""
 		)
 
 		use locator || myconf+=(
-			KRB5_CONFIG=/bin/true
+				KRB5_CONFIG=/bin/true
 		)
 	fi
 
@@ -201,6 +221,17 @@ multilib_src_install_all() {
 	newins "${S}"/src/examples/logrotate sssd
 
 	newconfd "${FILESDIR}"/sssd.conf sssd
+	newinitd "${FILESDIR}"/sssd sssd
+
+	keepdir /var/lib/sss/db
+	keepdir /var/lib/sss/deskprofile
+	keepdir /var/lib/sss/gpo_cache
+	keepdir /var/lib/sss/keytabs
+	keepdir /var/lib/sss/mc
+	keepdir /var/lib/sss/pipes/private
+	keepdir /var/lib/sss/pubconf/krb5.include.d
+	keepdir /var/lib/sss/secrets
+	keepdir /var/log/sssd
 
 	systemd_dounit "${FILESDIR}/${PN}.service"
 }
