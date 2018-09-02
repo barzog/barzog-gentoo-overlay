@@ -11,6 +11,10 @@ LICENSE=" || ( Artistic GPL-2 )"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="test"
+
+DEPEND="dev-perl/DBI"
+RDEPEND="${DEPEND}"
+
 perl_meta_configure() {
 	# ExtUtils::MakeMaker
 	echo virtual/perl-ExtUtils-MakeMaker

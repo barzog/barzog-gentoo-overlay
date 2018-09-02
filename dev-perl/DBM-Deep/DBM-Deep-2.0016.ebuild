@@ -4,7 +4,7 @@
 
 EAPI=5
 
-MODULE_AUTHOR=RKINYON
+MODULE_AUTHOR=SPROUT
 inherit perl-module
 
 DESCRIPTION="A pure perl multi-level hash/array DBM that supports transactions"
