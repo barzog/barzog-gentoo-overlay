@@ -16,7 +16,7 @@ SLOT="0"
 KEYWORDS="~x86 ~sparc ~amd64"
 IUSE="asciidoc"
 
-DEPEND="<=dev-db/postgresql-9.5[server]
+DEPEND="<dev-db/postgresql-9.5[server]
 		asciidoc? ( app-text/asciidoc )
 		dev-python/psycopg"
 RDEPEND="${DEPENDS}"
