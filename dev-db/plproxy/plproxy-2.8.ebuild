@@ -15,7 +15,7 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 
-DEPEND="( 
+DEPEND="|| ( 
 	dev-db/postgresql:10[server]
 	dev-db/postgresql:9.6[server]
 	dev-db/postgresql:9.5[server]
