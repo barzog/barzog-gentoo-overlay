@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit autotools db-use eutils perl-app toolchain-funcs
+inherit autotools db-use eutils perl-module toolchain-funcs
 
 MY_PV=${PV/_/}
 

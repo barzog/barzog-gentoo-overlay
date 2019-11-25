@@ -4,7 +4,7 @@
 
 EAPI=5
 
-inherit eutils perl-app
+inherit eutils perl-module
 
 FLOW_TOOLS_VERSION="0.68"
 
